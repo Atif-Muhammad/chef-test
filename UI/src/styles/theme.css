@@ -1,0 +1,512 @@
+/* ==========================================================================
+   Design Tokens - Private Chef Missy
+   Compact, elegant scale: tight, crisp, un-bulky layout
+   ========================================================================== */
+
+:root {
+  /* Colors */
+  --color-primary: #2e3b12;
+  --color-primary-hover: #3b4b18;
+  --color-primary-light: #f1f6ec;
+  
+  --color-bg: #fbf9f5;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f7f4ee;
+  
+  --color-text: #1e1b16;
+  --color-text-muted: #716c62;
+  --color-text-light: #9c968b;
+  --color-text-inverse: #ffffff;
+
+  --color-accent: #c49e5d;
+  --color-accent-hover: #b08c4e;
+  --color-accent-soft: #f8f3ea;
+
+  --color-sidebar-bg: #fcfbf8;
+  --color-border: #ece7de;
+  --color-border-subtle: #f2eee6;
+  --color-border-focus: #2e3b12;
+
+  --color-danger: #c53030;
+  --color-danger-bg: #feefef;
+  --color-warning: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-success: #15803d;
+  --color-success-bg: #f0fdf4;
+  --color-info: #1d4ed8;
+  --color-info-bg: #eff6ff;
+
+  /* Typography */
+  --font-family-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-family-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-stack: var(--font-family-sans);
+  --font-heading: var(--font-family-serif);
+  --font-serif: var(--font-family-serif);
+
+  /* Refined Heading & Text Scale - Crisp, Legible Luxury */
+  --font-size-h1: 1.95rem;
+  --font-size-h2: 1.5rem;
+  --font-size-h3: 1.18rem;
+  --font-size-h4: 0.98rem;
+  --font-size-body: 0.88rem;
+  --font-size-sm: 0.82rem;
+  --font-size-xs: 0.76rem;
+
+  --line-height-heading: 1.2;
+  --line-height-body: 1.5;
+
+  /* Spacing Scale - Consistent 8px Rhythm */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 14px;
+  --spacing-lg: 20px;
+  --spacing-xl: 28px;
+  --spacing-2xl: 36px;
+
+  /* Border Radius */
+  --border-radius-sm: 6px;
+  --border-radius-md: 10px;
+  --border-radius-lg: 14px;
+  --border-radius-xl: 18px;
+  --border-radius-full: 9999px;
+  --border-radius: var(--border-radius-md);
+
+  /* Elevation & Diffused Luxury Shadows (No dirty gray borders) */
+  --shadow-subtle: 0 1px 3px rgba(35, 30, 20, 0.04), 0 4px 12px rgba(35, 30, 20, 0.03);
+  --shadow-card: 0 2px 8px -1px rgba(40, 32, 20, 0.05), 0 1px 3px rgba(40, 32, 20, 0.03);
+  --shadow-hover: 0 10px 25px -4px rgba(40, 32, 20, 0.08), 0 3px 8px -2px rgba(40, 32, 20, 0.04);
+  --shadow-dropdown: 0 14px 34px -4px rgba(25, 20, 15, 0.14), 0 4px 12px -2px rgba(25, 20, 15, 0.06);
+  --shadow-sm: var(--shadow-subtle);
+  --shadow-md: var(--shadow-card);
+  --shadow-lg: var(--shadow-hover);
+  --shadow: var(--shadow-card);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Reset & Application Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--line-height-body);
+  font-size: var(--font-size-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle SVG Paper Grain Filter */
+.grain-texture {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-family-serif);
+  color: var(--color-text);
+  line-height: var(--line-height-heading);
+  font-weight: 600;
+}
+
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
+h3 { font-size: var(--font-size-h3); }
+h4 { font-size: var(--font-size-h4); }
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+button {
+  font-family: var(--font-family-sans);
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: var(--font-family-sans);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.badge-submitted {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.badge-confirmed {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.badge-allergen {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.badge-primary {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.badge-time-intensive {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+/* Custom Global Thin Scrollbar - Works on all browsers & entire app */
+html, body, * {
+  scrollbar-width: thin;
+  scrollbar-color: #d6ccbe transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #d6ccbe;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #b8ac9c;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ==========================================================================
+   Split-Screen Auth Layout
+   Left side: text, background image, branding
+   Right side: clean form without floating borders
+   ========================================================================== */
+
+.auth-split-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-surface);
+}
+
+.auth-left-panel {
+  flex: 1 1 50%;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 56px 48px;
+  box-sizing: border-box;
+  background-color: #fbf9f5;
+  background-image: linear-gradient(135deg, rgba(251, 249, 245, 0.90) 0%, rgba(251, 249, 245, 0.78) 50%, rgba(246, 241, 233, 0.92) 100%), url('/assets/auth-hero-salmon.jpg');
+  background-size: cover;
+  background-position: center;
+  border-right: 1px solid var(--color-border);
+}
+
+.auth-left-content {
+  max-width: 440px;
+  width: 100%;
+}
+
+.auth-right-panel {
+  flex: 1 1 50%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 36px;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.auth-form-container {
+  max-width: 410px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .auth-split-wrapper {
+    flex-direction: column;
+  }
+  .auth-left-panel {
+    min-height: auto;
+    padding: 36px 20px 28px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .auth-right-panel {
+    min-height: auto;
+    padding: 32px 20px 48px;
+  }
+  .auth-left-pillars {
+    display: none;
+  }
+}
+
+/* Responsive Top Bar */
+.admin-mobile-header {
+  display: none;
+}
+@media (max-width: 768px) {
+  .admin-mobile-header {
+    display: flex !important;
+  }
+}
+
+/* ==========================================================================
+   Admin Responsive Layout & Spacing Utilities
+   Crafted for mobile & tablet balance: quiet chrome, 4px scale, no viewport blowout
+   ========================================================================== */
+
+.admin-page-container {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.admin-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 640px) {
+  .admin-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+@media (max-width: 900px) {
+  .admin-kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+}
+@media (max-width: 540px) {
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+}
+
+.admin-dashboard-row {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr 0.95fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+@media (max-width: 1080px) {
+  .admin-dashboard-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+}
+@media (max-width: 768px) {
+  .admin-dashboard-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+}
+
+.admin-split-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .admin-split-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.admin-two-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .admin-two-col-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.admin-four-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .admin-four-stat-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+@media (max-width: 360px) {
+  .admin-four-stat-strip {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+.admin-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+@media (max-width: 640px) {
+  .admin-filter-bar {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .admin-filter-search {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .admin-filter-select {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 120px !important;
+    max-width: 100% !important;
+    width: auto !important;
+  }
+}
+
+.admin-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-tab-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.admin-tab-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .step-progress-subtitle {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   Skeleton Loading Shimmer & Pulse
+   ========================================================================== */
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, #ede8df 25%, #f7f4ee 50%, #ede8df 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   Heart Favourite Pop & Fill Animation
+   ========================================================================== */
+@keyframes heartPop {
+  0% {
+    transform: scale(1);
+  }
+  28% {
+    transform: scale(0.72);
+  }
+  55% {
+    transform: scale(1.36);
+  }
+  78% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.heart-pop-anim {
+  animation: heartPop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   Sidebar Culinary Art Card
+   ========================================================================== */
+.sidebar-culinary-art-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.sidebar-culinary-art-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(46, 59, 18, 0.08) !important;
+}
+
+
+
+
