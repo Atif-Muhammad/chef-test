@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  // baseURL: '/api',
+  baseURL: 'https://chef-test-f3n4.vercel.app/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
