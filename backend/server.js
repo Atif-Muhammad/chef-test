@@ -17,13 +17,47 @@ const notificationRoutes = require('./routes/shared/notification.routes');
 
 const app = express();
 
-// Connect Database
-connectDB();
+// Connect Database initially (non-blocking for serverless warm-up)
+connectDB().catch((err) => {
+  console.warn('Initial DB Connection Warning:', err.message);
+});
 
-// CORS configuration
-app.use(
-  cors()
-);
+// CORS configuration supporting credentials and dynamic origins
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    // Allow localhost, local IP, any .vercel.app domain, or matching CLIENT_URL
+    const isAllowed =
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.endsWith('.vercel.app') ||
+      (env.CLIENT_URL && origin.startsWith(env.CLIENT_URL.replace(/\/$/, '')));
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+    // Fallback: reflect the origin so browser credentialed CORS succeeds
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Set-Cookie'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Middleware to ensure DB connection is ready before handling requests (crucial in serverless)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Body parsers & cookies
 app.use(express.json());
@@ -72,12 +106,17 @@ app.use('/api', userRouterWrapper);
 // Global Error Handler
 app.use(errorHandler);
 
-// Setup Cron Jobs
-setupReminderCron();
+// Setup Cron Jobs (only in persistent server mode, not serverless)
+if (!process.env.VERCEL) {
+  setupReminderCron();
+}
 
-const PORT = env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`PrivateChefMissy Server running on port ${PORT} in ${env.NODE_ENV} mode`);
-});
+// Start HTTP server only in standalone / local development mode
+if (!process.env.VERCEL) {
+  const PORT = env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`PrivateChefMissy Server running on port ${PORT} in ${env.NODE_ENV} mode`);
+  });
+}
 
-module.exports = { app, server };
+module.exports = app;
