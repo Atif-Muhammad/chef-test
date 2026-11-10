@@ -13,6 +13,10 @@ import {
   LogIn,
   LogOut,
   ChevronDown,
+  Sparkles,
+  Award,
+  Heart,
+  Truck,
 } from 'lucide-react';
 
 export default function PublicWebsite() {
@@ -21,6 +25,11 @@ export default function PublicWebsite() {
   const [openFaq, setOpenFaq] = useState(null);
 
   const plateRef = useRef(null);
+  const plateAnchorRef = useRef(null);
+  const plateTargetRef = useRef(null);
+  const heroPlateLayerRef = useRef(null);
+  const secondPlateLayerRef = useRef(null);
+  const sprigRef = useRef(null);
   const heroContentRef = useRef(null);
   const backdropRef = useRef(null);
   const taglineRef = useRef(null);
@@ -62,29 +71,69 @@ export default function PublicWebsite() {
           const scrollY = window.scrollY;
           const windowH = window.innerHeight || 800;
 
-          // Dissolve smoothly over hero exit (between 50px and 85% of viewport)
-          const startFade = 50;
-          const endFade = windowH * 0.85;
-          const progress = Math.min(1, Math.max(0, (scrollY - startFade) / (endFade - startFade)));
-          const opacity = Math.max(0, 1 - progress);
-
-          // 1. Rotate the plate smoothly as user scrolls
-          if (plateRef.current) {
-            const rotation = scrollY * 0.18;
-            plateRef.current.style.transform = `rotate(${rotation.toFixed(2)}deg)`;
-          }
-
-          // 2. Dissolve both text and plate downwards together with scroll
+          // 1. Hero Left Text Dissolve (fades out as user scrolls through hero)
+          const textFadeStart = 60;
+          const textFadeEnd = windowH * 0.65;
+          const textProgress = Math.min(1, Math.max(0, (scrollY - textFadeStart) / (textFadeEnd - textFadeStart)));
+          const textOpacity = Math.max(0, 1 - textProgress);
           if (heroContentRef.current) {
-            const translateY = progress * 40;
-            heroContentRef.current.style.opacity = opacity.toFixed(3);
-            heroContentRef.current.style.transform = `translateY(${translateY.toFixed(1)}px)`;
-            heroContentRef.current.style.pointerEvents = opacity <= 0.05 ? 'none' : 'auto';
+            heroContentRef.current.style.opacity = textOpacity.toFixed(3);
+            heroContentRef.current.style.transform = `translateY(${(textProgress * 30).toFixed(1)}px)`;
+            heroContentRef.current.style.pointerEvents = textOpacity <= 0.05 ? 'none' : 'auto';
           }
 
-          // 3. Dissolve backdrop watermark text
+          // 2. Dissolve backdrop watermark text
           if (backdropRef.current) {
-            backdropRef.current.style.opacity = (0.07 * opacity).toFixed(3);
+            backdropRef.current.style.opacity = (0.07 * textOpacity).toFixed(3);
+          }
+
+          // 3. Plate Jump & Shape-Shift to Section 2
+          // Starts as hero scrolls past middle, completely landed and settled by 30% into Section 2
+          const jumpStart = windowH * 0.28;
+          const jumpEnd = windowH * 0.68;
+          const jumpProgress = Math.min(1, Math.max(0, (scrollY - jumpStart) / (jumpEnd - jumpStart)));
+
+          // Smooth Hermite cubic ease-in-out per animation guidelines
+          const eased = jumpProgress * jumpProgress * (3 - 2 * jumpProgress);
+
+          if (plateRef.current && plateAnchorRef.current && plateTargetRef.current) {
+            const anchorRect = plateAnchorRef.current.getBoundingClientRect();
+            const targetRect = plateTargetRef.current.getBoundingClientRect();
+
+            // Vector between hero plate anchor and section 2 target
+            const deltaX = (targetRect.left + window.scrollX) - (anchorRect.left + window.scrollX);
+            const deltaY = (targetRect.top + window.scrollY) - (anchorRect.top + window.scrollY);
+
+            // Leaping parabolic arc (lifts slightly at peak of jump, zero at endpoints)
+            const jumpArc = Math.sin(eased * Math.PI) * 24;
+            const currentX = eased * deltaX;
+            const currentY = eased * deltaY - jumpArc;
+            const currentScale = 1 + Math.sin(eased * Math.PI) * 0.04;
+
+            // Rotation: spins in hero, smoothly unwinds to 0deg (properly aligned) in Section 2,
+            // strictly locked at 0deg when scrolled further down; reverses when scrolled back up
+            const currentRotation = eased >= 1 ? 0 : (1 - eased) * (scrollY * 0.18);
+
+            plateRef.current.style.transform = `translate3d(${currentX.toFixed(1)}px, ${currentY.toFixed(1)}px, 0) scale(${currentScale.toFixed(3)}) rotate(${currentRotation.toFixed(2)}deg)`;
+
+            // Cross-fade: hero-plate fades out completely before crossing the green ribbon
+            // so beneath the green line in Section 2, hero-plate is 100% hidden
+            const heroAlpha = Math.max(0, 1 - (jumpProgress / 0.40));
+            const secondAlpha = Math.min(1, jumpProgress / 0.40);
+
+            if (heroPlateLayerRef.current) {
+              heroPlateLayerRef.current.style.opacity = heroAlpha.toFixed(3);
+              heroPlateLayerRef.current.style.display = heroAlpha <= 0.005 ? 'none' : 'block';
+            }
+            if (secondPlateLayerRef.current) {
+              secondPlateLayerRef.current.style.opacity = secondAlpha.toFixed(3);
+              secondPlateLayerRef.current.style.display = secondAlpha <= 0.005 ? 'none' : 'block';
+            }
+
+            // Green sprig behind plate dissolves as plate leaps away
+            if (sprigRef.current) {
+              sprigRef.current.style.opacity = Math.max(0, 0.95 * (1 - eased * 2)).toFixed(3);
+            }
           }
 
           // 4. Word-by-word reveal for the Tagline section
@@ -152,31 +201,35 @@ export default function PublicWebsite() {
   ];
 
   return (
-    <div style={{ backgroundColor: '#ffffff', color: '#1a1814', minHeight: '100vh', fontFamily: "var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)" }}>
+    <div style={{ backgroundColor: '#ffffff', color: '#1a1814', minHeight: '100vh', overflowX: 'hidden', fontFamily: "var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)" }}>
       
       {/* =========================================================================
-          Top Header Navigation (Quiet Chrome)
+          Top Header Navigation (Floating Capsule per hero-design.png)
           ========================================================================= */}
-      <header
+      <div
         style={{
           position: 'sticky',
-          top: 0,
+          top: '12px',
           zIndex: 100,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #ece7de',
+          padding: '0 20px',
+          margin: '0 auto',
+          maxWidth: '1280px',
         }}
       >
-        <div
+        <header
           style={{
-            maxWidth: '1160px',
-            margin: '0 auto',
-            padding: '12px 24px',
+            backgroundColor: 'rgba(252, 249, 243, 0.39)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: '9999px',
+            border: '1px solid rgba(220, 213, 202, 0.8)',
+            boxShadow: '0 6px 24px rgba(0, 0, 0, 0.06)',
+            padding: '3px 14px',
+            minHeight: '48px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '16px',
+            gap: '10px',
           }}
         >
           {/* Logo & Identity */}
@@ -185,28 +238,45 @@ export default function PublicWebsite() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
               textDecoration: 'none',
               color: 'inherit',
+              paddingLeft: '2px',
             }}
           >
-            <img
-              src="/assets/logo-crest.png"
-              alt="Private Chef Missy Crest"
+            <div
               style={{
-                width: '38px',
-                height: 'auto',
-                display: 'block',
-                mixBlendMode: 'multiply',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                backgroundColor: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                border: '1.5px solid #d9d2c5',
+                flexShrink: 0,
               }}
-            />
+            >
+              <img
+                src="/assets/logo-crest.png"
+                alt="Chef Missy"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  objectFit: 'contain',
+                  display: 'block',
+                  mixBlendMode: 'multiply',
+                }}
+              />
+            </div>
             <div>
               <span
                 style={{
                   fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
-                  fontSize: '1.25rem',
-                  fontWeight: 600,
-                  color: '#485c24',
+                  fontSize: '1.02rem',
+                  fontWeight: 700,
+                  color: '#1c301d',
                   display: 'block',
                   lineHeight: 1.15,
                 }}
@@ -215,8 +285,8 @@ export default function PublicWebsite() {
               </span>
               <span
                 style={{
-                  fontSize: '0.625rem',
-                  letterSpacing: '1.5px',
+                  fontSize: '0.52rem',
+                  letterSpacing: '1.4px',
                   color: '#716c62',
                   fontWeight: 600,
                   textTransform: 'uppercase',
@@ -228,13 +298,19 @@ export default function PublicWebsite() {
             </div>
           </Link>
 
+          {/* Thin vertical separator */}
+          <div className="public-nav-divider" style={{ width: '1px', height: '18px', backgroundColor: '#dcd5ca', margin: '0 2px' }} />
+
           {/* Desktop Nav Links */}
-          <nav className="public-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <nav className="public-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <a
               href="#service"
               style={{
-                fontSize: '0.875rem',
-                color: '#5c564c',
+                fontSize: '0.76rem',
+                color: '#ffffff',
+                backgroundColor: '#1e3320',
+                padding: '4px 12px',
+                borderRadius: '9999px',
                 textDecoration: 'none',
                 fontWeight: 500,
               }}
@@ -244,8 +320,9 @@ export default function PublicWebsite() {
             <a
               href="#philosophy"
               style={{
-                fontSize: '0.875rem',
-                color: '#5c564c',
+                fontSize: '0.76rem',
+                color: '#1c301d',
+                padding: '4px 9px',
                 textDecoration: 'none',
                 fontWeight: 500,
               }}
@@ -255,8 +332,9 @@ export default function PublicWebsite() {
             <a
               href="#how-it-works"
               style={{
-                fontSize: '0.875rem',
-                color: '#5c564c',
+                fontSize: '0.76rem',
+                color: '#1c301d',
+                padding: '4px 9px',
                 textDecoration: 'none',
                 fontWeight: 500,
               }}
@@ -266,8 +344,9 @@ export default function PublicWebsite() {
             <a
               href="#faq"
               style={{
-                fontSize: '0.875rem',
-                color: '#5c564c',
+                fontSize: '0.76rem',
+                color: '#1c301d',
+                padding: '4px 9px',
                 textDecoration: 'none',
                 fontWeight: 500,
               }}
@@ -277,37 +356,37 @@ export default function PublicWebsite() {
           </nav>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Link
                   to="/home"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    backgroundColor: '#485c24',
+                    gap: '5px',
+                    padding: '5px 13px',
+                    backgroundColor: '#1e3320',
                     color: '#ffffff',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.76rem',
                     fontWeight: 600,
                     textDecoration: 'none',
                   }}
                 >
-                  <User size={14} />
+                  <User size={13} />
                   <span>Dashboard</span>
-                  <ArrowRight size={14} />
+                  <ArrowRight size={13} />
                 </Link>
                 <button
                   type="button"
                   onClick={logout}
                   title="Sign out"
                   style={{
-                    padding: '8px 10px',
+                    padding: '5px 8px',
                     backgroundColor: '#ffffff',
                     border: '1px solid #dcd5ca',
-                    borderRadius: '6px',
+                    borderRadius: '9999px',
                     color: '#716c62',
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -315,28 +394,28 @@ export default function PublicWebsite() {
                     justifyContent: 'center',
                   }}
                 >
-                  <LogOut size={14} />
+                  <LogOut size={13} />
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Link
                   to="/login"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    backgroundColor: '#ffffff',
-                    color: '#485c24',
+                    gap: '5px',
+                    padding: '5px 13px',
+                    backgroundColor: '#f5f3ec',
+                    color: '#1c301d',
                     border: '1px solid #dcd5ca',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.76rem',
                     fontWeight: 600,
                     textDecoration: 'none',
                   }}
                 >
-                  <LogIn size={14} />
+                  <User size={12} />
                   <span>Sign In</span>
                 </Link>
 
@@ -345,20 +424,20 @@ export default function PublicWebsite() {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    backgroundColor: '#485c24',
+                    gap: '5px',
+                    padding: '5px 15px',
+                    backgroundColor: '#1e3320',
                     color: '#ffffff',
-                    border: '1px solid #485c24',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
+                    border: '1px solid #1e3320',
+                    borderRadius: '9999px',
+                    fontSize: '0.76rem',
                     fontWeight: 600,
                     textDecoration: 'none',
-                    boxShadow: '0 2px 8px rgba(72, 92, 36, 0.25)',
+                    boxShadow: '0 2px 10px rgba(30, 51, 32, 0.25)',
                   }}
                 >
                   <span>Create Account</span>
-                  <ArrowRight size={14} />
+                  <ArrowRight size={12} />
                 </Link>
               </div>
             )}
@@ -372,9 +451,9 @@ export default function PublicWebsite() {
                 display: 'none',
                 background: 'none',
                 border: '1px solid #dcd5ca',
-                borderRadius: '6px',
+                borderRadius: '9999px',
                 padding: '6px',
-                color: '#485c24',
+                color: '#1e3320',
                 cursor: 'pointer',
               }}
               aria-label="Toggle Navigation"
@@ -382,15 +461,18 @@ export default function PublicWebsite() {
               {mobileMenuOpen ? <CloseIcon size={18} /> : <MenuIcon size={18} />}
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Mobile Navigation Dropdown */}
         {mobileMenuOpen && (
           <div
             style={{
-              padding: '16px 24px',
+              marginTop: '8px',
+              padding: '16px 20px',
               backgroundColor: '#ffffff',
-              borderTop: '1px solid #ece7de',
+              borderRadius: '16px',
+              border: '1px solid #ece7de',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
@@ -432,10 +514,10 @@ export default function PublicWebsite() {
                   flex: 1,
                   textAlign: 'center',
                   padding: '8px',
-                  borderRadius: '6px',
+                  borderRadius: '9999px',
                   border: '1px solid #dcd5ca',
                   backgroundColor: '#ffffff',
-                  color: '#485c24',
+                  color: '#1e3320',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   textDecoration: 'none',
@@ -450,8 +532,8 @@ export default function PublicWebsite() {
                   flex: 1,
                   textAlign: 'center',
                   padding: '8px',
-                  borderRadius: '6px',
-                  backgroundColor: '#485c24',
+                  borderRadius: '9999px',
+                  backgroundColor: '#1e3320',
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: 600,
@@ -463,261 +545,448 @@ export default function PublicWebsite() {
             </div>
           </div>
         )}
-      </header>
+      </div>
 
       {/* =========================================================================
-          Hero Section: Centered Rotating Plate with Flanking Text & Backdrop Typography
+          Hero Section: Exact Replica of hero-design.png
           ========================================================================= */}
       <section
         style={{
           position: 'relative',
-          padding: '48px 24px 64px',
-          backgroundColor: '#faf8f4',
-          borderBottom: '1px solid #ece7de',
-          overflow: 'hidden',
-          minHeight: 'calc(100vh - 72px)',
+          marginTop: '-64px',
+          paddingTop: '80px',
+          backgroundColor: '#f7f4ec',
+          overflowX: 'clip',
+          overflowY: 'visible',
+          minHeight: 'calc(100vh - 40px)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
         }}
       >
-        {/* Subtle Ambient Radial Glow */}
+        {/* 1. Deep Forest Green Organic Backdrop with Cream Frame & Shadow (Image 4) */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '820px',
-            height: '820px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(72, 92, 36, 0.07) 0%, rgba(250, 248, 244, 0) 70%)',
+            top: 0,
+            right: 0,
+            width: '58%',
+            height: '100%',
+            overflow: 'hidden',
             pointerEvents: 'none',
-            zIndex: 0,
-          }}
-        />
-
-        {/* Large Editorial Watermark Typography Behind Plate */}
-        <div
-          ref={backdropRef}
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
-            fontSize: 'clamp(4.5rem, 13vw, 10rem)',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: '#485c24',
-            opacity: 0.07,
-            pointerEvents: 'none',
-            userSelect: 'none',
-            whiteSpace: 'nowrap',
             zIndex: 1,
-            willChange: 'opacity',
           }}
+          className="hero-green-curve-container"
         >
-          Chef Missy
+          <svg
+            viewBox="0 0 900 1000"
+            preserveAspectRatio="none"
+            style={{ width: '100%', height: '100%', display: 'block' }}
+          >
+            <defs>
+              {/* Soft Drop Shadow for the Cream Frame Structure */}
+              <filter id="creamFrameShadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="-14" dy="18" stdDeviation="22" floodColor="#000000" floodOpacity="0.10" />
+              </filter>
+
+              {/* Translucent Warm Cream Gradient for Frame Ribbon (Image 4) */}
+              <linearGradient id="creamFrameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ede3d1" stopOpacity="0.80" />
+                <stop offset="50%" stopColor="#e5dcce" stopOpacity="0.74" />
+                <stop offset="100%" stopColor="#ded2bf" stopOpacity="0.68" />
+              </linearGradient>
+
+              {/* Deep Olive/Forest Green Gradient */}
+              <linearGradient id="heroGreenBase" x1="15%" y1="0%" x2="85%" y2="100%">
+                <stop offset="0%" stopColor="#2c4c2f" />
+                <stop offset="50%" stopColor="#223d26" />
+                <stop offset="100%" stopColor="#142617" />
+              </linearGradient>
+
+              {/* Lighter Sage Facet Gradient (Image 4 top right corner) */}
+              <linearGradient id="heroFacetLight" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#5a7b5a" stopOpacity="0.82" />
+                <stop offset="100%" stopColor="#3c5b3d" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+
+            {/* Layer A: Outer Cream Frame Ribbon / Structure with Soft Shadow & Translucency */}
+            <path
+              d="M 310 0
+                 C 140 160, 20 400, 70 650
+                 C 115 840, 260 950, 480 975
+                 C 670 996, 820 965, 900 935
+                 L 900 0 Z"
+              fill="url(#creamFrameGrad)"
+              filter="url(#creamFrameShadow)"
+            />
+
+            {/* Layer B: Main Organic Forest Green Shape */}
+            <path
+              d="M 360 0
+                 C 200 170, 80 410, 130 655
+                 C 170 835, 310 935, 520 955
+                 C 690 970, 830 945, 900 920
+                 L 900 0 Z"
+              fill="url(#heroGreenBase)"
+            />
+
+            {/* Layer C: Top-Right Diagonal Geometric Facet (per Image 4) */}
+            <path
+              d="M 580 0 L 900 0 L 900 260 L 710 180 Z"
+              fill="url(#heroFacetLight)"
+            />
+          </svg>
         </div>
 
-        {/* Hero Content Container (Flanking Text on Left/Right & Rotating Plate in Center) */}
+        {/* 2. Botanical Foliage Leaves from /assets/leaf.png */}
+        {/* Top-Right Hanging Branch (Tuned matte botanical filter & framing angle) */}
+        <img
+          src="/assets/leaf.png"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '-40px',
+            right: '-20px',
+            width: '360px',
+            transform: 'rotate(185deg) scaleX(-1)',
+            pointerEvents: 'none',
+            zIndex: 12,
+            filter: 'brightness(0.85) contrast(1.18) saturate(0.82) sepia(0.06) drop-shadow(0 18px 30px rgba(0,0,0,0.36))',
+          }}
+          className="hero-leaf-top-right"
+        />
+
+        {/* Bottom-Right Emerging Branch (Tuned matte botanical filter & framing angle) */}
+        <img
+          src="/assets/leaf.png"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            bottom: '50px',
+            right: '-40px',
+            width: '380px',
+            transform: 'rotate(-28deg) scaleX(-1)',
+            pointerEvents: 'none',
+            zIndex: 12,
+            filter: 'brightness(0.85) contrast(1.18) saturate(0.82) sepia(0.06) drop-shadow(0 18px 28px rgba(0,0,0,0.4))',
+          }}
+          className="hero-leaf-bottom-right"
+        />
+
+        {/* Faint Mid-Left Floating Branch (Rotated 20deg anti-clockwise per user instruction) */}
+        <img
+          src="/assets/leaf.png"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            bottom: '180px',
+            left: '-80px',
+            width: '320px',
+            transform: 'rotate(22deg)',
+            opacity: 0.22,
+            pointerEvents: 'none',
+            zIndex: 1,
+            filter: 'blur(0.5px)',
+          }}
+          className="hero-leaf-left"
+        />
+
+        {/* 3. Main Hero Content Row (Left Copy, Center Plate) */}
         <div
-          ref={heroContentRef}
-          className="public-hero-container"
           style={{
             position: 'relative',
-            zIndex: 2,
-            maxWidth: '1240px',
+            zIndex: 4,
+            maxWidth: '1280px',
             margin: '0 auto',
             width: '100%',
-            willChange: 'transform, opacity',
-            transformOrigin: 'top center',
+            padding: '32px 24px 48px',
           }}
         >
-          {/* Left Wing: Headline & Introductory Narrative */}
-          <div className="public-hero-left" style={{ display: 'flex', flexDirection: 'column' }}>
-            <h1
-              className="public-hero-heading"
+          <div className="hero-main-layout">
+            
+            {/* Left Column: Heading, Subhead, CTAs & Proof Row (Fades out with scroll) */}
+            <div
+              ref={heroContentRef}
+              className="hero-left-column"
               style={{
-                fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
-                fontSize: 'clamp(2.1rem, 2.9vw, 2.85rem)',
-                fontWeight: 600,
-                color: '#2c3917',
-                lineHeight: 1.18,
-                margin: '0 0 16px',
-                textWrap: 'balance',
-                letterSpacing: '-0.015em',
+                display: 'flex',
+                flexDirection: 'column',
+                willChange: 'transform, opacity',
               }}
             >
-              Fresh, home-cooked meals prepared in your kitchen.
-            </h1>
-
-            <p
-              style={{
-                fontSize: '0.9375rem',
-                color: '#5c564c',
-                lineHeight: 1.6,
-                margin: '0 0 24px',
-                maxWidth: '440px',
-                textWrap: 'pretty',
-              }}
-            >
-              Chef Missy prepares wholesome dinners tailored to your family’s tastes and dietary needs. Made with fresh organic ingredients, cooked in your home, and ready whenever you are.
-            </p>
-
-            <div>
-              <Link
-                to={user ? '/home' : '/register'}
+              <span
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '11px 24px',
-                  backgroundColor: '#485c24',
-                  color: '#ffffff',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 14px rgba(72, 92, 36, 0.25)',
-                  transition: 'background-color 200ms ease, transform 150ms ease',
+                  fontSize: '0.75rem',
+                  letterSpacing: '2.5px',
+                  color: '#2c3917',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  display: 'block',
+                  marginBottom: '14px',
                 }}
               >
-                <span>{user ? 'Plan Your Menu' : 'Create an Account'}</span>
-                <ArrowRight size={15} />
-              </Link>
-            </div>
-          </div>
+                Private Chef Service
+              </span>
 
-          {/* Center Element: Centered Rotating Plate */}
-          <div
-            className="public-hero-plate-wrapper"
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {/* Soft frosted halo rim */}
+              <h1
+                className="hero-main-heading"
+                style={{
+                  fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
+                  fontSize: 'clamp(2.5rem, 3.7vw, 3.6rem)',
+                  fontWeight: 600,
+                  color: '#162215',
+                  lineHeight: 1.14,
+                  margin: '0 0 18px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Bespoke culinary
+                <br />
+                service prepared
+                <br />
+                <span style={{ fontStyle: 'italic', fontWeight: 400, color: '#1e3320', textDecoration: 'underline', textDecorationThickness: '1px', textUnderlineOffset: '6px' }}>
+                  fresh
+                </span>{' '}
+                for your home.
+              </h1>
+
+              <p
+                style={{
+                  fontSize: '0.94rem',
+                  color: '#5c564c',
+                  lineHeight: 1.65,
+                  margin: '0 0 32px',
+                  maxWidth: '440px',
+                  textWrap: 'pretty',
+                }}
+              >
+                Chef Missy creates seasonal organic meals customized to your household dossier and portion needs. Sourced fresh from local growers, prepared in small batches, and delivered directly to your door.
+              </p>
+
+              {/* 3-Part Proof Row on Left */}
+              <div
+                className="hero-left-proof-row"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '20px',
+                  paddingTop: '20px',
+                  borderTop: '1px solid #e7e2d6',
+                  maxWidth: '520px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#edf3e8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Leaf size={16} color="#254228" />
+                  </div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.80rem', color: '#1c301d', fontWeight: 700 }}>100% Organic</strong>
+                    <span style={{ fontSize: '0.68rem', color: '#716c62' }}>Farm Fresh Ingredients</span>
+                  </div>
+                </div>
+
+                <div style={{ width: '1px', height: '26px', backgroundColor: '#dcd5ca' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f4efe6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <ChefHat size={16} color="#1c301d" />
+                  </div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.80rem', color: '#1c301d', fontWeight: 700 }}>Expert Chef</strong>
+                    <span style={{ fontSize: '0.68rem', color: '#716c62' }}>Professional Quality</span>
+                  </div>
+                </div>
+
+                <div style={{ width: '1px', height: '26px', backgroundColor: '#dcd5ca' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f4efe6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Truck size={16} color="#1c301d" />
+                  </div>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.80rem', color: '#1c301d', fontWeight: 700 }}>On-Time Delivery</strong>
+                    <span style={{ fontSize: '0.68rem', color: '#716c62' }}>Freshly Prepared</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Center Column: Traveling & Shape-Shifting Plate with sprig behind */}
             <div
+              ref={plateAnchorRef}
+              className="hero-center-plate-container"
               style={{
-                padding: '10px',
-                borderRadius: '50%',
-                border: '1px solid rgba(72, 92, 36, 0.12)',
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                boxShadow: '0 16px 36px rgba(72, 92, 36, 0.14)',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 15,
               }}
             >
+              {/* Green sprig peeking out behind upper left rim of plate */}
+              <img
+                ref={sprigRef}
+                src="/assets/leaf.png"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: '-15px',
+                  left: '-35px',
+                  width: '170px',
+                  transform: 'rotate(-55deg)',
+                  opacity: 0.95,
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                  filter: 'brightness(0.85) contrast(1.18) saturate(0.82) sepia(0.06) drop-shadow(0 4px 12px rgba(0,0,0,0.25))',
+                  willChange: 'opacity',
+                }}
+              />
+
+              {/* Master Traveling & Morphing Plate Container */}
               <div
                 ref={plateRef}
-                className="public-hero-plate"
+                className="hero-rotating-plate"
                 style={{
-                  width: '380px',
-                  height: '380px',
-                  maxWidth: '75vw',
-                  maxHeight: '75vw',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  backgroundColor: '#ffffff',
-                  boxShadow:
-                    '0 24px 60px -12px rgba(72, 92, 36, 0.28), 0 8px 24px -4px rgba(0, 0, 0, 0.1)',
+                  position: 'relative',
+                  zIndex: 2,
+                  width: '450px',
+                  height: '450px',
+                  maxWidth: '85vw',
+                  maxHeight: '85vw',
                   willChange: 'transform',
                   transformOrigin: '50% 50%',
                 }}
               >
-                <img
-                  src="/assets/hero-plate.jpg"
-                  alt="Chef Missy signature culinary tasting plate"
+                {/* Layer 1: Hero Plate (Round photo with clip & circular shadow) */}
+                <div
+                  ref={heroPlateLayerRef}
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transform: 'scale(1.05)',
-                    display: 'block',
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    backgroundColor: '#ffffff',
+                    boxShadow:
+                      '0 32px 75px -12px rgba(0, 0, 0, 0.45), 0 14px 30px -6px rgba(0, 0, 0, 0.25)',
+                    opacity: 1,
+                    zIndex: 5,
+                    willChange: 'opacity',
+                  }}
+                >
+                  <img
+                    src="/assets/hero-plate.jpg"
+                    alt="Chef Missy signature culinary plate"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transform: 'scale(1.04)',
+                      display: 'block',
+                      pointerEvents: 'none',
+                      userSelect: 'none',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/public-hero-culinary.jpg';
+                    }}
+                  />
+                </div>
+
+                {/* Layer 2: 2nd Section Plate (Shape-shifted Salmon Plate on Transparent Canvas) */}
+                <div
+                  ref={secondPlateLayerRef}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0,
+                    zIndex: 15,
+                    filter: 'drop-shadow(0 32px 50px rgba(0, 0, 0, 0.35))',
+                    willChange: 'opacity',
                     pointerEvents: 'none',
-                    userSelect: 'none',
                   }}
-                  onError={(e) => {
-                    e.currentTarget.src = '/assets/public-hero-culinary.jpg';
-                  }}
-                />
+                >
+                  <img
+                    src="/assets/2nd-section-plate.png"
+                    alt="Chef Missy in-home grilled salmon plate"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      display: 'block',
+                      transform: 'scale(1.14)',
+                      pointerEvents: 'none',
+                      userSelect: 'none',
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Wing: Secondary Sign In & Quiet Proof Points */}
-          <div className="public-hero-right" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <Link
-                to="/login"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '10px 20px',
-                  backgroundColor: '#ffffff',
-                  color: '#485c24',
-                  borderRadius: '6px',
-                  border: '1px solid #dcd5ca',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  transition: 'background-color 200ms ease, border-color 200ms ease',
-                }}
-              >
-                <span>Client Sign In</span>
-              </Link>
-              <span style={{ fontSize: '0.75rem', color: '#716c62' }}>
-                No contracts &bull; Book anytime
-              </span>
+        {/* 4. Full-Width Bottom Dark Forest Green Ribbon Bar */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            backgroundColor: '#162817',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: '24px 24px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '1240px',
+              margin: '0 auto',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '24px',
+              alignItems: 'center',
+            }}
+            className="hero-bottom-ribbon-grid"
+          >
+            {/* Col 1 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+              <Leaf size={28} color="#a6bc9f" strokeWidth={1.8} />
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.96rem', color: '#ffffff', fontWeight: 600 }}>Fresh &amp; Organic</strong>
+                <span style={{ fontSize: '0.72rem', color: '#a6bc9f' }}>Always</span>
+              </div>
             </div>
 
-            {/* Quiet Proof Points Box */}
+            {/* Col 2 */}
             <div
-              className="public-proof-card"
+              className="hero-ribbon-divider-col"
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                borderRadius: '8px',
-                border: '1px solid #ece7de',
-                padding: '20px',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-                boxShadow: '0 4px 16px rgba(46, 59, 18, 0.04)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '14px',
+                borderLeft: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRight: '1px solid rgba(255, 255, 255, 0.15)',
               }}
             >
+              <Award size={28} color="#a6bc9f" strokeWidth={1.8} />
               <div>
-                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600, marginBottom: '2px' }}>
-                  100% Organic Ingredients
-                </strong>
-                <span style={{ fontSize: '0.75rem', color: '#716c62', lineHeight: 1.4 }}>
-                  Local organic produce &amp; pasture-raised meats
-                </span>
+                <strong style={{ display: 'block', fontSize: '0.96rem', color: '#ffffff', fontWeight: 600 }}>Premium Quality</strong>
+                <span style={{ fontSize: '0.72rem', color: '#a6bc9f' }}>Guaranteed</span>
               </div>
-              <div style={{ borderTop: '1px solid #f0ede6', paddingTop: '10px' }}>
-                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600, marginBottom: '2px' }}>
-                  Zero Seed Oils
-                </strong>
-                <span style={{ fontSize: '0.75rem', color: '#716c62', lineHeight: 1.4 }}>
-                  Cold-pressed extra virgin olive oil and butter only
-                </span>
-              </div>
-              <div style={{ borderTop: '1px solid #f0ede6', paddingTop: '10px' }}>
-                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600, marginBottom: '2px' }}>
-                  Family &amp; Kid-Friendly
-                </strong>
-                <span style={{ fontSize: '0.75rem', color: '#716c62', lineHeight: 1.4 }}>
-                  Mild flavours, toddler options (ages 1–5), and careful allergen care
-                </span>
+            </div>
+
+            {/* Col 3 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+              <Heart size={28} color="#a6bc9f" strokeWidth={1.8} />
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.96rem', color: '#ffffff', fontWeight: 600 }}>Made with Care</strong>
+                <span style={{ fontSize: '0.72rem', color: '#a6bc9f' }}>Just for you</span>
               </div>
             </div>
           </div>
@@ -725,60 +994,155 @@ export default function PublicWebsite() {
       </section>
 
       {/* =========================================================================
-          Tagline Reveal Section (Mandatory B11 per LandingPageDesignSkill)
+          Tagline Reveal Section with Plate Landing Target (Our Commitment)
           ========================================================================= */}
       <section
         style={{
           padding: '96px 24px',
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #ece7de',
-          textAlign: 'center',
+          position: 'relative',
+          overflowX: 'clip',
         }}
       >
-        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
-          <span
+        <div
+          className="tagline-section-layout"
+          style={{
+            maxWidth: '1240px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1.15fr 1fr',
+            alignItems: 'center',
+            gap: '48px',
+            minHeight: '460px',
+          }}
+        >
+          {/* Left Column: Commitment Tagline */}
+          <div className="tagline-text-col" style={{ textAlign: 'left' }}>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                letterSpacing: '2px',
+                color: '#716c62',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                display: 'block',
+                marginBottom: '20px',
+              }}
+            >
+              Our Commitment
+            </span>
+            <p
+              ref={taglineRef}
+              style={{
+                fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
+                fontSize: 'clamp(2rem, 3.2vw, 2.75rem)',
+                color: '#1a240e',
+                lineHeight: 1.32,
+                fontWeight: 600,
+                margin: '0 0 20px',
+                textWrap: 'balance',
+              }}
+              className="public-tagline-text"
+            >
+              {taglineWords.map((word, idx) => (
+                <span
+                  key={idx}
+                  className="public-tagline-word"
+                  style={{
+                    display: 'inline-block',
+                    marginRight: '0.3em',
+                    color: '#716c62',
+                    opacity: 0.3,
+                    transition: 'color 350ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    willChange: 'color, opacity',
+                  }}
+                >
+                  {word}
+                </span>
+              ))}
+            </p>
+            <span style={{ fontSize: '0.88rem', color: '#716c62', fontStyle: 'italic', display: 'block' }}>
+              Wild-caught seafood, pasture-raised meats &amp; local organic harvest.
+            </span>
+          </div>
+
+          {/* Right Column: Destination Landing Target for the Jumping Plate */}
+          <div
+            ref={plateTargetRef}
+            className="plate-landing-target"
             style={{
-              fontSize: '0.75rem',
-              letterSpacing: '2px',
-              color: '#716c62',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '450px',
+              position: 'relative',
             }}
           >
-            Our Commitment
-          </span>
-          <p
-            ref={taglineRef}
-            style={{
-              fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
-              fontSize: '2.5rem',
-              color: '#1a240e',
-              lineHeight: 1.35,
-              fontWeight: 600,
-              margin: '0 auto',
-              textWrap: 'balance',
-            }}
-            className="public-tagline-text"
-          >
-            {taglineWords.map((word, idx) => (
-              <span
-                key={idx}
-                className="public-tagline-word"
-                style={{
-                  display: 'inline-block',
-                  marginRight: '0.3em',
-                  color: '#716c62',
-                  opacity: 0.3,
-                  transition: 'color 350ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms cubic-bezier(0.22, 1, 0.36, 1)',
-                  willChange: 'color, opacity',
-                }}
-              >
-                {word}
-              </span>
-            ))}
-          </p>
+            {/* Tilted Oval Circles around 2nd-section-plate */}
+            <svg
+              viewBox="0 0 600 500"
+              style={{
+                position: 'absolute',
+                width: '124%',
+                maxWidth: '580px',
+                height: 'auto',
+                pointerEvents: 'none',
+                zIndex: 0,
+                overflow: 'visible',
+              }}
+            >
+              {/* Outer Tilted Oval Ring */}
+              <ellipse
+                cx="300"
+                cy="250"
+                rx="285"
+                ry="195"
+                transform="rotate(-8 300 250)"
+                fill="none"
+                stroke="#e2dacb"
+                strokeWidth="1.2"
+                opacity="0.6"
+              />
+              {/* Middle Tilted Oval Ring (subtle dashed accent) */}
+              <ellipse
+                cx="300"
+                cy="250"
+                rx="258"
+                ry="178"
+                transform="rotate(-18 300 250)"
+                fill="none"
+                stroke="#c7baa4"
+                strokeWidth="1.2"
+                strokeDasharray="8 6"
+                opacity="0.45"
+              />
+              {/* Inner Tilted Oval Ring */}
+              <ellipse
+                cx="300"
+                cy="250"
+                rx="232"
+                ry="158"
+                transform="rotate(-13 300 250)"
+                fill="none"
+                stroke="#d3c7b2"
+                strokeWidth="1.5"
+                opacity="0.65"
+              />
+            </svg>
+
+            {/* Soft ambient pedestal ring beneath the plate */}
+            <div
+              style={{
+                width: '420px',
+                height: '420px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0) 70%)',
+                position: 'absolute',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
         </div>
       </section>
 
@@ -1326,45 +1690,107 @@ export default function PublicWebsite() {
 
       {/* Responsive Styles */}
       <style>{`
-        @media (min-width: 901px) {
-          .public-hero-container {
+        @media (min-width: 1025px) {
+          .hero-main-layout {
             display: grid !important;
-            grid-template-columns: 1.05fr minmax(320px, 400px) 0.95fr !important;
+            grid-template-columns: 1.15fr 1fr !important;
             align-items: center !important;
             gap: 40px !important;
           }
-          .public-hero-left {
-            text-align: left !important;
-            align-items: flex-start !important;
+          .hero-center-plate-container {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
           }
-          .public-hero-right {
+          .tagline-section-layout {
+            display: grid !important;
+            grid-template-columns: 1.15fr 1fr !important;
+            align-items: center !important;
+            gap: 48px !important;
+          }
+          .tagline-text-col {
             text-align: left !important;
-            align-items: flex-start !important;
           }
         }
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
           .public-desktop-nav {
+            display: none !important;
+          }
+          .public-nav-divider {
             display: none !important;
           }
           .public-mobile-button {
             display: inline-flex !important;
           }
-          .public-hero-container {
+          .hero-green-curve-container {
+            width: 100% !important;
+            height: 52% !important;
+            top: auto !important;
+            bottom: 0 !important;
+          }
+          .hero-main-layout {
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             text-align: center !important;
-            gap: 28px !important;
+            gap: 36px !important;
           }
-          .public-hero-plate {
-            width: 280px !important;
-            height: 280px !important;
+          .hero-left-column {
+            align-items: center !important;
+            text-align: center !important;
           }
-          .public-hero-heading {
-            font-size: 2.25rem !important;
+          .hero-left-proof-row {
+            justify-content: center !important;
+          }
+          .tagline-section-layout {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 32px !important;
+          }
+          .tagline-text-col {
+            text-align: center !important;
+          }
+          .plate-landing-target {
+            min-height: 320px !important;
+            width: 100% !important;
+          }
+          .hero-rotating-plate {
+            width: 320px !important;
+            height: 320px !important;
+          }
+          .hero-leaf-top-right {
+            width: 240px !important;
+          }
+          .hero-leaf-bottom-right {
+            width: 250px !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .hero-bottom-ribbon-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .hero-ribbon-divider-col {
+            border-left: none !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+            padding: 12px 0 !important;
+          }
+          .hero-left-proof-row {
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          .hero-left-proof-row > div:nth-child(even) {
+            display: none !important;
+          }
+          .hero-main-heading {
+            font-size: 2.1rem !important;
           }
           .public-tagline-text {
-            font-size: 1.875rem !important;
+            font-size: 1.75rem !important;
           }
           .public-pillars-grid {
             grid-template-columns: 1fr !important;
@@ -1378,23 +1804,14 @@ export default function PublicWebsite() {
             grid-template-columns: 1fr !important;
             gap: 16px !important;
           }
-          .public-hero-left,
-          .public-hero-right {
-            align-items: center !important;
-            text-align: center !important;
-          }
         }
         @media (max-width: 520px) {
-          .public-hero-plate {
-            width: 230px !important;
-            height: 230px !important;
+          .hero-rotating-plate {
+            width: 260px !important;
+            height: 260px !important;
           }
-          .public-hero-heading {
-            font-size: 1.75rem !important;
-          }
-          .public-proof-card {
-            padding: 16px !important;
-            text-align: left !important;
+          .hero-main-heading {
+            font-size: 1.85rem !important;
           }
         }
       `}</style>
