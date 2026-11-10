@@ -86,8 +86,8 @@ export default function DishCatalogue() {
   }, []);
   const [selectedCuisines, setSelectedCuisines] = useState([]);
   const [selectedDietary, setSelectedDietary] = useState([]);
-  const [selectedSpice, setSelectedSpice] = useState('all'); // 'all' | 'mild' | 'medium' | 'hot'
-  const [selectedPrepTime, setSelectedPrepTime] = useState('all'); // 'all' | 'under30' | '30to60' | 'over60'
+  const [selectedSpice, setSelectedSpice] = useState('all'); // 'all' | 'none' | 'mild' | 'medium'
+  const [suitableAges1to5, setSuitableAges1to5] = useState(false);
   const [excludedAllergens, setExcludedAllergens] = useState([]);
 
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function DishCatalogue() {
     setSelectedCuisines([]);
     setSelectedDietary([]);
     setSelectedSpice('all');
-    setSelectedPrepTime('all');
+    setSuitableAges1to5(false);
     setExcludedAllergens([]);
   };
 
@@ -197,29 +197,41 @@ export default function DishCatalogue() {
     selectedDietary.length +
     selectedCuisines.length +
     (selectedSpice !== 'all' ? 1 : 0) +
-    (selectedPrepTime !== 'all' ? 1 : 0) +
+    (suitableAges1to5 ? 1 : 0) +
     excludedAllergens.length;
 
   const getActiveCategoryLabel = () => {
-    if (activeCategory === 'all') return '';
-    const found = categories.find((c) => c.slug === activeCategory);
-    if (found) return found.name;
-    if (activeCategory === 'main') return 'Main Courses';
-    if (activeCategory === 'dessert') return 'Desserts';
+    if (activeCategory === 'all') return 'All';
+    if (activeCategory === 'main') return 'Main';
+    if (activeCategory === 'side') return 'Side';
+    if (activeCategory === 'soup') return 'Soup';
+    if (activeCategory === 'dessert') return 'Dessert';
     if (activeCategory === 'kids') return "Kids' Meals";
-    return activeCategory;
+    const found = categories.find((c) => c.slug === activeCategory);
+    return found ? found.name : activeCategory;
   };
 
   // Filter application
   const filteredDishes = dishes
     .filter((d) => {
       // 1. Category match
-      const categoryName = d.categoryId?.slug || d.categoryId?.name?.toLowerCase() || '';
+      const catSlug = (d.categoryId?.slug || d.categoryId?.name || d.category || d.type || '').toLowerCase();
+      const isKids =
+        catSlug === 'kids' ||
+        catSlug.includes('kid') ||
+        d.type === 'kids' ||
+        d.category === 'kids' ||
+        Boolean(d.isKidsMeal) ||
+        Boolean(d.suitableForAges1to5);
+
       const matchCat =
         activeCategory === 'all' ||
-        d.category === activeCategory ||
-        d.type === activeCategory ||
-        categoryName === activeCategory;
+        catSlug === activeCategory ||
+        (activeCategory === 'kids' && isKids) ||
+        (activeCategory === 'soup' && (catSlug === 'soup' || catSlug.includes('soup') || d.type === 'soup' || d.category === 'soup')) ||
+        (activeCategory === 'side' && (catSlug === 'side' || catSlug.includes('side') || catSlug.includes('starter') || d.type === 'side' || d.category === 'side')) ||
+        (activeCategory === 'dessert' && (catSlug === 'dessert' || catSlug.includes('dessert') || d.type === 'dessert' || d.category === 'dessert')) ||
+        (activeCategory === 'main' && (catSlug === 'main' || catSlug.includes('main') || d.type === 'main' || d.category === 'main'));
 
       // 2. Search query
       const matchSearch =
@@ -251,25 +263,31 @@ export default function DishCatalogue() {
           dishDietary.map((dd) => dd.toLowerCase()).includes(dt.toLowerCase())
         );
 
-      // 5. Spice Level
+      // 5. Spice Level (none, mild, medium)
       const dishSpice = (d.spiceLevel || 'none').toLowerCase();
       let matchSpice = true;
-      if (selectedSpice === 'mild') {
+      if (selectedSpice === 'none') {
+        matchSpice = dishSpice === 'none';
+      } else if (selectedSpice === 'mild') {
         matchSpice = dishSpice === 'mild';
       } else if (selectedSpice === 'medium') {
-        matchSpice = dishSpice === 'mild' || dishSpice === 'none';
-      } else if (selectedSpice === 'hot') {
-        matchSpice = dishSpice === 'spicy';
+        matchSpice = dishSpice === 'medium' || dishSpice === 'spicy';
       }
 
-      // 6. Preparation time
-      let matchPrepTime = true;
-      if (selectedPrepTime === 'under30') {
-        matchPrepTime = !d.isTimeIntensive;
-      } else if (selectedPrepTime === '30to60') {
-        matchPrepTime = Boolean(d.isTimeIntensive);
-      } else if (selectedPrepTime === 'over60') {
-        matchPrepTime = Boolean(d.isTimeIntensive) && Boolean(d.cookingDuration > 60);
+      // 6. Kids Meals age 1-5 filter
+      let matchKidsAge = true;
+      if (suitableAges1to5) {
+        const textBlob = `${d.name} ${d.description || ''} ${Array.isArray(d.tags) ? d.tags.join(' ') : ''} ${dishDietary.join(' ')}`.toLowerCase();
+        matchKidsAge =
+          Boolean(d.suitableForAges1to5) ||
+          Boolean(d.isKidsMeal) ||
+          Boolean(d.isToddlerFriendly) ||
+          textBlob.includes('1-5') ||
+          textBlob.includes('toddler') ||
+          textBlob.includes('finger food') ||
+          textBlob.includes('ages 1') ||
+          d.type === 'kids' ||
+          catSlug.includes('kid');
       }
 
       // 7. Allergens to Exclude
@@ -286,7 +304,7 @@ export default function DishCatalogue() {
         matchCuisine &&
         matchDietary &&
         matchSpice &&
-        matchPrepTime &&
+        matchKidsAge &&
         matchAllergens
       );
     })
@@ -306,9 +324,77 @@ export default function DishCatalogue() {
             Explore Our Menu
           </h1>
           <p className="user-page-subtitle">
-            Seasonal culinary selections crafted by Chef Missy. Standardized 2-serving base recipes for in-home meal prep.
+            Seasonal meals prepared fresh in your home by Chef Missy. Standard 2-serving portions.
           </p>
         </div>
+      </div>
+
+      {/* Category Quick Filter Tabs */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          overflowX: 'auto',
+          paddingBottom: '4px',
+          marginBottom: '12px',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {[
+          { key: 'all', label: 'All Dishes' },
+          { key: 'main', label: 'Main' },
+          { key: 'side', label: 'Side' },
+          { key: 'soup', label: 'Soup' },
+          { key: 'dessert', label: 'Dessert' },
+          { key: 'kids', label: "Kids' Meals" },
+        ].map((tab) => {
+          const isActive = activeCategory === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveCategory(tab.key)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '999px',
+                border: isActive ? '1px solid #2e3b12' : '1px solid #ece7de',
+                backgroundColor: isActive ? '#2e3b12' : '#ffffff',
+                color: isActive ? '#ffffff' : '#595043',
+                fontSize: '0.76rem',
+                fontWeight: isActive ? 600 : 500,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+
+        {activeCategory === 'kids' && (
+          <button
+            type="button"
+            onClick={() => setSuitableAges1to5((prev) => !prev)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '999px',
+              border: suitableAges1to5 ? '1px solid #059669' : '1px dashed #059669',
+              backgroundColor: suitableAges1to5 ? '#ecfdf5' : '#ffffff',
+              color: suitableAges1to5 ? '#065f46' : '#059669',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>{suitableAges1to5 ? '✓ Suitable for ages 1–5' : '+ Suitable for ages 1–5'}</span>
+          </button>
+        )}
       </div>
 
       {/* Main Unified Filter Bar (Sleek, No Shadows, Drawer-Powered) */}
@@ -622,34 +708,27 @@ export default function DishCatalogue() {
             </button>
           )}
 
-          {/* Prep time chip */}
-          {selectedPrepTime !== 'all' && (
+          {/* Ages 1-5 chip */}
+          {suitableAges1to5 && (
             <button
               type="button"
-              onClick={() => setSelectedPrepTime('all')}
+              onClick={() => setSuitableAges1to5(false)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
                 padding: '2px 7px',
                 borderRadius: '4px',
-                backgroundColor: '#fef3c7',
-                color: '#b45309',
-                border: '1px solid #fde68a',
+                backgroundColor: '#ecfdf5',
+                color: '#065f46',
+                border: '1px solid #a7f3d0',
                 fontSize: '0.68rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 boxShadow: 'none',
               }}
             >
-              <span>
-                Prep:{' '}
-                {selectedPrepTime === 'under30'
-                  ? '< 30m'
-                  : selectedPrepTime === '30to60'
-                  ? '30–60m'
-                  : '> 60m'}
-              </span>
+              <span>Ages 1–5</span>
               <X size={10} />
             </button>
           )}
@@ -854,7 +933,7 @@ export default function DishCatalogue() {
                         boxShadow: 'none',
                       }}
                     >
-                      <Clock size={11} color="#ffffff" style={{ flexShrink: 0 }} /> 30m+ Prep (Max 2)
+                      Time-Intensive (Max 2)
                     </span>
                   )}
                 </div>
@@ -881,7 +960,15 @@ export default function DishCatalogue() {
                         fontWeight: 600,
                       }}
                     >
-                      {dish.type === 'kids' ? "Kids' Meal" : dish.type === 'dessert' ? 'Dessert' : 'Main'}
+                      {dish.type === 'kids' || dish.category === 'kids'
+                        ? "Kids' Meal"
+                        : dish.type === 'dessert' || dish.category === 'dessert'
+                        ? 'Dessert'
+                        : dish.type === 'soup' || dish.category === 'soup'
+                        ? 'Soup'
+                        : dish.type === 'side' || dish.category === 'side' || dish.type === 'starter'
+                        ? 'Side'
+                        : 'Main'}
                     </span>
 
                     <span
@@ -896,6 +983,25 @@ export default function DishCatalogue() {
                     >
                       Base Servings: 2
                     </span>
+
+                    {(dish.suitableForAges1to5 || dish.isKidsMeal) && (
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          padding: '2px 7px',
+                          borderRadius: '3px',
+                          backgroundColor: '#ecfdf5',
+                          color: '#065f46',
+                          border: '1px solid #a7f3d0',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                      >
+                        Suitable for ages 1–5
+                      </span>
+                    )}
 
                     {/* Admin-matched Spice Level Icon Badge */}
                     {dish.spiceLevel && dish.spiceLevel !== 'none' && (
@@ -971,7 +1077,7 @@ export default function DishCatalogue() {
                     }}
                     title={dish.description}
                   >
-                    {dish.description || 'Seasonal bespoke recipe prepared fresh.'}
+                    {dish.description || 'Seasonal dish prepared fresh.'}
                   </p>
 
                   {/* Action Footer */}
@@ -1037,8 +1143,6 @@ export default function DishCatalogue() {
         onToggleCuisine={toggleCuisineFilter}
         selectedSpice={selectedSpice}
         onChangeSpice={setSelectedSpice}
-        selectedPrepTime={selectedPrepTime}
-        onChangePrepTime={setSelectedPrepTime}
         excludedAllergens={excludedAllergens}
         onToggleExcludedAllergen={toggleExcludedAllergen}
         onResetAll={resetAllFilters}

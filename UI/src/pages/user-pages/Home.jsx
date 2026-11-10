@@ -260,7 +260,7 @@ export default function Home() {
               >
                 1
               </div>
-              <h4 style={{ fontSize: '0.86rem', color: '#1a1814', marginBottom: '4px', fontWeight: 600 }}>Curate Your Menu</h4>
+              <h4 style={{ fontSize: '0.86rem', color: '#1a1814', marginBottom: '4px', fontWeight: 600 }}>Plan Your Menu</h4>
               <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: 1.4, margin: 0 }}>
                 Explore chef-crafted seasonal specialties, salads, and kid-friendly favourites tailored to your tastes.
               </p>
@@ -335,7 +335,7 @@ export default function Home() {
             marginBottom: '6px',
           }}
         >
-          Fresh Meal Prep &bull; Artisanal Boxes
+          Fresh Meal Prep &bull; In-Home Service
         </span>
 
         <h1
@@ -361,7 +361,7 @@ export default function Home() {
             lineHeight: 1.5,
           }}
         >
-          Curate your bespoke weekly dishes. Chef Missy handles the ingredient sourcing and culinary preparation for your fresh meal boxes.
+          Plan your weekly menu. Chef Missy handles the fresh ingredient sourcing and cooks wholesome meals right in your home.
         </p>
 
         <div className="user-home-hero-actions">
@@ -392,17 +392,17 @@ export default function Home() {
 
       {/* Main Executive Boards Stack */}
       <div className="user-home-boards-grid">
-        {/* UPCOMING MEAL BOX ORDER HUB BOARD */}
+        {/* UPCOMING COOKING VISIT HUB BOARD */}
         <div className="user-dashboard-card">
             <div className="user-upcoming-header">
               <div className="user-upcoming-title-group">
                 <UtensilsCrossed size={18} color="var(--color-primary, #2e3b12)" className="user-upcoming-icon" />
                 <div>
                   <h3 className="user-upcoming-heading">
-                    Your Upcoming Box Order
+                    Your Upcoming Cooking Visit
                   </h3>
                   <span className="user-upcoming-subtext">
-                    Chef Missy will prepare this curated meal box for your household.
+                    Chef Missy will prepare this menu for your family.
                   </span>
                 </div>
               </div>
@@ -463,7 +463,12 @@ export default function Home() {
                       </span>
                       <span>&bull;</span>
                       <span style={{ color: 'var(--color-primary)', fontWeight: 500 }}>
-                        Arrival: {formatArrivalWindow(upcomingVisit.arrivalWindow)}
+                        Visit: {upcomingVisit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+                        {/\d/.test(upcomingVisit.arrivalWindow || '') && (
+                          <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #524d43)', marginLeft: '4px' }}>
+                            ({formatArrivalWindow(upcomingVisit.arrivalWindow)})
+                          </span>
+                        )}
                       </span>
                       {user?.location && (
                         <>
@@ -641,14 +646,14 @@ export default function Home() {
                 {/* 4-Step Preparation Journey Progress Bar */}
                 <div className="user-upcoming-journey-card">
                   <span className="user-upcoming-journey-title">
-                    Order Prep Journey
+                    Visit Prep Journey
                   </span>
                   <div className="user-upcoming-journey-track">
                     {[
-                      { short: 'Curated', full: '1. Menu Curated', active: Boolean(upcomingVisit.dishes?.length) },
+                      { short: 'Planned', full: '1. Menu Planned', active: Boolean(upcomingVisit.dishes?.length) },
                       { short: 'Confirmed', full: '2. Confirmed Date', active: ['confirmed', 'ready', 'completed'].includes(upcomingVisit.status) },
                       { short: 'Sourcing', full: '3. Grocery Sourcing', active: ['ready', 'completed'].includes(upcomingVisit.status) || Boolean(upcomingVisit.shoppingListShared) },
-                      { short: 'Ready', full: '4. Ready / Dispatched', active: upcomingVisit.status === 'completed' || Boolean(visitDateInfo?.isToday) },
+                      { short: 'Ready', full: '4. Ready / Cooking', active: upcomingVisit.status === 'completed' || Boolean(visitDateInfo?.isToday) },
                     ].map((st, i) => (
                       <div key={i} className="user-upcoming-journey-node">
                         <div
@@ -676,7 +681,7 @@ export default function Home() {
                 <div className="user-upcoming-actions">
                   <Link to={`/visits/${upcomingVisit._id}`}>
                     <button type="button" className="user-upcoming-btn-primary">
-                      <span>View Order Details</span>
+                      <span>View Visit Details</span>
                       <span>&rarr;</span>
                     </button>
                   </Link>
@@ -702,10 +707,10 @@ export default function Home() {
                   <ChefHatIcon size={32} color="#8c857b" />
                 </div>
                 <h4 style={{ fontSize: '0.96rem', color: '#1a1814', margin: '0 0 6px', fontWeight: 600 }}>
-                  No Upcoming Box Order
+                  No Upcoming Cooking Visit
                 </h4>
                 <p style={{ fontSize: '0.80rem', color: 'var(--color-text-muted)', margin: '0 0 16px', maxWidth: '380px', marginInline: 'auto', lineHeight: 1.45 }}>
-                  Chef Missy is ready to prepare your next meal box. Select your preferred dishes and reserve your preparation date.
+                  Chef Missy is ready to cook your next meals. Select your preferred dishes and choose your cooking date.
                 </p>
                 <Link to="/catalogue">
                   <button
@@ -720,7 +725,7 @@ export default function Home() {
                       cursor: 'pointer',
                     }}
                   >
-                    Order Next Box &rarr;
+                    Plan Your Menu &rarr;
                   </button>
                 </Link>
               </div>

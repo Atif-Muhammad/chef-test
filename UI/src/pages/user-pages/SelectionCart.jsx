@@ -36,7 +36,7 @@ export default function SelectionCart() {
 
   const todayStr = toDateInputValue(new Date()) || new Date().toISOString().split('T')[0];
 
-  // Steps: 1: Pack Your Box, 2: Select Dishes, 3: Review Your Box, 4: Box Confirmed
+  // Steps: 1: Plan Your Menu, 2: Select Dishes, 3: Review Menu Plan, 4: Menu Confirmed
   const [activeStep, setActiveStep] = useState(cart.visitDate ? 2 : 1);
   const [activeCat, setActiveCat] = useState('all');
   const [search, setSearch] = useState('');
@@ -57,10 +57,13 @@ export default function SelectionCart() {
   // Dish details dialog modal state
   const [viewingDish, setViewingDish] = useState(null);
 
-  // Timeslot state (start & end time in 24h for pickers, formatted to 12h for user display)
-  const [startTime, setStartTime] = useState(cart.startTime || '11:00');
-  const [endTime, setEndTime] = useState(cart.endTime || '13:00');
-  const [timeslotChosenByUser, setTimeslotChosenByUser] = useState(false);
+  // Visit preference (Morning or Afternoon - no clock hours)
+  const getInitialPreference = () => {
+    const raw = (cart.arrivalWindow || cart.visitPreference || '').toLowerCase();
+    return raw.includes('afternoon') ? 'Afternoon' : 'Morning';
+  };
+  const [visitPreference, setVisitPreference] = useState(getInitialPreference());
+  const [timeslotChosenByUser, setTimeslotChosenByUser] = useState(Boolean(cart.arrivalWindow || cart.visitPreference));
 
   // Unauthenticated user redirect if deep link visitId or date is present
   useEffect(() => {
@@ -132,20 +135,13 @@ export default function SelectionCart() {
           v.arrivalWindow.trim().length > 0
         );
 
-        let sTime = '11:00';
-        let eTime = '13:00';
+        const pref = v.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning';
+        setVisitPreference(pref);
         if (hasAdminWindow) {
-          const parts = v.arrivalWindow.split(/-|–/);
-          if (parts.length >= 2) {
-            sTime = parseTo24Time(parts[0], '11:00');
-            eTime = parseTo24Time(parts[1], '13:00');
-          }
           setTimeslotChosenByUser(true);
         } else {
           setTimeslotChosenByUser(false);
         }
-        setStartTime(sTime);
-        setEndTime(eTime);
 
         // Preload dishes if present in visit
         let visitDishes = [];
@@ -230,14 +226,26 @@ export default function SelectionCart() {
     };
   }, []);
 
+  const totalDishes = cart.dishes.length;
   const mainsCount = cart.dishes.filter((d) => (d.type || '').toLowerCase() === 'main').length;
   const timeIntensiveCount = cart.dishes.filter((d) => d.isTimeIntensive).length;
 
   // Filter dishes
   const filteredDishes = dishes.filter((dish) => {
+    const dishType = (dish.type || dish.category || '').toLowerCase();
+    const dishCatName = (dish.categoryId?.slug || dish.categoryId?.name || '').toLowerCase();
+    const isKids =
+      dishType === 'kids' ||
+      dishCatName === 'kids' ||
+      dishCatName.includes('kid') ||
+      Boolean(dish.isKidsMeal) ||
+      Boolean(dish.suitableForAges1to5);
     const matchesCat =
       activeCat === 'all' ||
-      dish.type?.toLowerCase() === activeCat.toLowerCase() ||
+      dishType === activeCat.toLowerCase() ||
+      dishCatName === activeCat.toLowerCase() ||
+      (activeCat === 'kids' && isKids) ||
+      (activeCat === 'side' && (dishType === 'starter' || dishCatName === 'starter')) ||
       (dish.categoryId?._id || dish.categoryId) === activeCat;
     const matchesSearch =
       !search ||
@@ -265,12 +273,10 @@ export default function SelectionCart() {
     return acc;
   }, []);
 
-  const handleTimeChange = (newStart, newEnd) => {
-    setStartTime(newStart);
-    setEndTime(newEnd);
+  const handlePreferenceChange = (pref) => {
+    setVisitPreference(pref);
     setTimeslotChosenByUser(true);
-    const windowStr = `${convert24To12(newStart)} - ${convert24To12(newEnd)}`;
-    updateCartDetails({ startTime: newStart, endTime: newEnd, arrivalWindow: windowStr });
+    updateCartDetails({ arrivalWindow: pref, visitPreference: pref });
   };
 
   const hasValidAdminWindow = Boolean(
@@ -292,39 +298,38 @@ export default function SelectionCart() {
       return;
     }
     if (!cart.visitDate) {
-      setError('Please set your box preparation/delivery date.');
+      setError('Please choose your preferred cooking date.');
       setActiveStep(1);
       return;
     }
     if (cart.visitDate < todayStr) {
-      setError('Past dates cannot be selected for box preparation.');
+      setError('Past dates cannot be selected for cooking visits.');
       setActiveStep(1);
       return;
     }
     if (isTimeslotMissing) {
-      setError('Please select a delivery / pickup timeslot for Chef Missy.');
+      setError('Please choose your visit preference (Morning or Afternoon).');
       setActiveStep(1);
       return;
     }
     if (cart.dishes.length === 0) {
-      setError('Please select at least one dish for your box.');
+      setError('Please select at least one dish for your menu plan.');
       setActiveStep(2);
       return;
     }
-    if (mainsCount > 7) {
-      setError('Maximum of 7 main courses allowed per box.');
+    if (totalDishes > 7) {
+      setError('You may select a maximum of 7 dishes total per visit.');
       return;
     }
     if (timeIntensiveCount > 2) {
-      setError('Maximum of 2 time-intensive dishes allowed per box.');
+      setError('You may choose a maximum of 2 time-intensive dishes per visit.');
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      const formattedWindow =
-        cart.arrivalWindow || (startTime && endTime ? `${convert24To12(startTime)} - ${convert24To12(endTime)}` : '11:00 AM - 1:00 PM');
+      const formattedWindow = cart.arrivalWindow || visitPreference || 'Morning';
 
       const payload = {
         visitId: linkedVisit?._id || visitIdParam || undefined,
@@ -342,14 +347,13 @@ export default function SelectionCart() {
       clearCart();
       setActiveStep(4);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to submit your box order.');
+      setError(err.response?.data?.message || err.message || 'Failed to submit your menu plan.');
     } finally {
       setLoading(false);
     }
   };
 
-  const formattedTimeslotPreview =
-    cart.arrivalWindow || (startTime && endTime ? `${convert24To12(startTime)} – ${convert24To12(endTime)}` : '11:00 AM – 1:00 PM');
+  const formattedTimeslotPreview = cart.arrivalWindow || visitPreference || 'Morning';
 
   return (
     <div className="user-page-container">
@@ -569,7 +573,7 @@ export default function SelectionCart() {
                 </span>
               </div>
               <p style={{ margin: '0 0 8px', fontSize: '0.74rem', color: '#78350f', lineHeight: 1.45 }}>
-                Chef Missy initiated this meal box for you. The fields highlighted in <strong>amber</strong> below need to be completed before your box order can be confirmed.
+                Chef Missy initiated this menu plan for you. The fields highlighted in <strong>amber</strong> below need to be completed before your cooking visit can be confirmed.
               </p>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {isDateMissing && (
@@ -660,7 +664,7 @@ export default function SelectionCart() {
                     })}
                   </strong>
                   {linkedVisit.arrivalWindow ? ` (${formatArrivalWindow(linkedVisit.arrivalWindow)})` : ''} •{' '}
-                  <strong>{linkedVisit.guests || 2} Portions</strong>. Review or customize your box menu below.
+                  <strong>{linkedVisit.guests || 2} Portions</strong>. Review or customize your menu plan below.
                 </p>
               </div>
             </div>
@@ -681,21 +685,21 @@ export default function SelectionCart() {
           }}
         >
           {activeStep === 1
-            ? 'Pack Your Box'
+            ? 'Plan Your Menu'
             : activeStep === 2
             ? 'Select Dishes'
             : activeStep === 3
-            ? 'Review Your Box'
-            : 'Order Confirmation'}
+            ? 'Review Menu Plan'
+            : 'Menu Plan Confirmed'}
         </h1>
         <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: 0 }}>
           {activeStep === 1
-            ? 'Set your preferred preparation date, timeslot, and box portions for Chef Missy.'
+            ? 'Set your preferred cooking date, visit preference, and portions for Chef Missy.'
             : activeStep === 2
-            ? 'Select fresh chef-crafted dishes to pack into your customized meal box.'
+            ? 'Select fresh chef-crafted dishes for your in-home meal preparation.'
             : activeStep === 3
-            ? 'Review your selected dishes, portion limits, and allergy safety alerts before confirming.'
-            : 'Your menu selection has been successfully submitted to Chef Missy.'}
+            ? 'Review your selected dishes, portion limits, and special requests before confirming.'
+            : 'Your menu plan has been successfully submitted to Chef Missy.'}
         </p>
       </div>
 
@@ -772,8 +776,8 @@ export default function SelectionCart() {
                 textAlign: 'center',
               }}
             >
-              <span className="user-stepper-text-desktop">Pack Your Box</span>
-              <span className="user-stepper-text-mobile">Pack Box</span>
+              <span className="user-stepper-text-desktop">Plan Your Menu</span>
+              <span className="user-stepper-text-mobile">Plan Menu</span>
               {(isDateMissing || isTimeslotMissing) && (
                 <span
                   style={{
@@ -796,11 +800,11 @@ export default function SelectionCart() {
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => {
               if (!cart.visitDate) {
-                setError('Please select a box preparation/delivery date first.');
+                setError('Please select your preferred cooking date first.');
                 return;
               }
               if (isTimeslotMissing) {
-                setError('Please select a delivery / pickup timeslot first.');
+                setError('Please choose your visit preference (Morning or Afternoon) first.');
                 return;
               }
               setError('');
@@ -864,15 +868,15 @@ export default function SelectionCart() {
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => {
               if (!cart.visitDate) {
-                setError('Please select a box preparation/delivery date first.');
+                setError('Please select your preferred cooking date first.');
                 return;
               }
               if (isTimeslotMissing) {
-                setError('Please select a delivery / pickup timeslot first.');
+                setError('Please choose your visit preference (Morning or Afternoon) first.');
                 return;
               }
               if (cart.dishes.length === 0) {
-                setError('Please select at least one dish for your box.');
+                setError('Please select at least one dish for your menu plan.');
                 return;
               }
               setError('');
@@ -911,7 +915,7 @@ export default function SelectionCart() {
                 textAlign: 'center',
               }}
             >
-              <span className="user-stepper-text-desktop">Review Your Box</span>
+              <span className="user-stepper-text-desktop">Review Menu Plan</span>
               <span className="user-stepper-text-mobile">Review</span>
             </span>
           </div>
@@ -1171,10 +1175,15 @@ export default function SelectionCart() {
                   : 'Selected Date'}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Timeslot / Window</span>
-              <span style={{ fontWeight: 600, color: '#1a1814' }}>
-                {confirmedVisit?.arrivalWindow || formattedTimeslotPreview}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Visit Preference</span>
+              <span style={{ fontWeight: 600, color: '#1a1814', textAlign: 'right' }}>
+                {(confirmedVisit?.arrivalWindow || formattedTimeslotPreview)?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+                {/\d/.test(confirmedVisit?.arrivalWindow || '') && (
+                  <span style={{ fontSize: '0.72rem', color: '#524d43', fontWeight: 500, marginLeft: '6px' }}>
+                    ({formatArrivalWindow(confirmedVisit.arrivalWindow)})
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -1202,7 +1211,7 @@ export default function SelectionCart() {
                 whiteSpace: 'nowrap',
               }}
             >
-              <span>View in Box History</span>
+              <span>View Past Menus</span>
               <ArrowRight size={12} />
             </Link>
             <Link
@@ -1244,7 +1253,7 @@ export default function SelectionCart() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <h3 style={{ fontSize: '0.94rem', color: '#1a1814', margin: 0, fontWeight: 700 }}>
-                  Dishes in Your Box ({cart.dishes.length})
+                  Dishes in Your Menu Plan ({cart.dishes.length})
                 </h3>
                 <button
                   type="button"
@@ -1319,8 +1328,11 @@ export default function SelectionCart() {
                                   </span>
                                 )}
                               </div>
-                              <div style={{ fontSize: '0.68rem', color: '#716c62', display: 'flex', gap: '6px', marginTop: '2px' }}>
+                              <div style={{ fontSize: '0.68rem', color: '#716c62', display: 'flex', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                                 <span style={{ textTransform: 'capitalize' }}>{dish.type || 'Main'}</span>
+                                {(dish.suitableForAges1to5 || dish.isKidsMeal) && (
+                                  <span style={{ color: '#065f46', fontWeight: 600 }}>• Suitable for ages 1–5</span>
+                                )}
                                 {dish.isTimeIntensive && <span style={{ color: '#d97706', fontWeight: 600 }}>• Time-Intensive</span>}
                               </div>
                             </div>
@@ -1366,13 +1378,13 @@ export default function SelectionCart() {
               }}
             >
               <h4 style={{ fontSize: '0.84rem', color: '#1a1814', margin: '0 0 10px', fontWeight: 700 }}>
-                Box Limits Checklist
+                Menu Planning Guidelines
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: mainsCount <= 7 ? '#059669' : '#b91c1c' }}>
-                  <Check size={14} color={mainsCount <= 7 ? '#059669' : '#b91c1c'} strokeWidth={2.5} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: totalDishes <= 7 ? '#059669' : '#b91c1c' }}>
+                  <Check size={14} color={totalDishes <= 7 ? '#059669' : '#b91c1c'} strokeWidth={2.5} />
                   <span>
-                    Main Courses: {mainsCount}/7 {mainsCount > 7 && '(Limit exceeded)'}
+                    Total Dishes: {totalDishes}/7 {totalDishes > 7 && '(Limit exceeded)'}
                   </span>
                 </div>
                 <div
@@ -1385,7 +1397,7 @@ export default function SelectionCart() {
                 >
                   <Check size={14} color={timeIntensiveCount <= 2 ? '#059669' : '#b91c1c'} strokeWidth={2.5} />
                   <span>
-                    Time-Intensive Dishes: {timeIntensiveCount}/2 {timeIntensiveCount > 2 && '(Limit exceeded)'}
+                    Time-Intensive: {timeIntensiveCount}/2 {timeIntensiveCount > 2 && '(Limit exceeded)'}
                   </span>
                 </div>
               </div>
@@ -1404,7 +1416,7 @@ export default function SelectionCart() {
               }}
             >
               <h3 style={{ fontSize: '0.90rem', color: '#1a1814', margin: '0 0 12px', fontWeight: 700 }}>
-                Box Summary
+                Menu Plan Summary
               </h3>
 
               <div
@@ -1429,9 +1441,16 @@ export default function SelectionCart() {
                       : 'Not set'}
                   </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#716c62' }}>Timeslot / Window:</span>
-                  <span style={{ fontWeight: 600 }}>{formattedTimeslotPreview}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ color: '#716c62' }}>Visit Preference:</span>
+                  <span style={{ fontWeight: 600, textAlign: 'right' }}>
+                    {visitPreference}
+                    {linkedVisit?.arrivalWindow && /\d/.test(linkedVisit.arrivalWindow) && (
+                      <span style={{ fontSize: '0.72rem', color: '#524d43', fontWeight: 500, marginLeft: '6px' }}>
+                        ({formatArrivalWindow(linkedVisit.arrivalWindow)})
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#716c62' }}>Portions:</span>
@@ -1449,7 +1468,7 @@ export default function SelectionCart() {
                 <button
                   type="button"
                   onClick={handleConfirmReservation}
-                  disabled={loading || cart.dishes.length === 0 || mainsCount > 7 || timeIntensiveCount > 2}
+                  disabled={loading || cart.dishes.length === 0 || totalDishes > 7 || timeIntensiveCount > 2}
                   className={`btn-anim ${loading ? 'btn-submitting' : ''}`}
                   style={{
                     width: '100%',
@@ -1471,11 +1490,11 @@ export default function SelectionCart() {
                   {loading ? (
                     <>
                       <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>Submitting Menu...</span>
+                      <span>Submitting Menu Plan...</span>
                     </>
                   ) : (
                     <>
-                      <span>Confirm & Submit Your Box</span>
+                      <span>Confirm Menu Plan</span>
                       <ArrowRight size={13} />
                     </>
                   )}
@@ -1531,7 +1550,7 @@ export default function SelectionCart() {
                     fontWeight: 700,
                   }}
                 >
-                  Pack Your Box
+                  Plan Your Menu
                 </h3>
 
                 {/* Date & Portions Row */}
@@ -1546,7 +1565,7 @@ export default function SelectionCart() {
                           margin: 0,
                         }}
                       >
-                        Box Preparation / Delivery Date *
+                        Preferred Cooking Date *
                       </label>
                       {isDateMissing && (
                         <span
@@ -1624,7 +1643,7 @@ export default function SelectionCart() {
                         color: '#1a1814',
                       }}
                     >
-                      Servings / Box Portions *
+                      Family Portions *
                     </label>
                     <input
                       type="number"
@@ -1652,7 +1671,7 @@ export default function SelectionCart() {
                   </div>
                 </div>
 
-                {/* Timeslot Window Section */}
+                {/* Preferred Visit Time (Morning / Afternoon - zero clock hours) */}
                 <div
                   style={{
                     marginBottom: '18px',
@@ -1675,7 +1694,7 @@ export default function SelectionCart() {
                           margin: 0,
                         }}
                       >
-                        Delivery / Pickup Timeslot *
+                        Preferred Visit Time *
                       </label>
                       {isTimeslotMissing && (
                         <span
@@ -1689,7 +1708,7 @@ export default function SelectionCart() {
                             borderRadius: '3px',
                           }}
                         >
-                          ⚠ Required — Select Window
+                          ⚠ Required — Choose Preference
                         </span>
                       )}
                     </div>
@@ -1708,75 +1727,71 @@ export default function SelectionCart() {
                     </span>
                   </div>
 
-                  {/* Custom Delivery / Pickup Timepicker Inputs */}
-                  <div className="user-form-2col" style={{ marginTop: '4px' }}>
-                    <div>
-                      <span style={{ fontSize: '0.69rem', color: '#57534e', display: 'block', marginBottom: '3px', fontWeight: 500 }}>
-                        From Time
-                      </span>
-                      <input
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => handleTimeChange(e.target.value, endTime)}
-                        style={{
-                          width: '100%',
-                          height: '36px',
-                          padding: '0 10px',
-                          borderRadius: '4px',
-                          border: isTimeslotMissing ? '1.5px solid #d97706' : '1px solid var(--color-border, #ece7de)',
-                          backgroundColor: isTimeslotMissing ? '#fffbeb' : '#ffffff',
-                          fontSize: '0.80rem',
-                          outline: 'none',
-                          color: '#1e1b16',
-                          boxSizing: 'border-box',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <span style={{ fontSize: '0.69rem', color: '#57534e', display: 'block', marginBottom: '3px', fontWeight: 500 }}>
-                        To Time
-                      </span>
-                      <input
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => handleTimeChange(startTime, e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '36px',
-                          padding: '0 10px',
-                          borderRadius: '4px',
-                          border: isTimeslotMissing ? '1.5px solid #d97706' : '1px solid var(--color-border, #ece7de)',
-                          backgroundColor: isTimeslotMissing ? '#fffbeb' : '#ffffff',
-                          fontSize: '0.80rem',
-                          outline: 'none',
-                          color: '#1e1b16',
-                          boxSizing: 'border-box',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '6px' }}>
+                    {['Morning', 'Afternoon'].map((period) => {
+                      const isSelected = (formattedTimeslotPreview || '').toLowerCase() === period.toLowerCase();
+                      return (
+                        <button
+                          key={period}
+                          type="button"
+                          onClick={() => handlePreferenceChange(period)}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '4px',
+                            border: isSelected ? '1.5px solid #2e3b12' : '1px solid var(--color-border, #ece7de)',
+                            backgroundColor: isSelected ? '#f1f6ec' : '#ffffff',
+                            color: isSelected ? '#2e3b12' : '#3c372f',
+                            fontWeight: isSelected ? 700 : 500,
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.12s ease',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              border: isSelected ? '4px solid #2e3b12' : '1.5px solid #a8a296',
+                              backgroundColor: '#ffffff',
+                              display: 'inline-block',
+                            }}
+                          />
+                          <span>{period}</span>
+                        </button>
+                      );
+                    })}
                   </div>
+                  <p style={{ margin: '8px 0 0', fontSize: '0.70rem', color: '#666053', lineHeight: 1.4 }}>
+                    * This is a preference. The exact visit time will be confirmed directly with Chef Missy.
+                  </p>
                 </div>
 
-                {/* Special Notes & Requests */}
+                {/* Special Requests */}
                 <div style={{ marginBottom: '20px' }}>
                   <label
                     style={{
                       fontSize: '0.76rem',
                       fontWeight: 600,
                       display: 'block',
-                      marginBottom: '5px',
+                      marginBottom: '3px',
                       color: '#1a1814',
                     }}
                   >
-                    Special Packaging & Preparation Notes
+                    Special Requests
                   </label>
+                  <p style={{ margin: '0 0 6px', fontSize: '0.70rem', color: '#666053', lineHeight: 1.4 }}>
+                    Please mention any ingredient dislikes or specific requests for your in-home cooking session.
+                  </p>
                   <textarea
                     rows={3}
                     value={cart.notes || ''}
                     onChange={(e) => updateCartDetails({ notes: e.target.value })}
-                    placeholder="Notes for Chef Missy (e.g. delivery drop-off instructions, extra sauce separate, portioning preferences)..."
+                    placeholder="E.g. ingredient dislikes, adjustments to sauces or seasonings, kitchen access notes..."
                     style={{
                       width: '100%',
                       padding: '8px 10px',
@@ -1798,11 +1813,11 @@ export default function SelectionCart() {
                   type="button"
                   onClick={() => {
                     if (!cart.visitDate) {
-                      setError('Please select a box preparation/delivery date to proceed.');
+                      setError('Please select your preferred cooking date to proceed.');
                       return;
                     }
                     if (isTimeslotMissing) {
-                      setError('Please select a delivery / pickup timeslot to proceed.');
+                      setError('Please choose your visit preference (Morning or Afternoon) to proceed.');
                       return;
                     }
                     setError('');
@@ -1852,7 +1867,7 @@ export default function SelectionCart() {
                   >
                     <AlertTriangle size={15} color="#d97706" style={{ flexShrink: 0 }} />
                     <span>
-                      <strong>Dishes Required:</strong> Chef Missy is waiting for your dish selections. Click any dish card below to pack it into your box (up to 7 courses).
+                      <strong>Dishes Required:</strong> Chef Missy is waiting for your dish selections. Click any dish card below to add it to your menu plan (up to 7 dishes total).
                     </span>
                   </div>
                 )}
@@ -1891,82 +1906,38 @@ export default function SelectionCart() {
 
                 {/* Filter pill buttons */}
                 <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '14px', paddingBottom: '2px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveCat('all')}
-                    className="btn-anim"
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '3px',
-                      border: `1px solid ${activeCat === 'all' ? 'var(--color-primary, #2e3b12)' : 'var(--color-border, #ece7de)'}`,
-                      backgroundColor: activeCat === 'all' ? 'var(--color-primary, #2e3b12)' : '#ffffff',
-                      color: activeCat === 'all' ? '#ffffff' : '#1e1b16',
-                      fontSize: '0.72rem',
-                      fontWeight: activeCat === 'all' ? 600 : 500,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    All Dishes ({dishes.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveCat('main')}
-                    className="btn-anim"
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '3px',
-                      border: `1px solid ${activeCat === 'main' ? 'var(--color-primary, #2e3b12)' : 'var(--color-border, #ece7de)'}`,
-                      backgroundColor: activeCat === 'main' ? 'var(--color-primary, #2e3b12)' : '#ffffff',
-                      color: activeCat === 'main' ? '#ffffff' : '#1e1b16',
-                      fontSize: '0.72rem',
-                      fontWeight: activeCat === 'main' ? 600 : 500,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    Mains
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveCat('dessert')}
-                    className="btn-anim"
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '3px',
-                      border: `1px solid ${activeCat === 'dessert' ? 'var(--color-primary, #2e3b12)' : 'var(--color-border, #ece7de)'}`,
-                      backgroundColor: activeCat === 'dessert' ? 'var(--color-primary, #2e3b12)' : '#ffffff',
-                      color: activeCat === 'dessert' ? '#ffffff' : '#1e1b16',
-                      fontSize: '0.72rem',
-                      fontWeight: activeCat === 'dessert' ? 600 : 500,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    Desserts
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveCat('kids')}
-                    className="btn-anim"
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '3px',
-                      border: `1px solid ${activeCat === 'kids' ? 'var(--color-primary, #2e3b12)' : 'var(--color-border, #ece7de)'}`,
-                      backgroundColor: activeCat === 'kids' ? 'var(--color-primary, #2e3b12)' : '#ffffff',
-                      color: activeCat === 'kids' ? '#ffffff' : '#1e1b16',
-                      fontSize: '0.72rem',
-                      fontWeight: activeCat === 'kids' ? 600 : 500,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    Kids' Meals
-                  </button>
+                  {[
+                    { key: 'all', label: `All Dishes (${dishes.length})` },
+                    { key: 'main', label: 'Main' },
+                    { key: 'side', label: 'Side' },
+                    { key: 'soup', label: 'Soup' },
+                    { key: 'dessert', label: 'Dessert' },
+                    { key: 'kids', label: "Kids' Meals" },
+                  ].map((tab) => {
+                    const isActive = activeCat === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActiveCat(tab.key)}
+                        className="btn-anim"
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '3px',
+                          border: `1px solid ${isActive ? 'var(--color-primary, #2e3b12)' : 'var(--color-border, #ece7de)'}`,
+                          backgroundColor: isActive ? 'var(--color-primary, #2e3b12)' : '#ffffff',
+                          color: isActive ? '#ffffff' : '#1e1b16',
+                          fontSize: '0.72rem',
+                          fontWeight: isActive ? 600 : 500,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          boxShadow: 'none',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
                   {categories.map((c) => {
                     const active = activeCat === c._id;
                     return (
@@ -2138,7 +2109,7 @@ export default function SelectionCart() {
                                   fontWeight: 600,
                                 }}
                               >
-                                Time-Intensive (30+ min)
+                                Time-Intensive (Max 2)
                               </span>
                             )}
                           </div>
@@ -2170,12 +2141,30 @@ export default function SelectionCart() {
                                   flexShrink: 0,
                                 }}
                               >
-                                {dish.type || 'Main'}
+                                {dish.type === 'kids' ? "Kids' Meal" : dish.type === 'dessert' ? 'Dessert' : dish.type === 'soup' ? 'Soup' : dish.type === 'side' ? 'Side' : 'Main'}
                               </span>
                             </div>
 
                             {/* Tags */}
                             <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                              {(dish.suitableForAges1to5 || dish.isKidsMeal) && (
+                                <span
+                                  style={{
+                                    fontSize: '0.62rem',
+                                    padding: '1.5px 6px',
+                                    borderRadius: '3px',
+                                    backgroundColor: '#ecfdf5',
+                                    color: '#065f46',
+                                    border: '1px solid #a7f3d0',
+                                    fontWeight: 600,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                  }}
+                                >
+                                  Suitable for ages 1–5
+                                </span>
+                              )}
                               {dishConflict && (
                                 <span
                                   style={{
@@ -2210,7 +2199,7 @@ export default function SelectionCart() {
                                   {tag}
                                 </span>
                               ))}
-                              {dish.spiceLevel && (
+                              {dish.spiceLevel && dish.spiceLevel !== 'none' && (
                                 <span
                                   style={{
                                     fontSize: '0.62rem',
@@ -2254,10 +2243,9 @@ export default function SelectionCart() {
                                 borderTop: '1px solid #f2ede4',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Clock size={11} color="#716c62" />
-                                <span>{dish.time || '30 mins'}</span>
-                              </div>
+                              <span style={{ fontSize: '0.68rem', color: '#594f42', fontWeight: 600 }}>
+                                2 Servings
+                              </span>
 
                               <span
                                 style={{
@@ -2266,7 +2254,7 @@ export default function SelectionCart() {
                                   color: inCart ? 'var(--color-primary, #2e3b12)' : '#716c62',
                                 }}
                               >
-                                {inCart ? '✓ In Your Box' : '+ Click to Select'}
+                                {inCart ? '✓ Selected' : '+ Click to Select'}
                               </span>
                             </div>
                           </div>
@@ -2279,7 +2267,7 @@ export default function SelectionCart() {
             )}
           </div>
 
-          {/* Right Column: "Your Box" Selection Panel */}
+          {/* Right Column: "Your Selected Dishes" Selection Panel */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0, maxWidth: '100%' }}>
             <div
               className="cart-your-box-panel"
@@ -2297,7 +2285,7 @@ export default function SelectionCart() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Package size={15} color={isDishesMissing ? '#d97706' : 'var(--color-primary, #2e3b12)'} />
-                  <h3 style={{ fontSize: '0.90rem', color: '#1a1814', margin: 0, fontWeight: 700 }}>Your Box</h3>
+                  <h3 style={{ fontSize: '0.90rem', color: '#1a1814', margin: 0, fontWeight: 700 }}>Your Selected Dishes</h3>
                 </div>
                 {isDishesMissing ? (
                   <span
@@ -2331,17 +2319,29 @@ export default function SelectionCart() {
                 ) : null}
               </div>
 
-              <span
-                style={{
-                  fontSize: '0.72rem',
-                  color: mainsCount > 7 ? '#b91c1c' : isDishesMissing ? '#b45309' : 'var(--color-text-muted, #716c62)',
-                  display: 'block',
-                  marginBottom: '12px',
-                  fontWeight: isDishesMissing ? 600 : 400,
-                }}
-              >
-                {cart.dishes.length} dishes in your box (Mains: {mainsCount}/7 • Time: {timeIntensiveCount}/2)
-              </span>
+              <div style={{ marginBottom: '12px' }}>
+                <span
+                  style={{
+                    fontSize: '0.74rem',
+                    color: totalDishes > 7 ? '#b91c1c' : '#2e3b12',
+                    display: 'block',
+                    fontWeight: 700,
+                  }}
+                >
+                  {totalDishes} of 7 dishes selected
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.70rem',
+                    color: timeIntensiveCount > 2 ? '#b91c1c' : '#666053',
+                    display: 'block',
+                    marginTop: '3px',
+                    lineHeight: 1.35,
+                  }}
+                >
+                  You may choose a maximum of two time-intensive dishes per visit ({timeIntensiveCount}/2 selected).
+                </span>
+              </div>
 
               {cart.dishes.length === 0 ? (
                 isDishesMissing ? (
@@ -2358,14 +2358,14 @@ export default function SelectionCart() {
                       marginBottom: '12px',
                     }}
                   >
-                    <strong>0 / 7 dishes packed</strong>
+                    <strong>0 of 7 dishes selected</strong>
                     <div style={{ fontSize: '0.70rem', color: '#b45309', marginTop: '4px' }}>
-                      Please click any dish card to pack it into your box.
+                      Please click any dish card to add it to your menu plan.
                     </div>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', padding: '18px 0' }}>
-                    No dishes packed yet. Click any dish card to add to your box.
+                    No dishes selected yet. Click any dish card to add to your menu plan.
                   </div>
                 )
               ) : (
@@ -2417,6 +2417,21 @@ export default function SelectionCart() {
                               <span style={{ fontSize: '0.67rem', color: 'var(--color-text-muted, #716c62)', textTransform: 'capitalize' }}>
                                 {dish.type || 'Main'}
                               </span>
+                              {(dish.suitableForAges1to5 || dish.isKidsMeal) && (
+                                <span
+                                  style={{
+                                    fontSize: '0.60rem',
+                                    fontWeight: 600,
+                                    color: '#065f46',
+                                    backgroundColor: '#ecfdf5',
+                                    border: '1px solid #a7f3d0',
+                                    borderRadius: '2px',
+                                    padding: '0 4px',
+                                  }}
+                                >
+                                  Ages 1–5
+                                </span>
+                              )}
                               {conflicts && (
                                 <span
                                   style={{
@@ -2467,13 +2482,13 @@ export default function SelectionCart() {
                 onClick={() => {
                   if (activeStep === 1) {
                     if (!cart.visitDate) {
-                      setError('Please set a box preparation date first.');
+                      setError('Please select your preferred cooking date first.');
                       return;
                     }
                     setActiveStep(2);
                   } else {
                     if (cart.dishes.length === 0) {
-                      setError('Please select at least one dish for your box.');
+                      setError('Please select at least one dish for your menu plan.');
                       return;
                     }
                     setActiveStep(3);
@@ -2498,7 +2513,7 @@ export default function SelectionCart() {
                   boxShadow: 'none',
                 }}
               >
-                <span>{activeStep === 1 ? 'Select Dishes \u2192' : 'Continue to Review Your Box \u2192'}</span>
+                <span>{activeStep === 1 ? 'Select Dishes \u2192' : 'Continue to Review Menu Plan \u2192'}</span>
               </button>
             </div>
           </div>
@@ -2580,6 +2595,22 @@ export default function SelectionCart() {
                 >
                   {viewingDish.type || 'Main'}
                 </span>
+                {(viewingDish.suitableForAges1to5 || viewingDish.isKidsMeal) && (
+                  <span
+                    style={{
+                      fontSize: '0.64rem',
+                      padding: '2px 7px',
+                      borderRadius: '3px',
+                      backgroundColor: '#ecfdf5',
+                      color: '#065f46',
+                      border: '1px solid #a7f3d0',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Suitable for ages 1–5
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -2641,12 +2672,12 @@ export default function SelectionCart() {
                       fontWeight: 600,
                     }}
                   >
-                    Time-Intensive (30+ min prep)
+                    Time-Intensive (Max 2)
                   </span>
                 )}
               </div>
 
-              {/* Section 2: Chef's Culinary Notes */}
+              {/* Section 2: About this dish */}
               {viewingDish.description && (
                 <div>
                   <h4
@@ -2659,7 +2690,7 @@ export default function SelectionCart() {
                       fontWeight: 700,
                     }}
                   >
-                    Chef's Culinary Notes
+                    About this dish
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.77rem', color: '#4a463e', lineHeight: 1.5 }}>
                     {viewingDish.description}
@@ -2742,8 +2773,7 @@ export default function SelectionCart() {
                       gap: '4px',
                     }}
                   >
-                    <Clock size={11} color="#57534e" />
-                    {viewingDish.time || '30 mins'}
+                    2 Servings
                   </span>
                 </div>
               </div>
@@ -2880,12 +2910,12 @@ export default function SelectionCart() {
                 {cart.dishes.some((d) => d._id === viewingDish._id) ? (
                   <>
                     <span>✕</span>
-                    <span>Remove from Your Box</span>
+                    <span>Remove from Menu Plan</span>
                   </>
                 ) : (
                   <>
                     <span>+</span>
-                    <span>Pack into Your Box</span>
+                    <span>Add to Menu Plan</span>
                   </>
                 )}
               </button>

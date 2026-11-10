@@ -14,8 +14,6 @@ export default function DishFilterDrawer({
   onToggleCuisine,
   selectedSpice = 'all',
   onChangeSpice,
-  selectedPrepTime = 'all',
-  onChangePrepTime,
   excludedAllergens = [],
   onToggleExcludedAllergen,
   onResetAll,
@@ -34,8 +32,8 @@ export default function DishFilterDrawer({
   }, [isOpen, onClose]);
 
   // Compute live counts from dishes
-  // 1. Dietary requirements
-  const canonicalDietary = ['Vegan', 'Vegetarian', 'Dairy-Free', 'Halal', 'Gluten-Free', 'Keto', 'Nut-Free', 'Low Carb'];
+  // 1. Dietary requirements (Removed Keto, Nut-Free, Low Carb per client spec)
+  const canonicalDietary = ['Vegan', 'Vegetarian', 'Dairy-Free', 'Halal', 'Gluten-Free'];
   const extractedDietary = Array.from(
     new Set(dishes.flatMap((d) => (Array.isArray(d.dietaryTags) ? d.dietaryTags : d.dietary ? [d.dietary] : [])))
   ).filter(Boolean);
@@ -51,8 +49,24 @@ export default function DishFilterDrawer({
     })
     .filter((item) => item.count > 0 || canonicalDietary.includes(item.label));
 
-  // 2. Cuisines
-  const canonicalCuisines = ['Modern British', 'Italian', 'Pan-Asian', 'Mediterranean', 'French', 'Thai', 'Japanese'];
+  // 2. Cuisines (Simplified & updated per client spec)
+  const canonicalCuisines = [
+    'British',
+    'Italian',
+    'Asian',
+    'Mediterranean',
+    'French',
+    'Thai',
+    'Japanese',
+    'Korean',
+    'Chinese',
+    'Russian',
+    'German',
+    'American',
+    'South American',
+    'Middle Eastern',
+    'Nordic',
+  ];
   const extractedCuisines = Array.from(
     new Set(dishes.flatMap((d) => (Array.isArray(d.cuisineTags) ? d.cuisineTags : d.cuisine ? [d.cuisine] : [])))
   ).filter(Boolean);
@@ -91,7 +105,6 @@ export default function DishFilterDrawer({
   activeFilterCount += selectedDietary.length;
   activeFilterCount += selectedCuisines.length;
   if (selectedSpice !== 'all') activeFilterCount += 1;
-  if (selectedPrepTime !== 'all') activeFilterCount += 1;
   activeFilterCount += excludedAllergens.length;
 
   return (
@@ -310,10 +323,19 @@ export default function DishFilterDrawer({
                 );
               })}
 
-              {['main', 'dessert', 'kids'].map((typeKey) => {
+              {[
+                { key: 'main', label: 'Main' },
+                { key: 'side', label: 'Side' },
+                { key: 'soup', label: 'Soup' },
+                { key: 'dessert', label: 'Dessert' },
+                { key: 'kids', label: "Kids' Meals" },
+              ].map(({ key: typeKey, label }) => {
                 const isActive = activeCategory === typeKey;
-                const label = typeKey === 'main' ? 'Main Courses' : typeKey === 'dessert' ? 'Desserts' : "Kids' Meals";
-                const count = dishes.filter((d) => (d.type || '').toLowerCase() === typeKey.toLowerCase()).length;
+                const count = dishes.filter(
+                  (d) =>
+                    (d.type || '').toLowerCase() === typeKey.toLowerCase() ||
+                    (d.categoryId?.slug || '').toLowerCase() === typeKey.toLowerCase()
+                ).length;
 
                 return (
                   <button
@@ -492,9 +514,9 @@ export default function DishFilterDrawer({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
                 { value: 'all', label: 'Any spice level' },
+                { value: 'none', label: 'None (no chilli heat)' },
                 { value: 'mild', label: 'Mild', icon: '/assets/spice-mild.png' },
                 { value: 'medium', label: 'Medium' },
-                { value: 'hot', label: 'Hot', icon: '/assets/spice-spicy.png' },
               ].map((opt) => {
                 const selected = selectedSpice === opt.value;
                 return (
@@ -556,84 +578,6 @@ export default function DishFilterDrawer({
                         {opt.label}
                       </span>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 4. Preparation time */}
-          <div>
-            <h3
-              style={{
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                color: '#1a1814',
-                margin: '0 0 10px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Preparation time
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {[
-                { value: 'all', label: 'Any duration' },
-                { value: 'under30', label: 'Under 30 minutes' },
-                { value: '30to60', label: '30–60 minutes' },
-                { value: 'over60', label: 'Over 60 minutes' },
-              ].map((opt) => {
-                const selected = selectedPrepTime === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => onChangePrepTime(opt.value)}
-                    style={{
-                      all: 'unset',
-                      boxSizing: 'border-box',
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '4px 2px',
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        border: selected ? '1px solid #2e3b12' : '1px solid #c7bea8',
-                        backgroundColor: '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {selected && (
-                        <div
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#2e3b12',
-                          }}
-                        />
-                      )}
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '0.80rem',
-                        color: selected ? '#1a1814' : '#4a463e',
-                        fontWeight: selected ? 600 : 400,
-                      }}
-                    >
-                      {opt.label}
-                    </span>
                   </button>
                 );
               })}

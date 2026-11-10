@@ -23,15 +23,22 @@ export default function DishBasicStep({
   const fileInputRef = useRef(null);
 
   const commonCuisinePresets = [
-    'French',
-    'Japanese Kaiseki',
-    'Mediterranean',
+    'British',
     'Italian',
-    'Nordic',
-    'Modern British',
-    'Pan-Asian',
+    'French',
+    'Asian',
+    'Japanese',
+    'Mediterranean',
+    'Mexican',
     'Middle Eastern',
-    'Mexican Contemporary',
+    'Nordic',
+    'Korean',
+    'Chinese',
+    'Thai',
+    'Russian',
+    'German',
+    'American',
+    'South American',
   ];
 
   const handleFilesSelected = (e) => {
@@ -60,13 +67,19 @@ export default function DishBasicStep({
     <div className="dish-step-basic">
       {/* LEFT COLUMN: Dish Core Details */}
       <div className="dish-basic-left-col" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {/* Dish Name */}
+        {/* Dish Name - Optimized to prevent iOS Safari Payment Card Autofill */}
         <FormInput
           label="Dish Name"
-          id="dishName"
+          id="dish_title"
+          name="dish_title"
+          autoComplete="off"
+          data-form-type="other"
+          data-lpignore="true"
+          autoCapitalize="words"
+          spellCheck="false"
           value={formData.name || ''}
           onChange={(e) => onFieldChange('name', e.target.value)}
-          placeholder="e.g. Pan-Seared Chilean Sea Bass with Yuzu Beurre Blanc"
+          placeholder="e.g. Pan-Seared Salmon with Herb Butter"
           required
           error={errors.name}
         />
@@ -97,23 +110,25 @@ export default function DishBasicStep({
             value={formData.type || 'main'}
             onChange={(val) => onFieldChange('type', val)}
             options={[
-              { value: 'main', label: 'Main Course' },
+              { value: 'main', label: 'Main' },
+              { value: 'side', label: 'Side' },
+              { value: 'soup', label: 'Soup' },
               { value: 'dessert', label: 'Dessert' },
-              { value: 'kids', label: "Kids' Meal" },
+              { value: 'kids', label: "Kids' Meals" },
             ]}
           />
         </div>
 
         {/* Description */}
         <FormInput
-          label="Public Presentation Description"
+          label="Description"
           id="dishDesc"
           type="textarea"
           rows={3}
           value={formData.description || ''}
           onChange={(e) => onFieldChange('description', e.target.value)}
-          placeholder="An evocative, refined description presented to clients in the seasonal menu catalogue..."
-          helperText="Shown directly to clients when selecting dishes for their in-home visit."
+          placeholder="A clear and simple description of this dish for families..."
+          helperText="Shown to clients when planning their menu."
           optional
         />
 

@@ -103,7 +103,7 @@ export default function VisitDetails() {
     );
   };
 
-  if (loading) return <Loader message="Loading box details..." />;
+  if (loading) return <Loader message="Loading visit details..." />;
 
   if (!visit) {
     return (
@@ -111,10 +111,10 @@ export default function VisitDetails() {
         <div style={{ maxWidth: '440px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #ece7de', padding: '30px 20px' }}>
           <Package size={38} color="#9ca3af" style={{ margin: '0 auto 12px' }} />
           <h2 style={{ fontSize: '1.15rem', color: '#1a1814', marginBottom: '6px', fontWeight: 700 }}>
-            Box Order Not Found
+            Cooking Visit Not Found
           </h2>
           <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: '0 0 16px', lineHeight: 1.45 }}>
-            We couldn't locate the requested meal box order. It may have been removed.
+            We couldn't locate the requested cooking visit. It may have been removed.
           </p>
           <Link to="/history">
             <button
@@ -130,7 +130,7 @@ export default function VisitDetails() {
                 fontWeight: 600,
               }}
             >
-              &larr; Back to Previous Boxes
+              &larr; Back to Past Menus
             </button>
           </Link>
         </div>
@@ -163,7 +163,7 @@ export default function VisitDetails() {
           }}
         >
           <ArrowLeft size={13} />
-          <span>Back to Previous Boxes</span>
+          <span>Back to Past Menus</span>
         </Link>
       </div>
 
@@ -193,7 +193,7 @@ export default function VisitDetails() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
             <h1 className="user-page-title">
-              Box Order Details
+              Cooking Visit Details
             </h1>
             <span
               style={{
@@ -209,7 +209,7 @@ export default function VisitDetails() {
             </span>
           </div>
           <p className="user-page-subtitle">
-            Full menu selections, preparation notes, delivery/pickup window, and order status.
+            Full menu selections, special requests, visit preference, and status.
           </p>
         </div>
 
@@ -219,11 +219,11 @@ export default function VisitDetails() {
             type="button"
             className="user-action-btn"
             onClick={useMenuAgain}
-            title="Re-pack this box"
+            title="Re-plan this menu"
             style={{ padding: '0 12px' }}
           >
             <RotateCcw size={13} />
-            <span className="user-btn-text">Re-pack This Box</span>
+            <span className="user-btn-text">Re-plan This Menu</span>
           </button>
         </div>
       </div>
@@ -292,14 +292,14 @@ export default function VisitDetails() {
               }}
             >
               {visit.status === 'confirmed'
-                ? 'Confirmed Box Order'
+                ? 'Confirmed Cooking Visit'
                 : visit.status === 'ready'
-                ? 'Ready for Pickup / Dispatch'
+                ? 'Menu Confirmed'
                 : visit.status === 'pending'
                 ? 'Pending Chef Review'
                 : visit.status === 'completed'
-                ? 'Completed Box Order'
-                : 'Cancelled Box Order'}
+                ? 'Completed Cooking Visit'
+                : 'Cancelled Cooking Visit'}
             </span>
             {getStatusBadge(visit.status)}
           </div>
@@ -323,19 +323,19 @@ export default function VisitDetails() {
           >
             {visit.status === 'confirmed' && (
               <>
-                Chef Missy is preparing your box for delivery or pickup between{' '}
-                <strong>{formatArrivalWindow(visit.arrivalWindow) || 'the scheduled hours'}</strong>.
+                Chef Missy will arrive for your in-home cooking session during your preferred window:{' '}
+                <strong>{visit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}</strong>.
               </>
             )}
             {visit.status === 'ready' &&
-              'Your meal box order is freshly prepared, packaged, and ready for pickup or dispatch!'}
+              'Your menu plan is confirmed. Chef Missy will arrive on your scheduled date!'}
             {visit.status === 'pending' &&
-              'Your meal box selection has been submitted to Chef Missy. You will receive an email confirmation once the preparation timeslot is finalized.'}
+              'Your menu selection has been submitted to Chef Missy. She will confirm the exact arrival time directly with you.'}
             {visit.status === 'completed' &&
-              'This meal box order has been prepared and completed. We hope you enjoyed every dish!'}
+              'This cooking visit has been completed. We hope your family enjoyed every dish!'}
             {visit.status === 'cancelled' && (
               <>
-                This box order was cancelled{visit.cancelledBy ? ` by ${visit.cancelledBy}` : ''}.
+                This cooking visit was cancelled{visit.cancelledBy ? ` by ${visit.cancelledBy}` : ''}.
                 {visit.cancellationReason && ` Reason: "${visit.cancellationReason}"`}
               </>
             )}
@@ -374,7 +374,7 @@ export default function VisitDetails() {
           </div>
           <div>
             <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-              Box Preparation Date
+              Cooking Visit Date
             </span>
             <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
               {formattedDate}
@@ -382,7 +382,7 @@ export default function VisitDetails() {
           </div>
         </div>
 
-        {/* 2. Box Portions */}
+        {/* 2. Family Portions */}
         <div
           style={{
             backgroundColor: '#ffffff',
@@ -411,7 +411,7 @@ export default function VisitDetails() {
           </div>
           <div>
             <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-              Box Portions
+              Family Portions
             </span>
             <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
               {visit.guests || 2} Portions
@@ -419,7 +419,7 @@ export default function VisitDetails() {
           </div>
         </div>
 
-        {/* 3. Delivery / Pickup Window */}
+        {/* 3. Visit Preference */}
         <div
           style={{
             backgroundColor: '#ffffff',
@@ -448,23 +448,30 @@ export default function VisitDetails() {
           </div>
           <div>
             <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-              Delivery / Pickup Window
+              Visit Preference
             </span>
-            <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
-              {formatArrivalWindow(visit.arrivalWindow) || (visit.status === 'confirmed' ? 'Scheduled' : '11:00 AM – 1:00 PM')}
-            </strong>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' }}>
+              <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
+                {visit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+              </strong>
+              {/\d/.test(visit.arrivalWindow || '') && (
+                <span style={{ fontSize: '0.72rem', color: '#524d43', fontWeight: 500 }}>
+                  ({formatArrivalWindow(visit.arrivalWindow)})
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content Layout: Dishes on Left, Summary & Notes on Right */}
       <div className="user-split-2col">
-        {/* Left Column: Dishes Packed in Box */}
+        {/* Left Column: Dishes in Menu Plan */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
             <Package size={16} color="var(--color-primary, #2e3b12)" />
             <h3 style={{ fontSize: '0.96rem', color: '#1a1814', margin: 0, fontWeight: 700 }}>
-              Box Dishes ({visit.dishes?.length || 0})
+              Selected Menu Dishes ({visit.dishes?.length || 0})
             </h3>
           </div>
 
@@ -661,7 +668,7 @@ export default function VisitDetails() {
             >
               <FileText size={15} color="#ffffff" />
               <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 700, color: '#ffffff' }}>
-                Box Order Summary
+                Cooking Visit Summary
               </h4>
             </div>
 
@@ -678,11 +685,11 @@ export default function VisitDetails() {
                 </strong>
               </div>
 
-              {/* Box Portions */}
+              {/* Family Portions */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#57534e', fontSize: '0.76rem' }}>
                   <Package size={13} color="#716c62" />
-                  <span>Box Portions</span>
+                  <span>Family Portions</span>
                 </div>
                 <strong style={{ fontSize: '0.82rem', color: '#1a1814' }}>
                   {visit.guests || 2}
@@ -712,16 +719,23 @@ export default function VisitDetails() {
                 {getStatusBadge(visit.status)}
               </div>
 
-              {/* Delivery / Pickup Window */}
+              {/* Visit Preference */}
               {visit.arrivalWindow && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#57534e', fontSize: '0.76rem' }}>
                     <Clock size={13} color="#716c62" />
-                    <span>Delivery / Pickup Window</span>
+                    <span>Visit Preference</span>
                   </div>
-                  <strong style={{ fontSize: '0.74rem', color: '#1a1814' }}>
-                    {formatArrivalWindow(visit.arrivalWindow)}
-                  </strong>
+                  <div style={{ textAlign: 'right' }}>
+                    <strong style={{ fontSize: '0.74rem', color: '#1a1814' }}>
+                      {visit.arrivalWindow.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+                    </strong>
+                    {/\d/.test(visit.arrivalWindow) && (
+                      <span style={{ display: 'block', fontSize: '0.67rem', fontWeight: 500, color: 'var(--color-text-muted, #524d43)', marginTop: '1px' }}>
+                        ({formatArrivalWindow(visit.arrivalWindow)})
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 

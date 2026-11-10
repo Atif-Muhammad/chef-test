@@ -351,15 +351,17 @@ export default function ClientSelections() {
   };
 
   const openStatusModal = (visit, targetStatus) => {
-    let sTime = '16:00';
-    let eTime = '17:00';
-    if (visit.arrivalWindow) {
+    const isAfternoon = (visit.arrivalWindow || '').toLowerCase().includes('afternoon');
+    let sTime = isAfternoon ? '13:00' : '09:00';
+    let eTime = isAfternoon ? '17:00' : '13:00';
+
+    if (visit.arrivalWindow && /\d/.test(visit.arrivalWindow)) {
       const parts = visit.arrivalWindow.split(/-|–/);
       if (parts.length >= 2) {
-        sTime = parseTo24Time(parts[0], '16:00');
-        eTime = parseTo24Time(parts[1], '17:00');
+        sTime = parseTo24Time(parts[0], sTime);
+        eTime = parseTo24Time(parts[1], eTime);
       } else if (parts.length === 1) {
-        sTime = parseTo24Time(parts[0], '16:00');
+        sTime = parseTo24Time(parts[0], sTime);
       }
     }
 
@@ -590,7 +592,7 @@ export default function ClientSelections() {
       render: (v) => {
         const items = [
           {
-            label: 'View Dossier',
+            label: 'View Visit Details',
             icon: <Eye size={13} />,
             onClick: () => setDetailModalVisit(v),
           },
@@ -879,7 +881,7 @@ export default function ClientSelections() {
         <Dialog
           isOpen={Boolean(detailModalVisit)}
           onClose={() => setDetailModalVisit(null)}
-          title={`Dining Visit Dossier: ${detailModalVisit.userId?.name || 'Client'}`}
+          title={`Visit Details: ${detailModalVisit.userId?.name || 'Client'}`}
           maxWidth="780px"
           cardStyle={{
             borderRadius: '4px',

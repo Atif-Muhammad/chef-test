@@ -395,7 +395,7 @@ export default function DishDetail() {
                 boxShadow: 'none',
               }}
             >
-              <Clock size={12} color="#ffffff" style={{ flexShrink: 0 }} /> Time-Intensive (30+ mins prep)
+              Time-Intensive (Max 2 per visit)
             </span>
           )}
         </div>
@@ -422,7 +422,7 @@ export default function DishDetail() {
                   fontWeight: 600,
                 }}
               >
-                {currentDish.type === 'kids' ? "Kids' Meal" : currentDish.type === 'dessert' ? 'Dessert' : 'Main Course'}
+                {currentDish.type === 'kids' ? "Kids' Meal" : currentDish.type === 'dessert' ? 'Dessert' : currentDish.type === 'soup' ? 'Soup' : currentDish.type === 'side' ? 'Side' : 'Main'}
               </span>
 
               <span
@@ -438,6 +438,22 @@ export default function DishDetail() {
               >
                 Base Servings: 2
               </span>
+
+              {(currentDish.suitableForAges1to5 || currentDish.isKidsMeal) && (
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#ecfdf5',
+                    color: '#065f46',
+                    border: '1px solid #a7f3d0',
+                    fontWeight: 600,
+                  }}
+                >
+                  Suitable for ages 1–5
+                </span>
+              )}
 
               {/* Admin-matched Spice Level Icon */}
               <span
@@ -647,7 +663,7 @@ export default function DishDetail() {
                 transition: 'all 0.12s ease',
               }}
             >
-              {inCart ? '✓ Selected in Visit Menu' : 'Add to My Visit Menu \u2192'}
+              {inCart ? '✓ Selected in Menu Plan' : 'Add to Menu Plan \u2192'}
             </button>
 
             <button
@@ -714,7 +730,7 @@ export default function DishDetail() {
                       fontFamily: 'var(--font-heading)',
                     }}
                   >
-                    Chef's Culinary Notes
+                    About this dish
                   </h3>
                   <p style={{ fontSize: '0.84rem', color: '#594f42', lineHeight: 1.6, margin: 0 }}>
                     {currentDish.description}

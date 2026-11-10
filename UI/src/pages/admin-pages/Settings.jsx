@@ -134,7 +134,7 @@ export default function Settings() {
         <button
           type="button"
           onClick={() => navigate(`/admin/selections?visit=${row._id}`)}
-          title="View Visit Dossier"
+          title="View Visit Details"
           style={{
             width: '26px',
             height: '26px',

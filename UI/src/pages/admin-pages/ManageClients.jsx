@@ -196,7 +196,7 @@ export default function ManageClients() {
           ariaLabel={`Actions for ${row.name}`}
           items={[
             {
-              label: 'View Client Dossier',
+              label: 'View Client Profile',
               icon: <Eye size={13} />,
               onClick: () => navigate(`/admin/clients/${row._id}`),
             },

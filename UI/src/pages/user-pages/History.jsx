@@ -324,10 +324,10 @@ export default function History() {
       <div className="user-title-row">
         <div>
           <h1 className="user-page-title">
-            Previous Boxes & Selections
+            Past Menus & Visits
           </h1>
           <p className="user-page-subtitle">
-            Browse your past meal boxes, review menu choices, and quickly re-pack favourite selections.
+            Browse your past cooking visits, review dish choices, and quickly re-plan favourite menus.
           </p>
         </div>
 
@@ -338,11 +338,11 @@ export default function History() {
               className="user-action-btn"
               onClick={() => useMenuAgain(selectedVisit)}
               disabled={detailsLoading}
-              title="Re-pack this box"
+              title="Re-plan this menu"
               style={{ padding: '0 12px' }}
             >
               <RotateCcw size={13} />
-              <span className="user-btn-text">Re-pack This Box</span>
+              <span className="user-btn-text">Re-plan This Menu</span>
             </button>
           </div>
         )}
@@ -364,10 +364,10 @@ export default function History() {
             <Package size={38} color="#9ca3af" />
           </div>
           <h3 style={{ fontSize: '1.05rem', color: '#1a1814', marginBottom: '6px', fontWeight: 600 }}>
-            No Previous Boxes Yet
+            No Past Menus Yet
           </h3>
           <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #716c62)', maxWidth: '420px', margin: '0 auto 16px', lineHeight: 1.45 }}>
-            Once you place your first meal box order, your full menu choices, chef preparation notes, and box details will appear here.
+            Once you confirm your first menu plan, your full dish choices and cooking visit details will appear here.
           </p>
           <Link to="/cart">
             <button
@@ -384,7 +384,7 @@ export default function History() {
                 boxShadow: 'none',
               }}
             >
-              Pack Your Box &rarr;
+              Plan Your Menu &rarr;
             </button>
           </Link>
         </div>
@@ -551,7 +551,7 @@ export default function History() {
                           }}
                         >
                           <Clock size={11} color="#065f46" style={{ flexShrink: 0 }} />
-                          <span>Window: {formatArrivalWindow(v.arrivalWindow)}</span>
+                          <span>Preference: {v.arrivalWindow.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}</span>
                         </div>
                       )}
                     </div>
@@ -658,7 +658,7 @@ export default function History() {
                   </div>
                   <div>
                     <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-                      Box Date
+                      Cooking Date
                     </span>
                     <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
                       {new Date(selectedVisit.visitDate).toLocaleDateString('en-US', {
@@ -671,7 +671,7 @@ export default function History() {
                   </div>
                 </div>
 
-                {/* 2. Box Portions */}
+                {/* 2. Family Portions */}
                 <div
                   className="history-metric-card"
                   style={{
@@ -702,7 +702,7 @@ export default function History() {
                   </div>
                   <div>
                     <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-                      Box Portions
+                      Family Portions
                     </span>
                     <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
                       {selectedVisit.guests || 2} Portions
@@ -710,7 +710,7 @@ export default function History() {
                   </div>
                 </div>
 
-                {/* 3. Delivery / Pickup Window */}
+                {/* 3. Visit Preference */}
                 <div
                   className="history-metric-card"
                   style={{
@@ -741,25 +741,32 @@ export default function History() {
                   </div>
                   <div>
                     <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-                      Delivery / Pickup Window
+                      Visit Preference
                     </span>
-                    <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
-                      {formatArrivalWindow(selectedVisit.arrivalWindow) || (selectedVisit.status === 'confirmed' ? 'Scheduled' : '11:00 AM – 1:00 PM')}
-                    </strong>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' }}>
+                      <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
+                        {selectedVisit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+                      </strong>
+                      {/\d/.test(selectedVisit.arrivalWindow || '') && (
+                        <span style={{ fontSize: '0.72rem', color: '#524d43', fontWeight: 500 }}>
+                          ({formatArrivalWindow(selectedVisit.arrivalWindow)})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Main Content Layout: Left Box Dishes List + Right Box Order Summary & Actions */}
+              {/* Main Content Layout: Left Dishes List + Right Summary & Actions */}
               <div className="user-split-2col">
-                {/* Left: Box Dishes List */}
+                {/* Left: Selected Menu Dishes List */}
                 <div>
                   {/* Section Title with View Details Link */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Package size={16} color="var(--color-primary, #2e3b12)" />
                       <h3 style={{ fontSize: '0.96rem', color: '#1a1814', margin: 0, fontWeight: 700 }}>
-                        Box Dishes ({selectedVisit.dishes?.length || 0})
+                        Selected Menu Dishes ({selectedVisit.dishes?.length || 0})
                       </h3>
                     </div>
 
@@ -974,7 +981,7 @@ export default function History() {
                     >
                       <FileText size={15} color="#ffffff" />
                       <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 700, color: '#ffffff' }}>
-                        Box Order Summary
+                        Cooking Visit Summary
                       </h4>
                     </div>
 
@@ -991,11 +998,11 @@ export default function History() {
                         </strong>
                       </div>
 
-                      {/* Box Portions */}
+                      {/* Family Portions */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#57534e', fontSize: '0.76rem' }}>
                           <Package size={13} color="#716c62" />
-                          <span>Box Portions</span>
+                          <span>Family Portions</span>
                         </div>
                         <strong style={{ fontSize: '0.82rem', color: '#1a1814' }}>
                           {selectedVisit.guests || 2}
@@ -1018,16 +1025,23 @@ export default function History() {
                         {getStatusBadge(selectedVisit.status)}
                       </div>
 
-                      {/* Delivery / Pickup Window */}
+                      {/* Visit Preference */}
                       {selectedVisit.arrivalWindow && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#57534e', fontSize: '0.76rem' }}>
                             <Clock size={13} color="#716c62" />
-                            <span>Delivery / Pickup Window</span>
+                            <span>Visit Preference</span>
                           </div>
-                          <strong style={{ fontSize: '0.74rem', color: '#1a1814' }}>
-                            {formatArrivalWindow(selectedVisit.arrivalWindow)}
-                          </strong>
+                          <div style={{ textAlign: 'right' }}>
+                            <strong style={{ fontSize: '0.74rem', color: '#1a1814' }}>
+                              {selectedVisit.arrivalWindow.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+                            </strong>
+                            {/\d/.test(selectedVisit.arrivalWindow) && (
+                              <span style={{ display: 'block', fontSize: '0.67rem', fontWeight: 500, color: 'var(--color-text-muted, #524d43)', marginTop: '1px' }}>
+                                ({formatArrivalWindow(selectedVisit.arrivalWindow)})
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1035,7 +1049,7 @@ export default function History() {
 
                   {/* 3 Stacked Action Buttons */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {/* 1. Re-pack This Box (Primary Dark Olive) */}
+                    {/* 1. Re-plan This Menu (Primary Dark Olive) */}
                     <button
                       type="button"
                       onClick={() => useMenuAgain(selectedVisit)}
@@ -1060,10 +1074,10 @@ export default function History() {
                       onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
                     >
                       <RotateCcw size={14} />
-                      <span>Re-pack This Box</span>
+                      <span>Re-plan This Menu</span>
                     </button>
 
-                    {/* 2. View Full Box Details (White Card Button) */}
+                    {/* 2. View Full Visit Details (White Card Button) */}
                     <Link to={`/visits/${selectedVisit._id}`} style={{ textDecoration: 'none' }}>
                       <button
                         type="button"
@@ -1088,11 +1102,11 @@ export default function History() {
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
                       >
                         <Eye size={14} color="var(--color-primary, #2e3b12)" />
-                        <span>View Full Box Details</span>
+                        <span>View Full Visit Details</span>
                       </button>
                     </Link>
 
-                    {/* 3. Pack a New Box (White Card Button) */}
+                    {/* 3. Plan a New Menu (White Card Button) */}
                     <Link to="/cart" style={{ textDecoration: 'none' }}>
                       <button
                         type="button"
@@ -1117,7 +1131,7 @@ export default function History() {
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
                       >
                         <Package size={14} color="var(--color-primary, #2e3b12)" />
-                        <span>Pack a New Box</span>
+                        <span>Plan a New Menu</span>
                       </button>
                     </Link>
                   </div>

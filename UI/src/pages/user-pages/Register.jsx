@@ -108,7 +108,7 @@ export default function Register() {
               fontFamily: "'Playfair Display', Georgia, serif",
               fontSize: '2.25rem',
               fontWeight: 600,
-              color: '#1a240e',
+              color: '#2c3917',
               lineHeight: 1.15,
               margin: '0 0 12px',
             }}
@@ -127,7 +127,7 @@ export default function Register() {
               maxWidth: '380px',
             }}
           >
-            Join Private Chef Missy and start creating personalised menus for your upcoming visits.
+            Join Private Chef Missy and start planning wholesome menus for your upcoming visits.
           </p>
 
           {/* 3 Value Pillars */}
@@ -147,14 +147,14 @@ export default function Register() {
                   flexShrink: 0,
                 }}
               >
-                <ClocheIcon size={16} color="#36441c" />
+                <ClocheIcon size={16} color="#485c24" />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1a240e' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2c3917' }}>
                   Browse &amp; Select
                 </h4>
                 <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: '#656056' }}>
-                  Explore a curated menu of seasonal dishes.
+                  Explore a delicious menu of seasonal dishes.
                 </p>
               </div>
             </div>
@@ -174,10 +174,10 @@ export default function Register() {
                   flexShrink: 0,
                 }}
               >
-                <HeartIcon size={15} color="#36441c" />
+                <HeartIcon size={15} color="#485c24" />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1a240e' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2c3917' }}>
                   Save Your Favourites
                 </h4>
                 <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: '#656056' }}>
@@ -201,10 +201,10 @@ export default function Register() {
                   flexShrink: 0,
                 }}
               >
-                <CalendarIcon size={15} color="#36441c" />
+                <CalendarIcon size={15} color="#485c24" />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1a240e' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2c3917' }}>
                   Plan Your Visit
                 </h4>
                 <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: '#656056' }}>
@@ -253,7 +253,7 @@ export default function Register() {
                 fontFamily: "'Playfair Display', Georgia, serif",
                 fontSize: '1.85rem',
                 fontWeight: 600,
-                color: '#1a240e',
+                color: '#2c3917',
                 margin: 0,
               }}
             >
@@ -336,7 +336,7 @@ export default function Register() {
                     transition: 'border-color 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
+                  onFocus={(e) => (e.target.style.borderColor = '#485c24')}
                   onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
                 />
               </div>
@@ -366,7 +366,7 @@ export default function Register() {
                     pointerEvents: 'none',
                   }}
                 >
-                  <MailIcon size={14} color="#445428" />
+                  <MailIcon size={14} color="#485c24" />
                 </span>
                 <input
                   id="register-email"
@@ -387,7 +387,7 @@ export default function Register() {
                     transition: 'border-color 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
+                  onFocus={(e) => (e.target.style.borderColor = '#485c24')}
                   onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
                 />
               </div>
@@ -417,7 +417,7 @@ export default function Register() {
                     pointerEvents: 'none',
                   }}
                 >
-                  <LockIcon size={14} color="#445428" />
+                  <LockIcon size={14} color="#485c24" />
                 </span>
                 <input
                   id="register-password"
@@ -438,7 +438,7 @@ export default function Register() {
                     transition: 'border-color 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
+                  onFocus={(e) => (e.target.style.borderColor = '#485c24')}
                   onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
                 />
                 <button
@@ -509,7 +509,7 @@ export default function Register() {
                     transition: 'border-color 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
+                  onFocus={(e) => (e.target.style.borderColor = '#485c24')}
                   onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
                 />
                 <button
@@ -551,7 +551,7 @@ export default function Register() {
                   required
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
-                  style={{ marginTop: '1px', accentColor: '#36441c', cursor: 'pointer' }}
+                  style={{ marginTop: '1px', accentColor: '#485c24', cursor: 'pointer' }}
                 />
                 <span>
                   I agree to the{' '}
@@ -574,7 +574,7 @@ export default function Register() {
               style={{
                 width: '100%',
                 padding: '9px',
-                backgroundColor: '#36441c',
+                backgroundColor: '#485c24',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -586,13 +586,13 @@ export default function Register() {
                 justifyContent: 'center',
                 gap: '6px',
                 transition: 'background-color 0.15s ease',
-                boxShadow: '0 3px 10px rgba(54, 68, 28, 0.2)',
+                boxShadow: '0 3px 10px rgba(72, 92, 36, 0.25)',
               }}
               onMouseEnter={(e) => {
-                if (!loading) e.currentTarget.style.backgroundColor = '#293515';
+                if (!loading) e.currentTarget.style.backgroundColor = '#3b4c1c';
               }}
               onMouseLeave={(e) => {
-                if (!loading) e.currentTarget.style.backgroundColor = '#36441c';
+                if (!loading) e.currentTarget.style.backgroundColor = '#485c24';
               }}
             >
               {loading ? 'Creating account...' : 'Create Account →'}
@@ -635,14 +635,14 @@ export default function Register() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#fbf9f5';
-                e.currentTarget.style.borderColor = '#36441c';
+                e.currentTarget.style.borderColor = '#485c24';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = '#ffffff';
                 e.currentTarget.style.borderColor = '#78716c';
               }}
             >
-              <UserIcon size={14} color="#36441c" />
+              <UserIcon size={14} color="#485c24" />
               <span>Already have an account? Log In</span>
             </Link>
           </form>

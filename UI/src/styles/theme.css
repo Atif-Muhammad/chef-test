@@ -5,17 +5,17 @@
 
 :root {
   /* Colors */
-  --color-primary: #2e3b12;
-  --color-primary-hover: #3b4b18;
-  --color-primary-light: #f1f6ec;
+  --color-primary: #485c24;
+  --color-primary-hover: #3b4c1c;
+  --color-primary-light: #f1f5ea;
   
   --color-bg: #fbf9f5;
   --color-surface: #ffffff;
   --color-surface-subtle: #f7f4ee;
   
   --color-text: #1e1b16;
-  --color-text-muted: #716c62;
-  --color-text-light: #9c968b;
+  --color-text-muted: #524d43;
+  --color-text-light: #6e685c;
   --color-text-inverse: #ffffff;
 
   --color-accent: #c49e5d;
@@ -25,7 +25,7 @@
   --color-sidebar-bg: #fcfbf8;
   --color-border: #ece7de;
   --color-border-subtle: #f2eee6;
-  --color-border-focus: #2e3b12;
+  --color-border-focus: #485c24;
 
   --color-danger: #c53030;
   --color-danger-bg: #feefef;

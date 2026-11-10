@@ -214,15 +214,17 @@ export default function ClientDetail() {
       return;
     }
 
-    let sTime = '16:00';
-    let eTime = '17:00';
-    if (visit.arrivalWindow) {
+    const isAfternoon = (visit.arrivalWindow || '').toLowerCase().includes('afternoon');
+    let sTime = isAfternoon ? '13:00' : '09:00';
+    let eTime = isAfternoon ? '17:00' : '13:00';
+
+    if (visit.arrivalWindow && /\d/.test(visit.arrivalWindow)) {
       const parts = visit.arrivalWindow.split(/-|–/);
       if (parts.length >= 2) {
-        sTime = parseTo24Time(parts[0], '16:00');
-        eTime = parseTo24Time(parts[1], '17:00');
+        sTime = parseTo24Time(parts[0], sTime);
+        eTime = parseTo24Time(parts[1], eTime);
       } else if (parts.length === 1) {
-        sTime = parseTo24Time(parts[0], '16:00');
+        sTime = parseTo24Time(parts[0], sTime);
       }
     }
 

@@ -86,11 +86,14 @@ export default function DishRecipeStep({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <ToggleSwitch
           id="isKidsMeal"
-          label="Kids' Meal Option (Ages 1-5)"
+          label="Kids' Meal Option (Ages 1–5)"
           description="Tailored portion/seasoning suitable for toddlers and younger children in family meal prep."
-          checked={Boolean(formData.isKidsMeal)}
-          onChange={(val) => onFieldChange('isKidsMeal', val)}
-          badge={formData.isKidsMeal ? <><ChildIcon size={12} color="#065f46" /> Kids' Friendly</> : ''}
+          checked={Boolean(formData.isKidsMeal || formData.suitableForAges1to5)}
+          onChange={(val) => {
+            onFieldChange('isKidsMeal', val);
+            onFieldChange('suitableForAges1to5', val);
+          }}
+          badge={(formData.isKidsMeal || formData.suitableForAges1to5) ? <><ChildIcon size={12} color="#065f46" /> Kids' Friendly (Ages 1–5)</> : ''}
           badgeColor="primary"
           disabled={disabled}
           optional

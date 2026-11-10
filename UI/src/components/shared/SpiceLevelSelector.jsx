@@ -19,11 +19,11 @@ export default function SpiceLevelSelector({
     {
       id: 'none',
       label: 'None',
-      hint: 'No heat / gentle',
+      hint: 'No chilli heat',
       icon: (
         <img
           src="/assets/no-spice.png"
-          alt="No heat"
+          alt="None"
           style={{ width: '22px', height: '22px', objectFit: 'contain', display: 'block' }}
         />
       ),
@@ -35,19 +35,19 @@ export default function SpiceLevelSelector({
       icon: (
         <img
           src="/assets/spice-mild.png"
-          alt="Mild heat"
+          alt="Mild"
           style={{ width: '22px', height: '22px', objectFit: 'contain', display: 'block' }}
         />
       ),
     },
     {
-      id: 'spicy',
-      label: 'Spicy',
-      hint: 'Distinct heat',
+      id: 'medium',
+      label: 'Medium',
+      hint: 'Moderate heat',
       icon: (
         <img
           src="/assets/spice-spicy.png"
-          alt="Spicy heat"
+          alt="Medium"
           style={{ width: '22px', height: '22px', objectFit: 'contain', display: 'block' }}
         />
       ),
@@ -81,7 +81,7 @@ export default function SpiceLevelSelector({
         }}
       >
         {options.map((opt) => {
-          const isSelected = value === opt.id;
+          const isSelected = value === opt.id || (opt.id === 'medium' && value === 'spicy');
           return (
             <button
               key={opt.id}

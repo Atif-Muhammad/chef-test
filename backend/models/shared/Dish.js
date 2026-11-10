@@ -84,7 +84,7 @@ const DishSchema = new mongoose.Schema(
     },
     spiceLevel: {
       type: String,
-      enum: ['none', 'mild', 'spicy'],
+      enum: ['none', 'mild', 'medium', 'spicy'],
       default: 'none',
     },
     nutritionalHighlights: {
@@ -107,9 +107,13 @@ const DishSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    suitableForAges1to5: {
+      type: Boolean,
+      default: false,
+    },
     type: {
       type: String,
-      enum: ['main', 'dessert', 'kids'],
+      enum: ['main', 'side', 'soup', 'dessert', 'kids', 'starter'],
       default: 'main',
     },
   },

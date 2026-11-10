@@ -37,12 +37,9 @@ const DIETARY_PRESETS = [
   'Vegan',
   'Gluten-Free',
   'Dairy-Free',
-  'Nut-Free',
   'Pescatarian',
   'Halal',
   'Kosher',
-  'Keto',
-  'Low Carb',
   'Low Sodium',
 ];
 
@@ -116,6 +113,8 @@ export default function Profile() {
   });
   const [editSelectedDietary, setEditSelectedDietary] = useState([]);
   const [editOtherDietary, setEditOtherDietary] = useState('');
+  const [hasFoodAllergies, setHasFoodAllergies] = useState(false);
+  const [allergyDetails, setAllergyDetails] = useState('');
   const [editSelectedAllergens, setEditSelectedAllergens] = useState([]);
   const [editOtherAllergies, setEditOtherAllergies] = useState('');
 
@@ -218,28 +217,14 @@ export default function Profile() {
     }
 
     // Populate Allergens
-    if (Array.isArray(user.allergies)) {
-      const matched = [];
-      const unmatched = [];
-      const targetList = masterAllergens.length > 0 ? masterAllergens : DEFAULT_FALLBACK_ALLERGENS;
-      user.allergies.forEach((alg) => {
-        if (!alg) return;
-        const clean = alg.trim();
-        const found = targetList.find(
-          (m) =>
-            m.toLowerCase() === clean.toLowerCase() ||
-            clean.toLowerCase().includes(m.toLowerCase()) ||
-            m.toLowerCase().includes(clean.toLowerCase())
-        );
-        if (found) {
-          matched.push(found);
-        } else {
-          unmatched.push(clean);
-        }
-      });
-      setEditSelectedAllergens([...new Set(matched)]);
-      setEditOtherAllergies(unmatched.join(', '));
+    if (Array.isArray(user.allergies) && user.allergies.length > 0) {
+      setHasFoodAllergies(true);
+      setAllergyDetails(user.allergies.join(', '));
+      setEditSelectedAllergens(user.allergies);
+      setEditOtherAllergies(user.allergies.join(', '));
     } else {
+      setHasFoodAllergies(false);
+      setAllergyDetails('');
       setEditSelectedAllergens([]);
       setEditOtherAllergies('');
     }
@@ -354,12 +339,17 @@ export default function Profile() {
         .filter(Boolean);
       const combinedDietary = [...new Set([...editSelectedDietary, ...customDietary])];
 
-      // Allergies array
-      const customAllergies = editOtherAllergies
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const combinedAllergies = [...new Set([...editSelectedAllergens, ...customAllergies])];
+      // Allergies array (simplified Yes/No + details)
+      let combinedAllergies = [];
+      if (hasFoodAllergies && allergyDetails.trim()) {
+        combinedAllergies = allergyDetails
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (combinedAllergies.length === 0 && allergyDetails.trim()) {
+          combinedAllergies = [allergyDetails.trim()];
+        }
+      }
 
       const payload = {
         name: editFormData.name.trim(),
@@ -413,7 +403,7 @@ export default function Profile() {
             My Profile & Preferences
           </h1>
           <p className="user-page-subtitle">
-            Manage your personal dossier, dietary regimen, allergen safeguards, and bespoke culinary notes.
+            Manage your family details, dietary needs, food allergies, and cooking notes.
           </p>
         </div>
 
@@ -1397,7 +1387,7 @@ export default function Profile() {
               color: '#8c857b',
             }}
           >
-            Special instructions are forwarded directly to Chef Missy for every bespoke order.
+            Special requests are shared directly with Chef Missy for every cooking visit.
           </div>
         </div>
       </div>
@@ -1874,9 +1864,9 @@ export default function Profile() {
                 }}
               >
                 <ShieldAlert size={13} />
-                <span className="profile-tab-text-desktop">Allergies & Safety</span>
+                <span className="profile-tab-text-desktop">Food Allergies</span>
                 <span className="profile-tab-text-mobile">Allergies</span>
-                {editSelectedAllergens.length > 0 && (
+                {hasFoodAllergies && (
                   <span
                     style={{
                       fontSize: '0.62rem',
@@ -1886,7 +1876,7 @@ export default function Profile() {
                       color: '#ffffff',
                     }}
                   >
-                    {editSelectedAllergens.length}
+                    Yes
                   </span>
                 )}
               </button>
@@ -2187,109 +2177,116 @@ export default function Profile() {
                   <div>
                     <div
                       style={{
-                        padding: '10px 12px',
-                        borderRadius: '4px',
-                        backgroundColor: '#fef2f2',
-                        border: '1px solid #fecaca',
+                        padding: '10px 14px',
+                        borderRadius: '6px',
+                        backgroundColor: '#fffbeb',
+                        border: '1px solid #fde68a',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        marginBottom: '14px',
+                        marginBottom: '16px',
                       }}
                     >
-                      <ShieldAlert size={16} color="#dc2626" style={{ flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.72rem', color: '#991b1b', lineHeight: 1.4 }}>
-                        <strong>Culinary Safety Protocol:</strong> Selected allergens trigger automated dish conflict alerts and safe ingredient substitutions by Chef Missy.
+                      <ShieldAlert size={16} color="#d97706" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.74rem', color: '#92400e', lineHeight: 1.45 }}>
+                        Chef Missy will discuss allergies and suitable adjustments directly with each family.
                       </span>
                     </div>
 
-                    {loadingAllergens ? (
-                      <div style={{ padding: '20px 0', textAlign: 'center', color: '#716c62', fontSize: '0.78rem' }}>
-                        <Loader2 size={16} className="animate-spin" style={{ display: 'inline-block', marginRight: '6px' }} />
-                        Loading allergen catalog...
-                      </div>
-                    ) : (
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-                          gap: '8px',
-                          marginBottom: '16px',
-                        }}
-                      >
-                        {allergenListToRender.map((allergenName) => {
-                          const isChecked = editSelectedAllergens.includes(allergenName);
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.80rem', fontWeight: 700, color: '#1a1814', display: 'block', marginBottom: '8px' }}>
+                        Do you have any food allergies?
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        {[
+                          { value: false, label: 'No' },
+                          { value: true, label: 'Yes' },
+                        ].map((opt) => {
+                          const isSelected = hasFoodAllergies === opt.value;
                           return (
-                            <div
-                              key={allergenName}
-                              onClick={() => toggleEditAllergen(allergenName)}
+                            <button
+                              key={opt.label}
+                              type="button"
+                              onClick={() => setHasFoodAllergies(opt.value)}
                               style={{
-                                padding: '8px 10px',
-                                borderRadius: '4px',
-                                border: isChecked ? '1px solid #dc2626' : '1px solid #ece7de',
-                                backgroundColor: isChecked ? '#fef2f2' : '#ffffff',
+                                padding: '10px 14px',
+                                borderRadius: '6px',
+                                border: isSelected ? '1.5px solid #2e3b12' : '1px solid #ece7de',
+                                backgroundColor: isSelected ? '#f1f6ec' : '#ffffff',
+                                color: isSelected ? '#2e3b12' : '#3c372f',
+                                fontWeight: isSelected ? 700 : 500,
+                                fontSize: '0.80rem',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
-                                userSelect: 'none',
-                                transition: 'all 0.15s ease',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                transition: 'all 0.12s ease',
                               }}
                             >
                               <span
                                 style={{
-                                  fontSize: '0.76rem',
-                                  fontWeight: isChecked ? 700 : 500,
-                                  color: isChecked ? '#991b1b' : '#1a1814',
+                                  width: '12px',
+                                  height: '12px',
+                                  borderRadius: '50%',
+                                  border: isSelected ? '4px solid #2e3b12' : '1.5px solid #a8a296',
+                                  backgroundColor: '#ffffff',
+                                  display: 'inline-block',
                                 }}
-                              >
-                                {allergenName}
-                              </span>
-                              <div
-                                style={{
-                                  width: '16px',
-                                  height: '16px',
-                                  borderRadius: '3px',
-                                  border: isChecked ? '1px solid #dc2626' : '1px solid #d4cdc5',
-                                  backgroundColor: isChecked ? '#dc2626' : '#ffffff',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: '#ffffff',
-                                }}
-                              >
-                                {isChecked && <Check size={11} strokeWidth={3} />}
-                              </div>
-                            </div>
+                              />
+                              <span>{opt.label}</span>
+                            </button>
                           );
                         })}
                       </div>
-                    )}
-
-                    <div style={{ borderTop: '1px solid #ece7de', paddingTop: '14px' }}>
-                      <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#1a1814', display: 'block', marginBottom: '5px' }}>
-                        Other Specific Allergens or Intolerances
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Coriander allergy, nightshades, stone fruit"
-                        value={editOtherAllergies}
-                        onChange={(e) => setEditOtherAllergies(e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '36px',
-                          padding: '0 10px',
-                          borderRadius: '4px',
-                          border: '1px solid #ece7de',
-                          fontSize: '0.80rem',
-                          backgroundColor: '#ffffff',
-                          outline: 'none',
-                        }}
-                      />
-                      <span style={{ fontSize: '0.68rem', color: '#8c857b', marginTop: '4px', display: 'block' }}>
-                        Separate multiple allergens with commas.
-                      </span>
                     </div>
+
+                    {hasFoodAllergies ? (
+                      <div>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#1a1814', display: 'block', marginBottom: '5px' }}>
+                          Please list any food allergies or adjustments needed:
+                        </label>
+                        <textarea
+                          rows={3}
+                          placeholder="Please list any food allergies or adjustments needed..."
+                          value={allergyDetails}
+                          onChange={(e) => setAllergyDetails(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--color-border, #ece7de)',
+                            fontSize: '0.80rem',
+                            backgroundColor: '#ffffff',
+                            color: '#1a1814',
+                            outline: 'none',
+                            fontFamily: 'inherit',
+                            resize: 'vertical',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                        <span style={{ fontSize: '0.70rem', color: '#666053', marginTop: '4px', display: 'block' }}>
+                          Chef Missy will review these details and discuss adjustments directly with you.
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '4px',
+                          backgroundColor: '#f0fdf4',
+                          border: '1px solid #bbf7d0',
+                          color: '#166534',
+                          fontSize: '0.76rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <CheckCircle2 size={16} color="#166534" />
+                        <span>No known food allergies.</span>
+                      </div>
+                    )}
                   </div>
                 )}
 

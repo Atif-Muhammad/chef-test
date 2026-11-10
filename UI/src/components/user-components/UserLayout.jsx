@@ -11,17 +11,17 @@ export default function UserLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  // Screen size detection for responsive mobile drawer
+  // Screen size detection for responsive mobile drawer (tablet and mobile up to 1024px)
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth <= 768;
+      return window.innerWidth <= 1024;
     }
     return false;
   });
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
+      const mobile = window.innerWidth <= 1024;
       setIsMobile(mobile);
       if (!mobile) setMobileOpen(false);
     };
@@ -100,7 +100,7 @@ export default function UserLayout() {
     },
     {
       to: '/cart',
-      label: 'Pack Your Box',
+      label: 'Plan Your Menu',
       badge: cartCount > 0 ? cartCount : null,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -122,7 +122,7 @@ export default function UserLayout() {
     },
     {
       to: '/history',
-      label: 'Previous Selections',
+      label: 'Past Menus',
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -190,10 +190,12 @@ export default function UserLayout() {
           top: 0,
           left: 0,
           bottom: isMobile ? 0 : 'auto',
-          height: '100vh',
-          maxHeight: '100vh',
+          height: isMobile ? '100dvh' : '100vh',
+          maxHeight: isMobile ? '100dvh' : '100vh',
           zIndex: isMobile ? 100 : 50,
-          overflow: 'hidden',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
           boxShadow: isMobile && mobileOpen ? '6px 0 28px rgba(46, 59, 18, 0.22)' : 'none',
           transform: isMobile ? (mobileOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
           transition: isMobile ? 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease' : 'none',
@@ -381,7 +383,7 @@ export default function UserLayout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Link
               to="/cart"
-              aria-label="Pack Your Box Cart"
+              aria-label="Plan Your Menu"
               style={{
                 display: 'flex',
                 alignItems: 'center',

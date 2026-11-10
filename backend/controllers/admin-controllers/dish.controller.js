@@ -31,6 +31,11 @@ exports.createDish = async (req, res, next) => {
     } else if (req.body.photoUrl && (!req.body.photos || req.body.photos.length === 0)) {
       req.body.photos = [req.body.photoUrl];
     }
+    if (req.body.isKidsMeal !== undefined || req.body.suitableForAges1to5 !== undefined) {
+      const isKids = Boolean(req.body.isKidsMeal || req.body.suitableForAges1to5);
+      req.body.isKidsMeal = isKids;
+      req.body.suitableForAges1to5 = isKids;
+    }
     const dish = await Dish.create(req.body);
     const populated = await Dish.findById(dish._id).populate('categoryId', 'name slug');
     return res.status(201).json({ dish: serializeDish(populated, true) });
@@ -84,6 +89,12 @@ exports.updateDish = async (req, res, next) => {
         req.body.photos = updatedUrls;
         req.body.photoUrl = updatedUrls[0] || '';
       }
+    }
+
+    if (req.body.isKidsMeal !== undefined || req.body.suitableForAges1to5 !== undefined) {
+      const isKids = Boolean(req.body.isKidsMeal || req.body.suitableForAges1to5);
+      req.body.isKidsMeal = isKids;
+      req.body.suitableForAges1to5 = isKids;
     }
 
     const dish = await Dish.findByIdAndUpdate(req.params.id, req.body, {

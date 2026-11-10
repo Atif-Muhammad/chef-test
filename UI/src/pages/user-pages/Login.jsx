@@ -91,7 +91,7 @@ export default function Login() {
               fontFamily: "'Playfair Display', Georgia, serif",
               fontSize: '2.25rem',
               fontWeight: 600,
-              color: '#1a240e',
+              color: '#2c3917',
               lineHeight: 1.15,
               margin: '0 0 12px',
             }}
@@ -130,14 +130,14 @@ export default function Login() {
                   flexShrink: 0,
                 }}
               >
-                <UtensilsIcon size={16} color="#36441c" />
+                <UtensilsIcon size={16} color="#485c24" />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1a240e' }}>
-                  Curated Dishes
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2c3917' }}>
+                  Seasonal Dishes
                 </h4>
                 <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: '#656056' }}>
-                  A wide selection of seasonal dishes, full of flavour.
+                  A wide selection of wholesome meals, full of flavour.
                 </p>
               </div>
             </div>
@@ -157,10 +157,10 @@ export default function Login() {
                   flexShrink: 0,
                 }}
               >
-                <ChefHatIcon size={16} color="#36441c" />
+                <ChefHatIcon size={16} color="#485c24" />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1a240e' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2c3917' }}>
                   Personalised for You
                 </h4>
                 <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: '#656056' }}>
@@ -184,10 +184,10 @@ export default function Login() {
                   flexShrink: 0,
                 }}
               >
-                <HeartIcon size={15} color="#36441c" />
+                <HeartIcon size={15} color="#485c24" />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1a240e' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2c3917' }}>
                   A Seamless Experience
                 </h4>
                 <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: '#656056' }}>
@@ -237,7 +237,7 @@ export default function Login() {
                 fontFamily: "'Playfair Display', Georgia, serif",
                 fontSize: '1.85rem',
                 fontWeight: 600,
-                color: '#1a240e',
+                color: '#2c3917',
                 margin: 0,
               }}
             >
@@ -274,7 +274,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* Box Invitation Notice */}
+          {/* Invitation Notice */}
           {redirectUrl.includes('visitId=') && (
             <div
               style={{
@@ -288,7 +288,7 @@ export default function Login() {
                 lineHeight: 1.4,
               }}
             >
-              Chef Missy has invited you to complete your meal box reservation. Please sign in to review and pack your box.
+              Chef Missy has invited you to complete your meal planning. Please sign in to choose your dishes.
             </div>
           )}
 
@@ -319,7 +319,7 @@ export default function Login() {
                     pointerEvents: 'none',
                   }}
                 >
-                  <MailIcon size={14} color="#445428" />
+                  <MailIcon size={14} color="#485c24" />
                 </span>
                 <input
                   id="client-email"
@@ -342,8 +342,8 @@ export default function Login() {
                     boxSizing: 'border-box',
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#36441c';
-                    e.target.style.boxShadow = '0 0 0 1px #36441c';
+                    e.target.style.borderColor = '#485c24';
+                    e.target.style.boxShadow = '0 0 0 1px #485c24';
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = '#8c8273';
@@ -378,7 +378,7 @@ export default function Login() {
                     pointerEvents: 'none',
                   }}
                 >
-                  <LockIcon size={14} color="#445428" />
+                  <LockIcon size={14} color="#485c24" />
                 </span>
                 <input
                   id="client-password"
@@ -401,8 +401,8 @@ export default function Login() {
                     boxSizing: 'border-box',
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#36441c';
-                    e.target.style.boxShadow = '0 0 0 1px #36441c';
+                    e.target.style.borderColor = '#485c24';
+                    e.target.style.boxShadow = '0 0 0 1px #485c24';
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = '#8c8273';
@@ -453,7 +453,7 @@ export default function Login() {
               style={{
                 width: '100%',
                 padding: '10px',
-                backgroundColor: '#36441c',
+                backgroundColor: '#485c24',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -465,13 +465,13 @@ export default function Login() {
                 justifyContent: 'center',
                 gap: '6px',
                 transition: 'background-color 0.15s ease',
-                boxShadow: '0 3px 10px rgba(54, 68, 28, 0.2)',
+                boxShadow: '0 3px 10px rgba(72, 92, 36, 0.25)',
               }}
               onMouseEnter={(e) => {
-                if (!loading) e.currentTarget.style.backgroundColor = '#293515';
+                if (!loading) e.currentTarget.style.backgroundColor = '#3b4c1c';
               }}
               onMouseLeave={(e) => {
-                if (!loading) e.currentTarget.style.backgroundColor = '#36441c';
+                if (!loading) e.currentTarget.style.backgroundColor = '#485c24';
               }}
             >
               {loading ? 'Logging in...' : 'Log In →'}

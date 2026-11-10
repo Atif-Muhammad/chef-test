@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -20,34 +20,134 @@ export default function PublicWebsite() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
 
+  const plateRef = useRef(null);
+  const heroContentRef = useRef(null);
+  const backdropRef = useRef(null);
+  const taglineRef = useRef(null);
+
+  const taglineWords = [
+    'Fresh',
+    'seasonal',
+    'ingredients,',
+    'wholesome',
+    'home-cooked',
+    'meals,',
+    'and',
+    'more',
+    'quality',
+    'time',
+    'for',
+    'your',
+    'family.',
+  ];
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) {
+      if (taglineRef.current) {
+        const words = taglineRef.current.querySelectorAll('.public-tagline-word');
+        words.forEach((span) => {
+          span.style.color = '#2c3917';
+          span.style.opacity = '1';
+        });
+      }
+      return;
+    }
+
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const windowH = window.innerHeight || 800;
+
+          // Dissolve smoothly over hero exit (between 50px and 85% of viewport)
+          const startFade = 50;
+          const endFade = windowH * 0.85;
+          const progress = Math.min(1, Math.max(0, (scrollY - startFade) / (endFade - startFade)));
+          const opacity = Math.max(0, 1 - progress);
+
+          // 1. Rotate the plate smoothly as user scrolls
+          if (plateRef.current) {
+            const rotation = scrollY * 0.18;
+            plateRef.current.style.transform = `rotate(${rotation.toFixed(2)}deg)`;
+          }
+
+          // 2. Dissolve both text and plate downwards together with scroll
+          if (heroContentRef.current) {
+            const translateY = progress * 40;
+            heroContentRef.current.style.opacity = opacity.toFixed(3);
+            heroContentRef.current.style.transform = `translateY(${translateY.toFixed(1)}px)`;
+            heroContentRef.current.style.pointerEvents = opacity <= 0.05 ? 'none' : 'auto';
+          }
+
+          // 3. Dissolve backdrop watermark text
+          if (backdropRef.current) {
+            backdropRef.current.style.opacity = (0.07 * opacity).toFixed(3);
+          }
+
+          // 4. Word-by-word reveal for the Tagline section
+          if (taglineRef.current) {
+            const rect = taglineRef.current.getBoundingClientRect();
+            const startY = windowH * 0.85;
+            const endY = windowH * 0.45;
+            const tagProgress = Math.min(1, Math.max(0, (startY - rect.top) / (startY - endY)));
+            const words = taglineRef.current.querySelectorAll('.public-tagline-word');
+            const activeCount = Math.floor(tagProgress * (words.length + 1));
+            words.forEach((span, idx) => {
+              if (idx < activeCount) {
+                span.style.color = '#2c3917';
+                span.style.opacity = '1';
+              } else {
+                span.style.color = '#716c62';
+                span.style.opacity = '0.3';
+              }
+            });
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
 
   const faqs = [
     {
-      q: 'How does Chef Missy differ from standard meal delivery services?',
-      a: 'Standard meal delivery services produce food in commercial factories on assembly lines. Chef Missy operates as your dedicated private chef, sourcing fresh organic ingredients and preparing individual meals specifically tailored to your household portion counts and dietary requirements.',
+      q: 'How does Chef Missy’s in-home cooking service work?',
+      a: 'Chef Missy comes directly to your home to prepare wholesome, fresh meals tailored to your family. She brings fresh ingredients, cooks your selected dishes in your kitchen, packages them neatly in your refrigerator, and leaves the kitchen spotless.',
     },
     {
-      q: 'How are household allergies and dietary requirements managed?',
-      a: 'During client registration, you record your household allergy dossier. Chef Missy strictly isolates ingredients for severe allergies, including nuts, gluten, dairy, nightshades, and Halal specifications, ensuring zero cross contamination during food preparation.',
+      q: 'How are food allergies and dietary needs handled?',
+      a: 'When you create an account, you can let us know if anyone in your family has food allergies. Chef Missy discusses any allergies or ingredient dislikes directly with each family to ensure all meals are prepared safely.',
     },
     {
-      q: 'Can family members with different preferences share the same box?',
-      a: 'Yes. You can select different dishes and portion quantities for individual members of your home. Each meal is packaged and labeled individually with complete reheating guidance.',
+      q: 'Can family members choose different dishes?',
+      a: 'Yes. You can select a variety of mains, sides, soups, desserts, and kid-friendly dishes for your visit, making it easy to satisfy everyone at the table.',
     },
     {
-      q: 'How are meals delivered and how long do they stay fresh?',
-      a: 'Meals are prepared on the morning of dispatch and delivered in insulated, temperature regulated containers. Dishes remain at peak freshness in your refrigerator for three to five days.',
+      q: 'How long do the prepared meals stay fresh?',
+      a: 'Dishes are prepared fresh in your kitchen during Chef Missy’s visit and remain delicious and ready to enjoy in your refrigerator for three to five days.',
     },
     {
       q: 'Is there a recurring contract or minimum weekly commitment?',
-      a: 'There are no forced contracts. You can pack a meal box whenever you need private chef service, whether on a regular weekly schedule or for specific busy weeks.',
+      a: 'No forced contracts or commitments. You can schedule a cooking visit whenever you need help, whether on a regular weekly basis or for busy periods.',
     },
     {
-      q: 'How do I review the seasonal dishes and place my first order?',
-      a: 'Create a client account to access the private seasonal catalog. Once registered, you can choose your dishes, configure portion counts, and select your delivery window.',
+      q: 'How do I choose dishes and book my first visit?',
+      a: 'Create an account to browse the seasonal dishes, choose up to 7 dishes, pick your preferred cooking date (Morning or Afternoon), and submit your request. Exact arrival times are confirmed directly with Chef Missy.',
     },
   ];
 
@@ -106,7 +206,7 @@ export default function PublicWebsite() {
                   fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
                   fontSize: '1.25rem',
                   fontWeight: 600,
-                  color: '#2e3b12',
+                  color: '#485c24',
                   display: 'block',
                   lineHeight: 1.15,
                 }}
@@ -187,7 +287,7 @@ export default function PublicWebsite() {
                     alignItems: 'center',
                     gap: '6px',
                     padding: '8px 16px',
-                    backgroundColor: '#2e3b12',
+                    backgroundColor: '#485c24',
                     color: '#ffffff',
                     borderRadius: '6px',
                     fontSize: '0.875rem',
@@ -228,7 +328,7 @@ export default function PublicWebsite() {
                     gap: '6px',
                     padding: '8px 14px',
                     backgroundColor: '#ffffff',
-                    color: '#2e3b12',
+                    color: '#485c24',
                     border: '1px solid #dcd5ca',
                     borderRadius: '6px',
                     fontSize: '0.875rem',
@@ -247,13 +347,14 @@ export default function PublicWebsite() {
                     alignItems: 'center',
                     gap: '6px',
                     padding: '8px 16px',
-                    backgroundColor: '#2e3b12',
+                    backgroundColor: '#485c24',
                     color: '#ffffff',
-                    border: '1px solid #2e3b12',
+                    border: '1px solid #485c24',
                     borderRadius: '6px',
                     fontSize: '0.875rem',
                     fontWeight: 600,
                     textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(72, 92, 36, 0.25)',
                   }}
                 >
                   <span>Create Account</span>
@@ -273,7 +374,7 @@ export default function PublicWebsite() {
                 border: '1px solid #dcd5ca',
                 borderRadius: '6px',
                 padding: '6px',
-                color: '#2e3b12',
+                color: '#485c24',
                 cursor: 'pointer',
               }}
               aria-label="Toggle Navigation"
@@ -334,7 +435,7 @@ export default function PublicWebsite() {
                   borderRadius: '6px',
                   border: '1px solid #dcd5ca',
                   backgroundColor: '#ffffff',
-                  color: '#2e3b12',
+                  color: '#485c24',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   textDecoration: 'none',
@@ -350,7 +451,7 @@ export default function PublicWebsite() {
                   textAlign: 'center',
                   padding: '8px',
                   borderRadius: '6px',
-                  backgroundColor: '#2e3b12',
+                  backgroundColor: '#485c24',
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: 600,
@@ -365,174 +466,259 @@ export default function PublicWebsite() {
       </header>
 
       {/* =========================================================================
-          Hero Section: Introductory Narrative & One Polished Visual Moment
+          Hero Section: Centered Rotating Plate with Flanking Text & Backdrop Typography
           ========================================================================= */}
       <section
         style={{
-          padding: '64px 24px 80px',
+          position: 'relative',
+          padding: '48px 24px 64px',
           backgroundColor: '#faf8f4',
           borderBottom: '1px solid #ece7de',
+          overflow: 'hidden',
+          minHeight: 'calc(100vh - 72px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
+        {/* Subtle Ambient Radial Glow */}
         <div
+          aria-hidden="true"
           style={{
-            maxWidth: '1160px',
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: '1.05fr 0.95fr',
-            gap: '48px',
-            alignItems: 'center',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '820px',
+            height: '820px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(72, 92, 36, 0.07) 0%, rgba(250, 248, 244, 0) 70%)',
+            pointerEvents: 'none',
+            zIndex: 0,
           }}
-          className="public-hero-layout"
-        >
-          {/* Left Narrative Block */}
-          <div>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                letterSpacing: '1.5px',
-                color: '#5c564c',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                display: 'block',
-                marginBottom: '16px',
-              }}
-            >
-              Private Chef Meal Preparation
-            </span>
+        />
 
+        {/* Large Editorial Watermark Typography Behind Plate */}
+        <div
+          ref={backdropRef}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
+            fontSize: 'clamp(4.5rem, 13vw, 10rem)',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: '#485c24',
+            opacity: 0.07,
+            pointerEvents: 'none',
+            userSelect: 'none',
+            whiteSpace: 'nowrap',
+            zIndex: 1,
+            willChange: 'opacity',
+          }}
+        >
+          Chef Missy
+        </div>
+
+        {/* Hero Content Container (Flanking Text on Left/Right & Rotating Plate in Center) */}
+        <div
+          ref={heroContentRef}
+          className="public-hero-container"
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            maxWidth: '1240px',
+            margin: '0 auto',
+            width: '100%',
+            willChange: 'transform, opacity',
+            transformOrigin: 'top center',
+          }}
+        >
+          {/* Left Wing: Headline & Introductory Narrative */}
+          <div className="public-hero-left" style={{ display: 'flex', flexDirection: 'column' }}>
             <h1
+              className="public-hero-heading"
               style={{
                 fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
-                fontSize: '3rem',
+                fontSize: 'clamp(2.1rem, 2.9vw, 2.85rem)',
                 fontWeight: 600,
-                color: '#1a240e',
-                lineHeight: 1.15,
-                margin: '0 0 20px',
-                maxWidth: '620px',
+                color: '#2c3917',
+                lineHeight: 1.18,
+                margin: '0 0 16px',
                 textWrap: 'balance',
+                letterSpacing: '-0.015em',
               }}
-              className="public-hero-heading"
             >
-              Bespoke culinary service prepared fresh for your home.
+              Fresh, home-cooked meals prepared in your kitchen.
             </h1>
 
             <p
               style={{
-                fontSize: '1rem',
+                fontSize: '0.9375rem',
                 color: '#5c564c',
                 lineHeight: 1.6,
-                margin: '0 0 32px',
-                maxWidth: '540px',
+                margin: '0 0 24px',
+                maxWidth: '440px',
                 textWrap: 'pretty',
               }}
             >
-              Chef Missy creates seasonal organic meals customized to your dietary regimen and portion needs. Sourced from local growers, prepared fresh in small batches, and delivered directly to your door.
+              Chef Missy prepares wholesome dinners tailored to your family’s tastes and dietary needs. Made with fresh organic ingredients, cooked in your home, and ready whenever you are.
             </p>
 
-            {/* CTAs */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
+            <div>
               <Link
                 to={user ? '/home' : '/register'}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '10px 20px',
-                  backgroundColor: '#2e3b12',
+                  padding: '11px 24px',
+                  backgroundColor: '#485c24',
                   color: '#ffffff',
                   borderRadius: '6px',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(72, 92, 36, 0.25)',
+                  transition: 'background-color 200ms ease, transform 150ms ease',
                 }}
               >
-                <span>{user ? 'View Client Dashboard' : 'Create an Account'}</span>
+                <span>{user ? 'Plan Your Menu' : 'Create an Account'}</span>
                 <ArrowRight size={15} />
               </Link>
+            </div>
+          </div>
 
+          {/* Center Element: Centered Rotating Plate */}
+          <div
+            className="public-hero-plate-wrapper"
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* Soft frosted halo rim */}
+            <div
+              style={{
+                padding: '10px',
+                borderRadius: '50%',
+                border: '1px solid rgba(72, 92, 36, 0.12)',
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                boxShadow: '0 16px 36px rgba(72, 92, 36, 0.14)',
+              }}
+            >
+              <div
+                ref={plateRef}
+                className="public-hero-plate"
+                style={{
+                  width: '380px',
+                  height: '380px',
+                  maxWidth: '75vw',
+                  maxHeight: '75vw',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  backgroundColor: '#ffffff',
+                  boxShadow:
+                    '0 24px 60px -12px rgba(72, 92, 36, 0.28), 0 8px 24px -4px rgba(0, 0, 0, 0.1)',
+                  willChange: 'transform',
+                  transformOrigin: '50% 50%',
+                }}
+              >
+                <img
+                  src="/assets/hero-plate.jpg"
+                  alt="Chef Missy signature culinary tasting plate"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transform: 'scale(1.05)',
+                    display: 'block',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.src = '/assets/public-hero-culinary.jpg';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Wing: Secondary Sign In & Quiet Proof Points */}
+          <div className="public-hero-right" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <Link
                 to="/login"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '10px 18px',
+                  padding: '10px 20px',
                   backgroundColor: '#ffffff',
-                  color: '#2e3b12',
+                  color: '#485c24',
                   borderRadius: '6px',
                   border: '1px solid #dcd5ca',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   textDecoration: 'none',
+                  transition: 'background-color 200ms ease, border-color 200ms ease',
                 }}
               >
                 <span>Client Sign In</span>
               </Link>
+              <span style={{ fontSize: '0.75rem', color: '#716c62' }}>
+                No contracts &bull; Book anytime
+              </span>
             </div>
 
-            {/* Quiet Proof Points */}
+            {/* Quiet Proof Points Box */}
             <div
+              className="public-proof-card"
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '16px',
-                paddingTop: '24px',
-                borderTop: '1px solid #e8e2d5',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: '8px',
+                border: '1px solid #ece7de',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                boxShadow: '0 4px 16px rgba(46, 59, 18, 0.04)',
               }}
-              className="public-proof-strip"
             >
               <div>
-                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600 }}>
-                  100% Organic
+                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600, marginBottom: '2px' }}>
+                  100% Organic Ingredients
                 </strong>
-                <span style={{ fontSize: '0.75rem', color: '#716c62' }}>
-                  Regional farm produce
+                <span style={{ fontSize: '0.75rem', color: '#716c62', lineHeight: 1.4 }}>
+                  Local organic produce &amp; pasture-raised meats
                 </span>
               </div>
-              <div>
-                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600 }}>
+              <div style={{ borderTop: '1px solid #f0ede6', paddingTop: '10px' }}>
+                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600, marginBottom: '2px' }}>
                   Zero Seed Oils
                 </strong>
-                <span style={{ fontSize: '0.75rem', color: '#716c62' }}>
-                  Pure cold pressed olive oil
+                <span style={{ fontSize: '0.75rem', color: '#716c62', lineHeight: 1.4 }}>
+                  Cold-pressed extra virgin olive oil and butter only
                 </span>
               </div>
-              <div>
-                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600 }}>
-                  Strict Isolation
+              <div style={{ borderTop: '1px solid #f0ede6', paddingTop: '10px' }}>
+                <strong style={{ display: 'block', fontSize: '0.875rem', color: '#1a1814', fontWeight: 600, marginBottom: '2px' }}>
+                  Family &amp; Kid-Friendly
                 </strong>
-                <span style={{ fontSize: '0.75rem', color: '#716c62' }}>
-                  Complete allergen safety
+                <span style={{ fontSize: '0.75rem', color: '#716c62', lineHeight: 1.4 }}>
+                  Mild flavours, toddler options (ages 1–5), and careful allergen care
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* Right Image: Single Polished Craft Visual */}
-          <div>
-            <div
-              style={{
-                borderRadius: '12px',
-                overflow: 'hidden',
-                border: '1px solid #e2dacd',
-                backgroundColor: '#ffffff',
-                boxShadow: '0 8px 30px rgba(46, 59, 18, 0.08)',
-              }}
-            >
-              <img
-                src="/assets/public-hero-culinary.jpg"
-                alt="Chef Missy private culinary preparation"
-                style={{
-                  width: '100%',
-                  height: '440px',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-                onError={(e) => {
-                  e.currentTarget.src = '/assets/auth-hero-salmon.jpg';
-                }}
-              />
             </div>
           </div>
         </div>
@@ -543,13 +729,13 @@ export default function PublicWebsite() {
           ========================================================================= */}
       <section
         style={{
-          padding: '80px 24px',
+          padding: '96px 24px',
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #ece7de',
           textAlign: 'center',
         }}
       >
-        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
           <span
             style={{
               fontSize: '0.75rem',
@@ -558,24 +744,40 @@ export default function PublicWebsite() {
               fontWeight: 600,
               textTransform: 'uppercase',
               display: 'block',
-              marginBottom: '16px',
+              marginBottom: '20px',
             }}
           >
             Our Commitment
           </span>
           <p
+            ref={taglineRef}
             style={{
               fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
-              fontSize: '2.25rem',
+              fontSize: '2.5rem',
               color: '#1a240e',
-              lineHeight: 1.3,
+              lineHeight: 1.35,
               fontWeight: 600,
               margin: '0 auto',
               textWrap: 'balance',
             }}
             className="public-tagline-text"
           >
-            Fresh seasonal ingredients and thoughtful recipes, prepared with care exclusively for your household table.
+            {taglineWords.map((word, idx) => (
+              <span
+                key={idx}
+                className="public-tagline-word"
+                style={{
+                  display: 'inline-block',
+                  marginRight: '0.3em',
+                  color: '#716c62',
+                  opacity: 0.3,
+                  transition: 'color 350ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  willChange: 'color, opacity',
+                }}
+              >
+                {word}
+              </span>
+            ))}
           </p>
         </div>
       </section>
@@ -593,16 +795,16 @@ export default function PublicWebsite() {
               style={{
                 fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
                 fontSize: '2.25rem',
-                color: '#1a240e',
+                color: '#2c3917',
                 margin: '8px 0 12px',
                 fontWeight: 600,
                 textWrap: 'balance',
               }}
             >
-              Personal culinary attention without mass production
+              Fresh, home-cooked food without the shopping or kitchen stress
             </h2>
             <p style={{ fontSize: '0.9375rem', color: '#5c564c', maxWidth: '600px', margin: '0 auto', lineHeight: 1.5, textWrap: 'pretty' }}>
-              Unlike commercial subscription boxes, Chef Missy tailors cooking techniques, ingredients, and portions to your individual household dossier.
+              Unlike takeout or commercial meal kits, Chef Missy prepares wholesome dinners right in your kitchen, customized directly to your family’s tastes and portion needs.
             </p>
           </div>
 
@@ -633,7 +835,7 @@ export default function PublicWebsite() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#2e3b12',
+                  color: '#485c24',
                   marginBottom: '20px',
                 }}
               >
@@ -666,7 +868,7 @@ export default function PublicWebsite() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#2e3b12',
+                  color: '#485c24',
                   marginBottom: '20px',
                 }}
               >
@@ -676,7 +878,7 @@ export default function PublicWebsite() {
                 Individual Allergen Care
               </h3>
               <p style={{ fontSize: '0.875rem', color: '#655e53', lineHeight: 1.55, margin: 0 }}>
-                Every meal is prepared according to your household dietary safety profile. Strict isolation for nuts, gluten, dairy, nightshades, and Halal specifications.
+                Every meal is prepared according to your dietary needs and allergies, discussed directly with each family to ensure complete peace of mind.
               </p>
             </div>
 
@@ -699,17 +901,17 @@ export default function PublicWebsite() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#2e3b12',
+                  color: '#485c24',
                   marginBottom: '20px',
                 }}
               >
                 <ChefHat size={20} />
               </div>
               <h3 style={{ fontSize: '1.125rem', color: '#1a1814', margin: '0 0 10px', fontWeight: 600 }}>
-                Custom Household Portions
+                Family-Sized Portions
               </h3>
               <p style={{ fontSize: '0.875rem', color: '#655e53', lineHeight: 1.55, margin: 0 }}>
-                Specify exact serving counts per dish. Whether providing dinner for two, a growing family, or high protein training diets, your meal box arrives calibrated to your needs.
+                Choose dishes that suit everyone at your table, from wholesome family mains to options suitable for young children (ages 1–5).
               </p>
             </div>
           </div>
@@ -729,16 +931,16 @@ export default function PublicWebsite() {
               style={{
                 fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
                 fontSize: '2.25rem',
-                color: '#1a240e',
+                color: '#2c3917',
                 margin: '8px 0 12px',
                 fontWeight: 600,
                 textWrap: 'balance',
               }}
             >
-              How our private dining service works
+              How our in-home cooking service works
             </h2>
             <p style={{ fontSize: '0.9375rem', color: '#5c564c', maxWidth: '540px', margin: '0 auto', lineHeight: 1.5, textWrap: 'pretty' }}>
-              Three steps from household registration to chilled doorstep delivery.
+              Three simple steps to fresh meals cooked in your kitchen.
             </p>
           </div>
 
@@ -757,7 +959,7 @@ export default function PublicWebsite() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '6px',
-                  backgroundColor: '#2e3b12',
+                  backgroundColor: '#485c24',
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: 600,
@@ -773,7 +975,7 @@ export default function PublicWebsite() {
                 Register your profile
               </h4>
               <p style={{ fontSize: '0.875rem', color: '#655e53', lineHeight: 1.55, margin: 0 }}>
-                Create your client dossier detailing food allergies, dietary restrictions, and household portion preferences.
+                Create your family account and let us know if anyone has food allergies or ingredient preferences.
               </p>
             </div>
 
@@ -784,7 +986,7 @@ export default function PublicWebsite() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '6px',
-                  backgroundColor: '#2e3b12',
+                  backgroundColor: '#485c24',
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: 600,
@@ -797,10 +999,10 @@ export default function PublicWebsite() {
                 2
               </div>
               <h4 style={{ fontSize: '1.125rem', color: '#1a1814', margin: '0 0 10px', fontWeight: 600 }}>
-                Select your dishes
+                Plan your menu
               </h4>
               <p style={{ fontSize: '0.875rem', color: '#655e53', lineHeight: 1.55, margin: 0 }}>
-                Access the private client portal to browse rotating seasonal options and pick the exact meals for your box.
+                Browse our seasonal dishes and select up to 7 delicious meals for your upcoming cooking visit.
               </p>
             </div>
 
@@ -811,7 +1013,7 @@ export default function PublicWebsite() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '6px',
-                  backgroundColor: '#2e3b12',
+                  backgroundColor: '#485c24',
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: 600,
@@ -824,10 +1026,10 @@ export default function PublicWebsite() {
                 3
               </div>
               <h4 style={{ fontSize: '1.125rem', color: '#1a1814', margin: '0 0 10px', fontWeight: 600 }}>
-                Delivered fresh
+                Cooked fresh in your home
               </h4>
               <p style={{ fontSize: '0.875rem', color: '#655e53', lineHeight: 1.55, margin: 0 }}>
-                Chef Missy sources the ingredients, cooks your meals fresh, and delivers chilled boxes in temperature regulated packaging.
+                Chef Missy brings fresh ingredients to your home, prepares your meals, and leaves your refrigerator stocked and kitchen clean.
               </p>
             </div>
           </div>
@@ -847,7 +1049,7 @@ export default function PublicWebsite() {
               style={{
                 fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
                 fontSize: '2.25rem',
-                color: '#1a240e',
+                color: '#2c3917',
                 margin: '8px 0 12px',
                 fontWeight: 600,
                 textWrap: 'balance',
@@ -902,7 +1104,7 @@ export default function PublicWebsite() {
               style={{
                 fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
                 fontSize: '2.25rem',
-                color: '#1a240e',
+                color: '#2c3917',
                 margin: '8px 0 12px',
                 fontWeight: 600,
                 textWrap: 'balance',
@@ -978,16 +1180,16 @@ export default function PublicWebsite() {
             style={{
               fontFamily: "var(--font-heading, 'Playfair Display', Georgia, serif)",
               fontSize: '2.25rem',
-              color: '#1a240e',
+              color: '#2c3917',
               margin: '0 0 16px',
               fontWeight: 600,
               textWrap: 'balance',
             }}
           >
-            Experience private chef dining in your home
+            Experience fresh in-home cooking for your family
           </h2>
           <p style={{ fontSize: '1rem', color: '#5c564c', lineHeight: 1.6, margin: '0 0 32px', textWrap: 'pretty' }}>
-            Create your household dossier to access the seasonal catalog, set custom portions, and reserve your meal box delivery.
+            Create an account to browse the seasonal menu, select your favorite dishes, and choose your preferred cooking date.
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -998,15 +1200,16 @@ export default function PublicWebsite() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 24px',
-                backgroundColor: '#2e3b12',
+                backgroundColor: '#485c24',
                 color: '#ffffff',
                 borderRadius: '6px',
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(72, 92, 36, 0.25)',
               }}
             >
-              <span>{user ? 'Go to Client Dashboard' : 'Create an Account'}</span>
+              <span>{user ? 'Plan Your Menu' : 'Create an Account'}</span>
               <ArrowRight size={15} />
             </Link>
 
@@ -1018,7 +1221,7 @@ export default function PublicWebsite() {
                 gap: '6px',
                 padding: '10px 20px',
                 backgroundColor: '#ffffff',
-                color: '#2e3b12',
+                color: '#485c24',
                 borderRadius: '6px',
                 border: '1px solid #dcd5ca',
                 fontSize: '0.875rem',
@@ -1035,7 +1238,7 @@ export default function PublicWebsite() {
       {/* =========================================================================
           Footer
           ========================================================================= */}
-      <footer style={{ backgroundColor: '#1a240e', color: '#c5d1b3', padding: '48px 24px 32px' }}>
+      <footer style={{ backgroundColor: '#243013', color: '#c5d1b3', padding: '48px 24px 32px' }}>
         <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
           <div
             style={{
@@ -1123,6 +1326,22 @@ export default function PublicWebsite() {
 
       {/* Responsive Styles */}
       <style>{`
+        @media (min-width: 901px) {
+          .public-hero-container {
+            display: grid !important;
+            grid-template-columns: 1.05fr minmax(320px, 400px) 0.95fr !important;
+            align-items: center !important;
+            gap: 40px !important;
+          }
+          .public-hero-left {
+            text-align: left !important;
+            align-items: flex-start !important;
+          }
+          .public-hero-right {
+            text-align: left !important;
+            align-items: flex-start !important;
+          }
+        }
         @media (max-width: 900px) {
           .public-desktop-nav {
             display: none !important;
@@ -1130,15 +1349,22 @@ export default function PublicWebsite() {
           .public-mobile-button {
             display: inline-flex !important;
           }
-          .public-hero-layout {
-            grid-template-columns: 1fr !important;
-            gap: 32px !important;
+          .public-hero-container {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 28px !important;
+          }
+          .public-hero-plate {
+            width: 280px !important;
+            height: 280px !important;
           }
           .public-hero-heading {
             font-size: 2.25rem !important;
           }
           .public-tagline-text {
-            font-size: 1.75rem !important;
+            font-size: 1.875rem !important;
           }
           .public-pillars-grid {
             grid-template-columns: 1fr !important;
@@ -1152,14 +1378,23 @@ export default function PublicWebsite() {
             grid-template-columns: 1fr !important;
             gap: 16px !important;
           }
+          .public-hero-left,
+          .public-hero-right {
+            align-items: center !important;
+            text-align: center !important;
+          }
         }
         @media (max-width: 520px) {
-          .public-hero-heading {
-            font-size: 1.875rem !important;
+          .public-hero-plate {
+            width: 230px !important;
+            height: 230px !important;
           }
-          .public-proof-strip {
-            grid-template-columns: 1fr !important;
-            gap: 12px !important;
+          .public-hero-heading {
+            font-size: 1.75rem !important;
+          }
+          .public-proof-card {
+            padding: 16px !important;
+            text-align: left !important;
           }
         }
       `}</style>

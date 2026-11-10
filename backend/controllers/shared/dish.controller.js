@@ -22,8 +22,15 @@ exports.getDishes = async (req, res, next) => {
       query.isTimeIntensive = isTimeIntensive === 'true';
     }
 
-    if (isKidsMeal !== undefined) {
-      query.isKidsMeal = isKidsMeal === 'true';
+    if (isKidsMeal !== undefined || req.query.suitableForAges1to5 !== undefined) {
+      const wantKids = isKidsMeal === 'true' || req.query.suitableForAges1to5 === 'true';
+      if (wantKids) {
+        query.$or = [
+          { suitableForAges1to5: true },
+          { isKidsMeal: true },
+          { type: 'kids' },
+        ];
+      }
     }
 
     if (search) {

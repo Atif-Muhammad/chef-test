@@ -14,7 +14,7 @@ export default function SidebarCulinaryArt({ className = '' }) {
       style={{
         width: '100%',
         boxSizing: 'border-box',
-        padding: '10px 10px 8px',
+        padding: '8px 8px 6px',
         borderRadius: '6px',
         backgroundColor: '#fcfbf8',
         border: '1px solid #ebd9c0',
@@ -25,10 +25,10 @@ export default function SidebarCulinaryArt({ className = '' }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        flexShrink: 0,
       }}
     >
-      {/* Botanical Leaf Branch - Full Size & Unshrinked */}
+      {/* Botanical Leaf Branch */}
       <div
         style={{
           width: '100%',
@@ -44,8 +44,8 @@ export default function SidebarCulinaryArt({ className = '' }) {
           src="/assets/leaf.png"
           alt="Fresh culinary botanical leaf"
           style={{
-            width: '118px',
-            maxWidth: '85%',
+            width: '96px',
+            maxWidth: '80%',
             height: 'auto',
             display: 'block',
             mixBlendMode: 'multiply',
@@ -60,17 +60,17 @@ export default function SidebarCulinaryArt({ className = '' }) {
         />
       </div>
 
-      {/* Editorial Poetry - Centered */}
+      {/* Text - Clear & Legible */}
       <div
         style={{
           position: 'relative',
           zIndex: 2,
           fontFamily: "var(--font-heading, 'Cormorant Garamond', Georgia, serif)",
           fontStyle: 'italic',
-          fontSize: '0.85rem',
-          fontWeight: 600,
-          lineHeight: 1.18,
-          color: '#505b68',
+          fontSize: '0.82rem',
+          fontWeight: 700,
+          lineHeight: 1.2,
+          color: '#323924',
           textAlign: 'center',
           width: '100%',
           letterSpacing: '-0.01em',
@@ -90,7 +90,7 @@ export default function SidebarCulinaryArt({ className = '' }) {
           height: '1.5px',
           backgroundColor: '#c49e5d',
           borderRadius: '1px',
-          margin: '6px auto 2px',
+          margin: '4px auto 2px',
         }}
       />
     </div>

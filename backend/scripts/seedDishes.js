@@ -18,10 +18,10 @@ const CATEGORIES = [
   { name: 'Mains - Seafood', slug: 'mains-seafood', order: 2 },
   { name: 'Mains - Pasta & Grains', slug: 'mains-pasta-grains', order: 3 },
   { name: 'Mains - Vegetarian & Vegan', slug: 'mains-vegetarian', order: 4 },
-  { name: 'Japanese & Asian Fusion', slug: 'japanese-fusion', order: 5 },
-  { name: 'Desserts & Sweet Pastries', slug: 'desserts', order: 6 },
-  { name: "Kids' Meals", slug: 'kids-meals', order: 7 },
-  { name: 'Starters & Broths', slug: 'starters', order: 8 },
+  { name: 'Sides', slug: 'sides', order: 5 },
+  { name: 'Soups', slug: 'soups', order: 6 },
+  { name: 'Desserts', slug: 'desserts', order: 7 },
+  { name: "Kids' Meals", slug: 'kids-meals', order: 8 },
 ];
 
 const ALLERGENS = [
@@ -37,7 +37,24 @@ const ALLERGENS = [
 ];
 
 // Base dish templates to generate ~300 unique culinary entries
-const CUISINES = ['Modern French', 'Japanese Kaiseki', 'Italian Rustic', 'Mediterranean', 'California Clean', 'Pan-Asian'];
+const CUISINES = [
+  'British',
+  'Italian',
+  'French',
+  'Asian',
+  'Japanese',
+  'Mediterranean',
+  'Mexican',
+  'Middle Eastern',
+  'Nordic',
+  'Korean',
+  'Chinese',
+  'Thai',
+  'Russian',
+  'German',
+  'American',
+  'South American',
+];
 const DIETARY = ['Nut-Free', 'Dairy-Free', 'Gluten-Free Available', 'High-Protein', 'Low-Carb', 'Halal-Friendly'];
 
 const PROTEINS = [
@@ -182,6 +199,8 @@ function generate300Dishes(categoryMap) {
         isTimeIntensive: false,
         isPublished: true,
         isKidsMeal: true,
+        suitableForAges1to5: true,
+        spiceLevel: 'none',
         type: 'kids',
       });
       index++;
