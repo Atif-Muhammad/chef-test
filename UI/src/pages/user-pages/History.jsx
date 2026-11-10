@@ -23,14 +23,7 @@ function BoxDetailsSkeleton() {
   return (
     <div>
       {/* 3 Metric Overview Cards Skeleton */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '12px',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="user-metric-3col" style={{ marginBottom: '16px' }}>
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -55,7 +48,7 @@ function BoxDetailsSkeleton() {
       </div>
 
       {/* Main 2-Column Grid Skeleton */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px', gap: '16px' }}>
+      <div className="user-split-2col">
         {/* Left Column: Dishes Skeleton */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -243,7 +236,11 @@ export default function History() {
 
   const scrollCarousel = (direction) => {
     if (scrollRef.current) {
-      const offset = direction === 'left' ? -280 : 280;
+      const containerWidth = scrollRef.current.clientWidth || 280;
+      const isMobile = window.innerWidth <= 640;
+      const offset = isMobile
+        ? (direction === 'left' ? -containerWidth : containerWidth)
+        : (direction === 'left' ? -(containerWidth + 12) : (containerWidth + 12));
       scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
     }
   };
@@ -285,14 +282,16 @@ export default function History() {
       <span
         style={{
           display: 'inline-block',
-          padding: '2px 8px',
+          padding: '2px 7px',
           borderRadius: '4px',
-          fontSize: '0.66rem',
+          fontSize: '0.64rem',
           fontWeight: 600,
           backgroundColor: c.bg,
           color: c.color,
           border: `1px solid ${c.border}`,
           textTransform: 'capitalize',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
         }}
       >
         {c.label}
@@ -301,11 +300,11 @@ export default function History() {
   };
 
   return (
-    <div style={{ width: '100%', paddingBottom: '30px' }}>
+    <div className="user-page-container">
       {/* Back Breadcrumb */}
       <div style={{ marginBottom: '8px' }}>
         <Link
-          to="/"
+          to="/home"
           style={{
             fontSize: '0.74rem',
             color: 'var(--color-text-muted, #716c62)',
@@ -322,65 +321,30 @@ export default function History() {
       </div>
 
       {/* Header Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-          gap: '10px',
-        }}
-      >
+      <div className="user-title-row">
         <div>
-          <h1
-            style={{
-              fontSize: '1.45rem',
-              color: '#1a1814',
-              margin: '0 0 3px',
-              letterSpacing: '-0.3px',
-              fontWeight: 700,
-              fontFamily: 'var(--font-heading, serif)',
-            }}
-          >
+          <h1 className="user-page-title">
             Previous Boxes & Selections
           </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: 0 }}>
+          <p className="user-page-subtitle">
             Browse your past meal boxes, review menu choices, and quickly re-pack favourite selections.
           </p>
         </div>
 
         {selectedVisit && (
-          <button
-            type="button"
-            onClick={() => useMenuAgain(selectedVisit)}
-            disabled={detailsLoading}
-            style={{
-              padding: '8px 18px',
-              borderRadius: '20px',
-              backgroundColor: 'var(--color-primary, #2e3b12)',
-              color: '#ffffff',
-              border: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: detailsLoading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: 'none',
-              opacity: detailsLoading ? 0.7 : 1,
-              transition: 'opacity 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              if (!detailsLoading) e.currentTarget.style.opacity = '0.92';
-            }}
-            onMouseLeave={(e) => {
-              if (!detailsLoading) e.currentTarget.style.opacity = '1';
-            }}
-          >
-            <RotateCcw size={13} />
-            <span>Re-pack This Box</span>
-          </button>
+          <div className="user-title-actions">
+            <button
+              type="button"
+              className="user-action-btn"
+              onClick={() => useMenuAgain(selectedVisit)}
+              disabled={detailsLoading}
+              title="Re-pack this box"
+              style={{ padding: '0 12px' }}
+            >
+              <RotateCcw size={13} />
+              <span className="user-btn-text">Re-pack This Box</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -441,6 +405,7 @@ export default function History() {
               type="button"
               onClick={() => scrollCarousel('left')}
               title="Previous boxes"
+              className="history-carousel-btn"
               style={{
                 width: '32px',
                 height: '32px',
@@ -472,6 +437,7 @@ export default function History() {
             {/* Scrollable Track with x-axis pagination detection */}
             <div
               ref={scrollRef}
+              className="history-carousel-track"
               onScroll={handleTrackScroll}
               style={{
                 display: 'flex',
@@ -481,6 +447,7 @@ export default function History() {
                 msOverflowStyle: 'none',
                 padding: '4px 2px',
                 flex: 1,
+                minWidth: 0,
                 scrollBehavior: 'smooth',
               }}
             >
@@ -489,8 +456,8 @@ export default function History() {
                 [1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
+                    className="history-nav-card-skeleton"
                     style={{
-                      minWidth: '240px',
                       height: '84px',
                       borderRadius: '10px',
                       border: '1px solid #ece7de',
@@ -517,13 +484,18 @@ export default function History() {
                     day: 'numeric',
                     year: 'numeric',
                   });
+                  const shortDate = dateObj.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  });
 
                   return (
                     <div
                       key={v._id}
                       onClick={() => setSelectedVisitId(v._id)}
+                      className={`history-nav-card ${isSelected ? 'active' : ''}`}
                       style={{
-                        minWidth: '240px',
                         padding: '12px 14px',
                         borderRadius: '10px',
                         border: isSelected ? '2px solid var(--color-primary, #2e3b12)' : '1px solid var(--color-border, #ece7de)',
@@ -541,11 +513,14 @@ export default function History() {
                         if (!isSelected) e.currentTarget.style.borderColor = 'var(--color-border, #ece7de)';
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <strong style={{ fontSize: '0.82rem', color: '#1a1814', fontWeight: 700 }}>
-                          {formattedDate}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '6px', minWidth: 0 }}>
+                        <strong className="history-nav-card-title" style={{ fontSize: '0.80rem', color: '#1a1814', fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span className="history-date-desktop">{formattedDate}</span>
+                          <span className="history-date-mobile">{shortDate}</span>
                         </strong>
-                        {getStatusBadge(v.status)}
+                        <div style={{ flexShrink: 0 }}>
+                          {getStatusBadge(v.status)}
+                        </div>
                       </div>
 
                       <div
@@ -615,6 +590,7 @@ export default function History() {
               type="button"
               onClick={() => scrollCarousel('right')}
               title="Next boxes"
+              className="history-carousel-btn"
               style={{
                 width: '32px',
                 height: '32px',
@@ -650,16 +626,10 @@ export default function History() {
           ) : (
             <div>
               {/* 3 Metric Cards Row (Box Date, Box Portions, Delivery/Pickup Window) */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '12px',
-                  marginBottom: '16px',
-                }}
-              >
+              <div className="user-metric-3col" style={{ marginBottom: '16px' }}>
                 {/* 1. Box Date */}
                 <div
+                  className="history-metric-card"
                   style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid var(--color-border, #ece7de)',
@@ -672,6 +642,7 @@ export default function History() {
                   }}
                 >
                   <div
+                    className="history-metric-icon"
                     style={{
                       width: '34px',
                       height: '34px',
@@ -686,10 +657,10 @@ export default function History() {
                     <Calendar size={17} color="var(--color-primary, #2e3b12)" />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
+                    <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
                       Box Date
                     </span>
-                    <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
+                    <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
                       {new Date(selectedVisit.visitDate).toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
@@ -702,6 +673,7 @@ export default function History() {
 
                 {/* 2. Box Portions */}
                 <div
+                  className="history-metric-card"
                   style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid var(--color-border, #ece7de)',
@@ -714,6 +686,7 @@ export default function History() {
                   }}
                 >
                   <div
+                    className="history-metric-icon"
                     style={{
                       width: '34px',
                       height: '34px',
@@ -728,10 +701,10 @@ export default function History() {
                     <Users size={17} color="var(--color-primary, #2e3b12)" />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
+                    <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
                       Box Portions
                     </span>
-                    <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
+                    <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
                       {selectedVisit.guests || 2} Portions
                     </strong>
                   </div>
@@ -739,6 +712,7 @@ export default function History() {
 
                 {/* 3. Delivery / Pickup Window */}
                 <div
+                  className="history-metric-card"
                   style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid var(--color-border, #ece7de)',
@@ -751,6 +725,7 @@ export default function History() {
                   }}
                 >
                   <div
+                    className="history-metric-icon"
                     style={{
                       width: '34px',
                       height: '34px',
@@ -765,10 +740,10 @@ export default function History() {
                     <Clock size={17} color="#b45309" />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
+                    <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
                       Delivery / Pickup Window
                     </span>
-                    <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
+                    <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
                       {formatArrivalWindow(selectedVisit.arrivalWindow) || (selectedVisit.status === 'confirmed' ? 'Scheduled' : '11:00 AM – 1:00 PM')}
                     </strong>
                   </div>
@@ -776,7 +751,7 @@ export default function History() {
               </div>
 
               {/* Main Content Layout: Left Box Dishes List + Right Box Order Summary & Actions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px', gap: '16px' }}>
+              <div className="user-split-2col">
                 {/* Left: Box Dishes List */}
                 <div>
                   {/* Section Title with View Details Link */}

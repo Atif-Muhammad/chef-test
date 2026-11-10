@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const userAuthController = require('../../controllers/user-controllers/auth.controller');
 const selectionController = require('../../controllers/user-controllers/selection.controller');
 const favouriteController = require('../../controllers/user-controllers/favourite.controller');
-const { requireClient } = require('../../middleware/auth.middleware');
+const { requireClient, checkClientActive } = require('../../middleware/auth.middleware');
 const Allergy = require('../../models/shared/Allergy');
 
 // Multer storage for client profile photos -> /uploads/clients/[clientid]/[filename]
@@ -42,8 +42,9 @@ const uploadClientPhoto = multer({
   fileFilter: clientPhotoFilter,
 });
 
-// All user routes require client role
+// All user routes require authenticated and strictly active client
 router.use(requireClient);
+router.use(checkClientActive);
 
 // Profile
 router.put('/profile', userAuthController.updateProfile);

@@ -64,9 +64,10 @@ export default function ToggleSwitch({
         ...style,
       }}
     >
-      <div style={{ flex: 1, paddingRight: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div className="toggle-switch-info" style={{ flex: 1, paddingRight: '12px' }}>
+        <div className="toggle-switch-label-wrap" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
           <span
+            className="toggle-switch-label"
             style={{
               fontSize: '0.78rem',
               fontWeight: 600,
@@ -76,10 +77,11 @@ export default function ToggleSwitch({
             {label} {required && <span style={{ color: 'var(--color-danger)' }}>*</span>}
             {optional && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.68rem', fontWeight: 400, marginLeft: '4px' }}>(opt)</span>}
           </span>
-          {badge && <span style={badgeStyle}>{badge}</span>}
+          {badge && <span className="toggle-switch-badge" style={badgeStyle}>{badge}</span>}
         </div>
         {description && (
           <p
+            className="toggle-switch-desc"
             style={{
               fontSize: '0.68rem',
               color: 'var(--color-text-muted, #716c62)',
@@ -94,6 +96,7 @@ export default function ToggleSwitch({
 
       {/* Switch Track & Thumb */}
       <div
+        className="toggle-switch-track"
         style={{
           width: '38px',
           height: '22px',

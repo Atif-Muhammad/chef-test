@@ -19,18 +19,23 @@ import {
   CheckCircle2,
   ExternalLink,
   RotateCcw,
+  Plus,
+  ArrowLeft,
 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Card from '../../components/shared/Card';
 import Button from '../../components/shared/Button';
+import Dialog from '../../components/shared/Dialog';
 import CustomDatePicker from '../../components/shared/CustomDatePicker';
 import Table from '../../components/shared/Table';
+import KebabMenu from '../../components/shared/KebabMenu';
 import {
   formatArrivalWindow,
   formatLocalDate,
   convert24To12,
   parseTo24Time,
   toDateInputValue,
+  truncateWords,
 } from '../../utils/formatters';
 import {
   WarningIcon,
@@ -295,26 +300,40 @@ export default function ClientDetail() {
     ? 'Standard Window'
     : '—';
 
-  // Table columns for full-width Dining Appointments section
+  // Table columns for full-width Dining Appointments section (Max 3 columns with KebabMenu)
   const appointmentColumns = [
     {
-      header: 'Scheduled Date & Timing',
+      header: 'Visit & Timing',
       accessor: 'visitDate',
-      width: '210px',
+      width: '180px',
       render: (v) => {
         const formattedWindow = formatArrivalWindow(v.arrivalWindow);
         return (
           <div>
-            <strong style={{ fontSize: '0.80rem', color: '#1e1b16', display: 'block' }}>
-              {formatLocalDate(v.visitDate)}
-            </strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <strong style={{ fontSize: '0.80rem', color: '#1e1b16' }}>
+                {formatLocalDate(v.visitDate)}
+              </strong>
+              <span
+                style={{
+                  fontSize: '0.62rem',
+                  backgroundColor: '#f6f3eb',
+                  border: '1px solid #ede8df',
+                  padding: '0 4px',
+                  borderRadius: '3px',
+                  color: '#57534e',
+                }}
+              >
+                {v.guests || 2}p
+              </span>
+            </div>
             {formattedWindow && formattedWindow !== 'Timing pending' ? (
               <span
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '3px',
-                  fontSize: '0.66rem',
+                  fontSize: '0.64rem',
                   color: '#065f46',
                   fontWeight: 600,
                   backgroundColor: '#ecfdf5',
@@ -327,7 +346,7 @@ export default function ClientDetail() {
                 <Clock size={10} color="#065f46" style={{ flexShrink: 0 }} /> {formattedWindow}
               </span>
             ) : (
-              <span style={{ display: 'block', fontSize: '0.66rem', color: '#b45309', marginTop: '2px' }}>
+              <span style={{ display: 'block', fontSize: '0.64rem', color: '#b45309', marginTop: '2px' }}>
                 Timing pending
               </span>
             )}
@@ -336,47 +355,91 @@ export default function ClientDetail() {
       },
     },
     {
-      header: 'Menu & Dishes',
-      accessor: 'guests',
+      header: 'Menu & Status',
+      accessor: 'dishes',
       render: (v) => {
         const dishNames = (v.dishes || [])
           .map((d) => (d.dishId && typeof d.dishId === 'object' ? d.dishId.name : ''))
           .filter(Boolean);
+        const hasConflicts = v.allergyFlags && v.allergyFlags.length > 0;
+        const isConfirmed = v.status === 'confirmed';
+        const isReady = v.status === 'ready';
+        const isPending = v.status === 'pending';
+        const isCompleted = v.status === 'completed';
 
         return (
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 700, color: '#1e1b16', fontSize: '0.76rem' }}>
-                {v.guests || 2} Guests
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               <span
                 style={{
-                  fontSize: '0.64rem',
-                  backgroundColor: '#f6f3eb',
-                  border: '1px solid #ede8df',
-                  padding: '1px 5px',
+                  fontSize: '0.66rem',
+                  fontWeight: 600,
+                  padding: '1px 6px',
                   borderRadius: '3px',
-                  color: '#57534e',
+                  textTransform: 'capitalize',
+                  backgroundColor: isConfirmed
+                    ? '#ecfdf5'
+                    : isReady
+                    ? '#f5f3ff'
+                    : isPending
+                    ? '#fef3c7'
+                    : isCompleted
+                    ? '#f0fdf4'
+                    : '#fee2e2',
+                  color: isConfirmed
+                    ? '#065f46'
+                    : isReady
+                    ? '#6d28d9'
+                    : isPending
+                    ? '#92400e'
+                    : isCompleted
+                    ? '#166534'
+                    : '#991b1b',
+                  border: `1px solid ${
+                    isConfirmed
+                      ? '#a7f3d0'
+                      : isReady
+                      ? '#ddd6fe'
+                      : isPending
+                      ? '#fde68a'
+                      : isCompleted
+                      ? '#bbf7d0'
+                      : '#fca5a5'
+                  }`,
                 }}
               >
-                {v.dishes?.length || 0} dishes
+                {v.status}
               </span>
+              {hasConflicts && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '1px 5px',
+                    borderRadius: '3px',
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    fontSize: '0.62rem',
+                    fontWeight: 600,
+                  }}
+                  title={v.allergyFlags.map((f) => `${f.dishName}: ${f.conflictAllergen}`).join('; ')}
+                >
+                  <WarningIcon size={9} color="#b91c1c" /> Allergy Flag
+                </span>
+              )}
             </div>
-
             {dishNames.length > 0 && (
               <div
                 style={{
-                  fontSize: '0.68rem',
+                  fontSize: '0.70rem',
                   color: '#716c62',
                   marginTop: '2px',
-                  maxWidth: '360px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
                 }}
                 title={dishNames.join(', ')}
               >
-                {dishNames.join(', ')}
+                {truncateWords(dishNames.join(', '), 4)}
               </div>
             )}
           </div>
@@ -384,219 +447,43 @@ export default function ClientDetail() {
       },
     },
     {
-      header: 'Allergy Safety',
-      accessor: 'allergyFlags',
-      width: '180px',
-      render: (v) => {
-        const hasConflicts = v.allergyFlags && v.allergyFlags.length > 0;
-        return hasConflicts ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {v.allergyFlags.map((flag, idx) => (
-              <span
-                key={idx}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  padding: '1.5px 6px',
-                  borderRadius: '3px',
-                  backgroundColor: '#fee2e2',
-                  border: '1px solid #fecaca',
-                  color: '#b91c1c',
-                  fontSize: '0.64rem',
-                  fontWeight: 600,
-                  maxWidth: '170px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                title={`${flag.dishName}: ${flag.conflictAllergen}`}
-              >
-                <WarningIcon size={10} color="#b91c1c" /> {flag.dishName}: {flag.conflictAllergen}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <span
-            style={{
-              color: '#15803d',
-              fontSize: '0.70rem',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <CheckCircleIcon size={12} color="#15803d" /> No Conflicts
-          </span>
-        );
-      },
-    },
-    {
-      header: 'Status',
-      accessor: 'status',
-      width: '105px',
-      render: (v) => {
-        const isConfirmed = v.status === 'confirmed';
-        const isReady = v.status === 'ready';
-        const isPending = v.status === 'pending';
-        const isCompleted = v.status === 'completed';
-
-        return (
-          <span
-            style={{
-              fontSize: '0.66rem',
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: '3px',
-              textTransform: 'capitalize',
-              backgroundColor: isConfirmed
-                ? '#ecfdf5'
-                : isReady
-                ? '#f5f3ff'
-                : isPending
-                ? '#fef3c7'
-                : isCompleted
-                ? '#f0fdf4'
-                : '#fee2e2',
-              color: isConfirmed
-                ? '#065f46'
-                : isReady
-                ? '#6d28d9'
-                : isPending
-                ? '#92400e'
-                : isCompleted
-                ? '#166534'
-                : '#991b1b',
-              border: `1px solid ${
-                isConfirmed
-                  ? '#a7f3d0'
-                  : isReady
-                  ? '#ddd6fe'
-                  : isPending
-                  ? '#fde68a'
-                  : isCompleted
-                  ? '#bbf7d0'
-                  : '#fca5a5'
-              }`,
-              display: 'inline-block',
-            }}
-          >
-            {v.status}
-          </span>
-        );
-      },
-    },
-    {
       header: 'Actions',
       accessor: '_id',
       align: 'right',
-      width: '155px',
+      width: '48px',
       render: (v) => {
         const isPending = v.status === 'pending';
         const isConfirmed = v.status === 'confirmed';
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-            <Link to={`/admin/shopping-list/${v._id}`} title="View shopping list">
-              <button
-                type="button"
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '3px',
-                  backgroundColor: '#f5f3ef',
-                  border: '1px solid #e7e2d8',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ede8df')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-              >
-                <ClipboardIcon size={11} color="#2e3b12" />
-              </button>
-            </Link>
-
-            {isPending && (
-              <button
-                type="button"
-                onClick={() => openStatusModal(v, 'confirmed')}
-                title="Confirm appointment"
-                style={{
-                  padding: '0 8px',
-                  height: '24px',
-                  borderRadius: '3px',
-                  border: '1px solid #242e0e',
-                  backgroundColor: '#2e3b12',
-                  color: '#ffffff',
-                  fontSize: '0.66rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <CheckCircleIcon size={10} color="#ffffff" />
-                <span>Confirm</span>
-              </button>
-            )}
-
-            {isConfirmed && (
-              <button
-                type="button"
-                onClick={() => openStatusModal(v, 'ready')}
-                title="Mark order ready for pickup or dispatch"
-                style={{
-                  padding: '0 8px',
-                  height: '24px',
-                  borderRadius: '3px',
-                  border: '1px solid #5b21b6',
-                  backgroundColor: '#6d28d9',
-                  color: '#ffffff',
-                  fontSize: '0.66rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <Package size={10} color="#ffffff" />
-                <span>Ready</span>
-              </button>
-            )}
-
-            {isPending && (
-              <button
-                type="button"
-                onClick={() => openStatusModal(v, 'cancelled')}
-                title="Decline appointment"
-                style={{
-                  padding: '0 7px',
-                  height: '24px',
-                  borderRadius: '3px',
-                  border: '1px solid #fee2e2',
-                  backgroundColor: '#fef2f2',
-                  color: '#dc2626',
-                  fontSize: '0.66rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Decline
-              </button>
-            )}
-          </div>
-        );
+        const items = [
+          {
+            label: 'Shopping List',
+            icon: <ClipboardIcon size={13} color="#2e3b12" />,
+            to: `/admin/shopping-list/${v._id}`,
+          },
+        ];
+        if (isPending) {
+          items.push({
+            label: 'Confirm Appointment',
+            icon: <CheckCircleIcon size={13} color="#15803d" />,
+            onClick: () => openStatusModal(v, 'confirmed'),
+          });
+        }
+        if (isConfirmed) {
+          items.push({
+            label: 'Mark as Ready',
+            icon: <Package size={13} color="#6d28d9" />,
+            onClick: () => openStatusModal(v, 'ready'),
+          });
+        }
+        if (isPending) {
+          items.push({
+            label: 'Decline Appointment',
+            icon: <AlertTriangle size={13} color="#dc2626" />,
+            danger: true,
+            onClick: () => openStatusModal(v, 'cancelled'),
+          });
+        }
+        return <KebabMenu items={items} />;
       },
     },
   ];
@@ -618,18 +505,18 @@ export default function ClientDetail() {
    * ----------------------------------------------------------- */
 
   const ClientInfoSkeleton = () => (
-    <Card style={{ padding: '16px 18px', border: '1px solid #ece7de', borderRadius: '4px', backgroundColor: '#ffffff', height: '100%', minHeight: '210px' }}>
-      <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '18px' }}>
-        <div style={{ width: '62px', height: '62px', borderRadius: '50%', backgroundColor: '#f0ece1' }} className="skeleton-pulse" />
+    <Card className="client-detail-card" style={{ height: '100%', minHeight: '210px' }}>
+      <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px' }}>
+        <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#f0ece1', flexShrink: 0 }} className="skeleton-pulse" />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ width: '140px', height: '18px', backgroundColor: '#f0ece1', borderRadius: '3px' }} className="skeleton-pulse" />
           <div style={{ width: '180px', height: '12px', backgroundColor: '#f5f3ed', borderRadius: '3px' }} className="skeleton-pulse" />
           <div style={{ width: '110px', height: '12px', backgroundColor: '#f5f3ed', borderRadius: '3px' }} className="skeleton-pulse" />
         </div>
       </div>
-      <div className="admin-four-stat-strip" style={{ padding: '10px 8px', backgroundColor: '#fbf9f5', borderRadius: '4px', border: '1px solid #ece7de' }}>
+      <div className="admin-four-stat-strip" style={{ padding: '8px', backgroundColor: '#fbf9f5', borderRadius: '4px', border: '1px solid #ece7de' }}>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div key={i} style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '50px', height: '10px', backgroundColor: '#ede8df', borderRadius: '2px' }} className="skeleton-pulse" />
             <div style={{ width: '60px', height: '14px', backgroundColor: '#f0ece1', borderRadius: '2px' }} className="skeleton-pulse" />
           </div>
@@ -714,12 +601,8 @@ export default function ClientDetail() {
 
     return (
       <Card
+        className="client-detail-card"
         style={{
-          padding: '16px 18px',
-          border: '1px solid var(--color-border, #ece7de)',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -746,12 +629,12 @@ export default function ClientDetail() {
             {/* Avatar */}
             <div
               style={{
-                width: '60px',
-                height: '60px',
+                width: '56px',
+                height: '56px',
                 borderRadius: '50%',
                 backgroundColor: '#2e3b12',
                 color: '#ffffff',
-                fontSize: '1.35rem',
+                fontSize: '1.25rem',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
@@ -819,7 +702,7 @@ export default function ClientDetail() {
                 {client.phone && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Phone size={12} color="#8c857b" style={{ flexShrink: 0 }} />
-                    <span>{client.phone}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.phone}</span>
                   </div>
                 )}
                 {client.location && (
@@ -839,7 +722,7 @@ export default function ClientDetail() {
         <div
           className="admin-four-stat-strip"
           style={{
-            padding: '9px 8px',
+            padding: '8px',
             backgroundColor: '#fbf9f5',
             borderRadius: '4px',
             border: '1px solid #ece7de',
@@ -847,7 +730,7 @@ export default function ClientDetail() {
             marginTop: '8px',
           }}
         >
-          <div>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
               Client Since
             </span>
@@ -855,7 +738,7 @@ export default function ClientDetail() {
               {memberSince}
             </strong>
           </div>
-          <div>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
               Total Orders
             </span>
@@ -863,7 +746,7 @@ export default function ClientDetail() {
               {totalVisits}
             </strong>
           </div>
-          <div>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
               Last Order
             </span>
@@ -871,7 +754,7 @@ export default function ClientDetail() {
               {lastOrderDate}
             </strong>
           </div>
-          <div>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
               Preferred Delivery
             </span>
@@ -902,12 +785,8 @@ export default function ClientDetail() {
     const hasAllergies = client.allergies && client.allergies.length > 0;
     return (
       <Card
+        className="client-detail-card"
         style={{
-          padding: '16px 18px',
-          border: '1px solid var(--color-border, #ece7de)',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -1030,15 +909,7 @@ export default function ClientDetail() {
     if (profileLoading || !client) return <DietaryPreferencesSkeleton />;
 
     return (
-      <Card
-        style={{
-          padding: '16px 18px',
-          border: '1px solid var(--color-border, #ece7de)',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
-        }}
-      >
+      <Card className="client-detail-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
           <Leaf size={15} color="var(--color-primary, #2e3b12)" />
           <h3
@@ -1091,12 +962,8 @@ export default function ClientDetail() {
 
     return (
       <Card
+        className="client-detail-card"
         style={{
-          padding: '16px 18px',
-          border: '1px solid var(--color-border, #ece7de)',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -1162,12 +1029,8 @@ export default function ClientDetail() {
     const favList = favourites || [];
     return (
       <Card
+        className="client-detail-card"
         style={{
-          padding: '16px 18px',
-          border: '1px solid var(--color-border, #ece7de)',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
           height: '100%',
         }}
       >
@@ -1312,12 +1175,8 @@ export default function ClientDetail() {
   const renderRecentOrdersCard = () => {
     return (
       <Card
+        className="client-detail-card"
         style={{
-          padding: '16px 18px',
-          border: '1px solid var(--color-border, #ece7de)',
-          borderRadius: '4px',
-          boxShadow: 'none',
-          backgroundColor: '#ffffff',
           width: '100%',
         }}
       >
@@ -1355,6 +1214,7 @@ export default function ClientDetail() {
 
         {/* Date Range Filter Bar */}
         <div
+          className="client-orders-filter-bar"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -1473,124 +1333,52 @@ export default function ClientDetail() {
         }
       `}</style>
 
-      {/* Top Breadcrumb & Page Header */}
-      <div style={{ marginBottom: '14px' }}>
-        <Link
-          to="/admin/clients"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            color: 'var(--color-primary, #2e3b12)',
-            fontSize: '0.74rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-            marginBottom: '4px',
-          }}
-        >
-          &larr; Back to Client List
-        </Link>
+      {/* Title Row with Action Buttons at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link
+            to="/admin/clients"
+            className="admin-action-btn-outline"
+            title="Back to Client Directory"
+            style={{ width: '32px', height: '32px' }}
+          >
+            <ArrowLeft size={16} />
+          </Link>
+          <h1 className="admin-page-title" style={{ margin: 0 }}>
+            Client Details
+          </h1>
+        </div>
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '10px',
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontSize: '1.30rem',
-                color: 'var(--color-primary, #2e3b12)',
-                fontFamily: 'var(--font-heading, serif)',
-                fontWeight: 700,
-                margin: '0 0 2px',
-              }}
+        <div className="admin-title-actions" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          {client && (
+            <button
+              type="button"
+              className={isTerminated ? 'admin-action-btn' : 'admin-action-btn-outline'}
+              onClick={() =>
+                setStatusActionModal({
+                  open: true,
+                  targetStatus: isTerminated ? 'active' : 'terminated',
+                  submitting: false,
+                })
+              }
+              title={isTerminated ? 'Allow System Access' : 'Terminate User Access'}
+              style={!isTerminated ? { borderColor: '#fecaca', color: '#b91c1c' } : {}}
             >
-              Client Details
-            </h1>
-            <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.74rem', margin: 0 }}>
-              View and manage client information, dietary preferences, allergy profile, and order history.
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {/* Status Toggle Action Button */}
-            {client && (
-              <button
-                type="button"
-                onClick={() =>
-                  setStatusActionModal({
-                    open: true,
-                    targetStatus: isTerminated ? 'active' : 'terminated',
-                    submitting: false,
-                  })
-                }
-                style={{
-                  height: '30px',
-                  padding: '0 10px',
-                  borderRadius: '4px',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  backgroundColor: isTerminated ? '#2e3b12' : '#ffffff',
-                  color: isTerminated ? '#ffffff' : '#b91c1c',
-                  border: `1px solid ${isTerminated ? '#242e0e' : '#fecaca'}`,
-                  boxShadow: 'none',
-                  transition: 'all 0.12s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isTerminated) e.currentTarget.style.backgroundColor = '#fef2f2';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isTerminated) e.currentTarget.style.backgroundColor = '#ffffff';
-                }}
-              >
-                {isTerminated ? (
-                  <>
-                    <UserCheck size={12} color="#ffffff" />
-                    <span>Allow System Access</span>
-                  </>
-                ) : (
-                  <>
-                    <UserX size={12} color="#b91c1c" />
-                    <span>Terminate User</span>
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Add Order / Selections Link */}
-            <Link
-              to="/admin/selections"
-              style={{
-                height: '30px',
-                padding: '0 12px',
-                borderRadius: '4px',
-                backgroundColor: 'var(--color-primary, #2e3b12)',
-                border: 'none',
-                color: '#ffffff',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                textDecoration: 'none',
-                boxShadow: 'none',
-              }}
-            >
-              <span>+ Add Order / Visit</span>
-            </Link>
-          </div>
+              {isTerminated ? <UserCheck size={15} /> : <UserX size={15} />}
+            </button>
+          )}
+          <Link
+            to="/admin/selections"
+            className="admin-action-btn"
+            title="Create Dining Order / Appointment"
+          >
+            <Plus size={16} />
+          </Link>
         </div>
       </div>
+      <p className="admin-page-subtitle">
+        View and manage client information, dietary preferences, allergy profile, and order history.
+      </p>
 
       {/* VIEWPORT-BASED LAYOUT:
           - Desktop (>= 1024px):
@@ -1633,15 +1421,23 @@ export default function ClientDetail() {
 
           {/* Tab Navigation */}
           <div
+            className="client-detail-tabs-bar"
             style={{
               display: 'flex',
               gap: '4px',
               borderBottom: '1px solid var(--color-border, #ece7de)',
               marginBottom: '12px',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              whiteSpace: 'nowrap',
+              paddingBottom: '2px',
             }}
           >
             <button
               type="button"
+              className={`client-detail-tab-btn ${activeTab === 'appointments' ? 'active' : ''}`}
               onClick={() => setActiveTab('appointments')}
               style={{
                 padding: '6px 12px',
@@ -1656,6 +1452,8 @@ export default function ClientDetail() {
                 alignItems: 'center',
                 gap: '5px',
                 borderRadius: '4px 4px 0 0',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               <span>Dining Appointments</span>
@@ -1675,6 +1473,7 @@ export default function ClientDetail() {
 
             <button
               type="button"
+              className={`client-detail-tab-btn ${activeTab === 'dietary' ? 'active' : ''}`}
               onClick={() => setActiveTab('dietary')}
               style={{
                 padding: '6px 12px',
@@ -1689,6 +1488,8 @@ export default function ClientDetail() {
                 alignItems: 'center',
                 gap: '5px',
                 borderRadius: '4px 4px 0 0',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               <span>Dietary & Allergies</span>
@@ -1710,6 +1511,7 @@ export default function ClientDetail() {
 
             <button
               type="button"
+              className={`client-detail-tab-btn ${activeTab === 'favourites' ? 'active' : ''}`}
               onClick={() => setActiveTab('favourites')}
               style={{
                 padding: '6px 12px',
@@ -1724,6 +1526,8 @@ export default function ClientDetail() {
                 alignItems: 'center',
                 gap: '5px',
                 borderRadius: '4px 4px 0 0',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               <span>Favourites</span>
@@ -1761,63 +1565,26 @@ export default function ClientDetail() {
 
       {/* USER TERMINATION CONFIRMATION MODAL */}
       {statusActionModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 110,
-            padding: '16px',
+        <Dialog
+          isOpen={statusActionModal.open}
+          onClose={() => !statusActionModal.submitting && setStatusActionModal({ open: false, targetStatus: null, submitting: false })}
+          title={statusActionModal.targetStatus === 'terminated' ? 'Terminate Client Access?' : 'Reactivate Client Access?'}
+          maxWidth="440px"
+          cardStyle={{
+            borderRadius: '4px',
+            backgroundColor: 'var(--color-bg, #fbf9f5)',
+            border: '1px solid var(--color-border, #ece7de)',
+            padding: '16px 20px',
           }}
-        >
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '4px',
-              maxWidth: '430px',
-              width: '100%',
-              padding: '18px 20px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-              border: '1px solid var(--color-border, #ece7de)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              {statusActionModal.targetStatus === 'terminated' ? (
-                <AlertTriangle size={18} color="#dc2626" />
-              ) : (
-                <ShieldCheck size={18} color="#15803d" />
-              )}
-              <h3 style={{ fontSize: '1.0rem', color: '#1e1b16', margin: 0, fontWeight: 700 }}>
-                {statusActionModal.targetStatus === 'terminated'
-                  ? 'Terminate Client Access?'
-                  : 'Reactivate Client Access?'}
-              </h3>
-            </div>
-
-            <p style={{ fontSize: '0.74rem', color: '#4a463e', lineHeight: 1.5, margin: '0 0 16px' }}>
-              {statusActionModal.targetStatus === 'terminated' ? (
-                <>
-                  Terminating <strong>{client?.name}</strong> will immediately revoke their access to the system.
-                  Active portal sessions will be blocked, and all subsequent login attempts will be rejected.
-                </>
-              ) : (
-                <>
-                  Allowing system access will restore <strong>{client?.name}</strong>’s login privileges and portal access.
-                </>
-              )}
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          footer={
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <button
                 type="button"
                 disabled={statusActionModal.submitting}
                 onClick={() => setStatusActionModal({ open: false, targetStatus: null, submitting: false })}
                 style={{
-                  height: '30px',
-                  padding: '0 12px',
+                  height: '32px',
+                  padding: '0 14px',
                   borderRadius: '3px',
                   border: '1px solid var(--color-border, #ece7de)',
                   backgroundColor: '#ffffff',
@@ -1834,7 +1601,7 @@ export default function ClientDetail() {
                 disabled={statusActionModal.submitting}
                 onClick={handleToggleClientStatus}
                 style={{
-                  height: '30px',
+                  height: '32px',
                   padding: '0 14px',
                   borderRadius: '3px',
                   border: 'none',
@@ -1852,198 +1619,183 @@ export default function ClientDetail() {
                   : 'Confirm Reactivation'}
               </button>
             </div>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {statusActionModal.targetStatus === 'terminated' ? (
+                <AlertTriangle size={18} color="#dc2626" />
+              ) : (
+                <ShieldCheck size={18} color="#15803d" />
+              )}
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1e1b16' }}>
+                {statusActionModal.targetStatus === 'terminated' ? 'Access Revocation Notice' : 'Access Restoration'}
+              </span>
+            </div>
+
+            <p style={{ fontSize: '0.74rem', color: '#4a463e', lineHeight: 1.5, margin: 0 }}>
+              {statusActionModal.targetStatus === 'terminated' ? (
+                <>
+                  Terminating <strong>{client?.name}</strong> will immediately revoke their access to the system.
+                  Active portal sessions will be blocked, and all subsequent login attempts will be rejected.
+                </>
+              ) : (
+                <>
+                  Allowing system access will restore <strong>{client?.name}</strong>’s login privileges and portal access.
+                </>
+              )}
+            </p>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {/* VISIT STATUS UPDATE MODAL (CONFIRM / READY / DECLINE) */}
       {statusModal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '16px',
+        <Dialog
+          isOpen={statusModal.open}
+          onClose={() => setStatusModal({ ...statusModal, open: false })}
+          title={
+            statusModal.targetStatus === 'confirmed'
+              ? 'Confirm Appointment & Arrival Window'
+              : statusModal.targetStatus === 'ready'
+              ? 'Mark Order Ready for Pickup / Dispatch'
+              : 'Decline Appointment'
+          }
+          maxWidth="480px"
+          cardStyle={{
+            borderRadius: '4px',
+            backgroundColor: 'var(--color-bg, #fbf9f5)',
+            border: '1px solid var(--color-border, #ece7de)',
+            padding: '16px 20px',
           }}
+          footer={
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => setStatusModal({ ...statusModal, open: false })}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                onClick={handleStatusSubmit}
+                disabled={statusModal.submitting}
+              >
+                {statusModal.submitting
+                  ? 'Saving...'
+                  : statusModal.targetStatus === 'confirmed'
+                  ? 'Confirm & Notify'
+                  : statusModal.targetStatus === 'ready'
+                  ? 'Mark Ready & Notify'
+                  : 'Decline & Notify'}
+              </Button>
+            </div>
+          }
         >
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '4px',
-              maxWidth: '460px',
-              width: '100%',
-              padding: '18px 20px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-              border: '1px solid var(--color-border, #ece7de)',
-            }}
-          >
-            <h3 style={{ fontSize: '1.0rem', color: '#1a1814', margin: '0 0 10px', fontWeight: 700 }}>
-              {statusModal.targetStatus === 'confirmed'
-                ? 'Confirm Appointment & Arrival Window'
-                : statusModal.targetStatus === 'ready'
-                ? 'Mark Order Ready for Pickup / Dispatch'
-                : 'Decline Appointment'}
-            </h3>
+          <form onSubmit={handleStatusSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {statusModal.targetStatus === 'confirmed' && (
+              <>
+                <div className="dialog-grid-2col">
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
+                      Confirmed Date *
+                    </label>
+                    <CustomDatePicker
+                      required
+                      value={statusModal.confirmedDate}
+                      onChange={(e) => setStatusModal({ ...statusModal, confirmedDate: e.target.value })}
+                      style={{
+                        height: '32px',
+                        fontSize: '0.74rem',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
+                      Confirmed Window Preview
+                    </label>
+                    <div
+                      style={{
+                        height: '32px',
+                        padding: '0 8px',
+                        borderRadius: '3px',
+                        border: '1px solid #a7f3d0',
+                        backgroundColor: '#ecfdf5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        color: '#065f46',
+                      }}
+                    >
+                      <Clock size={11} color="#065f46" style={{ flexShrink: 0 }} />
+                      {convert24To12(statusModal.startTime)} – {convert24To12(statusModal.endTime)}
+                    </div>
+                  </div>
+                </div>
 
-            <form onSubmit={handleStatusSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {statusModal.targetStatus === 'confirmed' && (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
+                    Arrival Time Range *
+                  </label>
+                  <div className="dialog-grid-2col">
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
-                        Confirmed Date *
-                      </label>
-                      <CustomDatePicker
+                      <span style={{ fontSize: '0.66rem', color: '#716c62', display: 'block', marginBottom: '2px' }}>Start Time</span>
+                      <input
+                        type="time"
                         required
-                        value={statusModal.confirmedDate}
-                        onChange={(e) => setStatusModal({ ...statusModal, confirmedDate: e.target.value })}
+                        value={statusModal.startTime}
+                        onChange={(e) => setStatusModal({ ...statusModal, startTime: e.target.value })}
                         style={{
-                          height: '32px',
+                          width: '100%',
+                          padding: '5px 8px',
+                          borderRadius: '3px',
+                          border: '1px solid var(--color-border, #ece7de)',
+                          backgroundColor: 'var(--color-bg, #fbf9f5)',
                           fontSize: '0.74rem',
+                          boxSizing: 'border-box',
+                          height: '32px',
+                          outline: 'none',
                         }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
-                        Confirmed Window Preview
-                      </label>
-                      <div
+                      <span style={{ fontSize: '0.66rem', color: '#716c62', display: 'block', marginBottom: '2px' }}>End Time</span>
+                      <input
+                        type="time"
+                        required
+                        value={statusModal.endTime}
+                        onChange={(e) => setStatusModal({ ...statusModal, endTime: e.target.value })}
                         style={{
-                          height: '32px',
-                          padding: '0 8px',
+                          width: '100%',
+                          padding: '5px 8px',
                           borderRadius: '3px',
-                          border: '1px solid #a7f3d0',
-                          backgroundColor: '#ecfdf5',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          fontSize: '0.72rem',
-                          fontWeight: 600,
-                          color: '#065f46',
+                          border: '1px solid var(--color-border, #ece7de)',
+                          backgroundColor: 'var(--color-bg, #fbf9f5)',
+                          fontSize: '0.74rem',
+                          boxSizing: 'border-box',
+                          height: '32px',
+                          outline: 'none',
                         }}
-                      >
-                        <Clock size={11} color="#065f46" style={{ flexShrink: 0 }} />
-                        {convert24To12(statusModal.startTime)} – {convert24To12(statusModal.endTime)}
-                      </div>
+                      />
                     </div>
                   </div>
+                </div>
 
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
-                      Arrival Time Range *
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <span style={{ fontSize: '0.66rem', color: '#716c62', display: 'block', marginBottom: '2px' }}>Start Time</span>
-                        <input
-                          type="time"
-                          required
-                          value={statusModal.startTime}
-                          onChange={(e) => setStatusModal({ ...statusModal, startTime: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '5px 8px',
-                            borderRadius: '3px',
-                            border: '1px solid var(--color-border, #ece7de)',
-                            backgroundColor: 'var(--color-bg, #fbf9f5)',
-                            fontSize: '0.74rem',
-                            boxSizing: 'border-box',
-                            height: '32px',
-                            outline: 'none',
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.66rem', color: '#716c62', display: 'block', marginBottom: '2px' }}>End Time</span>
-                        <input
-                          type="time"
-                          required
-                          value={statusModal.endTime}
-                          onChange={(e) => setStatusModal({ ...statusModal, endTime: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '5px 8px',
-                            borderRadius: '3px',
-                            border: '1px solid var(--color-border, #ece7de)',
-                            backgroundColor: 'var(--color-bg, #fbf9f5)',
-                            fontSize: '0.74rem',
-                            boxSizing: 'border-box',
-                            height: '32px',
-                            outline: 'none',
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
-                      Chef Preparation Notes (optional, included in confirmation email)
-                    </label>
-                    <textarea
-                      rows="3"
-                      value={statusModal.chefNotes}
-                      onChange={(e) => setStatusModal({ ...statusModal, chefNotes: e.target.value })}
-                      placeholder="e.g. Bringing carbon steel pans; please ensure stovetop is accessible..."
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        borderRadius: '3px',
-                        border: '1px solid var(--color-border, #ece7de)',
-                        backgroundColor: 'var(--color-bg, #fbf9f5)',
-                        fontSize: '0.74rem',
-                        boxSizing: 'border-box',
-                        outline: 'none',
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-
-              {statusModal.targetStatus === 'ready' && (
-                <>
-                  <div style={{ backgroundColor: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '4px', padding: '10px 12px', fontSize: '0.74rem', color: '#5b21b6', lineHeight: 1.4 }}>
-                    <strong>Box Order Ready:</strong> Marking this order as <strong>Ready</strong> will send an automated email notification to the client stating their meal box has been prepared and is ready for pickup or outbound dispatch.
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
-                      Pickup / Dispatch Notes (optional, included in client email)
-                    </label>
-                    <textarea
-                      rows="3"
-                      value={statusModal.chefNotes}
-                      onChange={(e) => setStatusModal({ ...statusModal, chefNotes: e.target.value })}
-                      placeholder="e.g. Freshly packed in insulated thermal box. Ready for pickup at kitchen desk..."
-                      style={{
-                        width: '100%',
-                        padding: '6px 8px',
-                        borderRadius: '3px',
-                        border: '1px solid var(--color-border, #ece7de)',
-                        backgroundColor: 'var(--color-bg, #fbf9f5)',
-                        fontSize: '0.74rem',
-                        boxSizing: 'border-box',
-                        outline: 'none',
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-
-              {statusModal.targetStatus === 'cancelled' && (
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
-                    Decline / Cancellation Reason (sent in email to client) *
+                    Chef Preparation Notes (optional, included in confirmation email)
                   </label>
                   <textarea
                     rows="3"
-                    required
-                    value={statusModal.cancellationReason}
-                    onChange={(e) => setStatusModal({ ...statusModal, cancellationReason: e.target.value })}
-                    placeholder="Provide clear reason for declining this appointment..."
+                    value={statusModal.chefNotes}
+                    onChange={(e) => setStatusModal({ ...statusModal, chefNotes: e.target.value })}
+                    placeholder="e.g. Bringing carbon steel pans; please ensure stovetop is accessible..."
                     style={{
                       width: '100%',
                       padding: '6px 8px',
@@ -2056,35 +1808,64 @@ export default function ClientDetail() {
                     }}
                   />
                 </div>
-              )}
+              </>
+            )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={() => setStatusModal({ ...statusModal, open: false })}
-                >
-                  Close
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  type="submit"
-                  disabled={statusModal.submitting}
-                >
-                  {statusModal.submitting
-                    ? 'Saving...'
-                    : statusModal.targetStatus === 'confirmed'
-                    ? 'Confirm & Notify'
-                    : statusModal.targetStatus === 'ready'
-                    ? 'Mark Ready & Notify'
-                    : 'Decline & Notify'}
-                </Button>
+            {statusModal.targetStatus === 'ready' && (
+              <>
+                <div style={{ backgroundColor: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '4px', padding: '10px 12px', fontSize: '0.74rem', color: '#5b21b6', lineHeight: 1.4 }}>
+                  <strong>Box Order Ready:</strong> Marking this order as <strong>Ready</strong> will send an automated email notification to the client stating their meal box has been prepared and is ready for pickup or outbound dispatch.
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
+                    Pickup / Dispatch Notes (optional, included in client email)
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={statusModal.chefNotes}
+                    onChange={(e) => setStatusModal({ ...statusModal, chefNotes: e.target.value })}
+                    placeholder="e.g. Freshly packed in insulated thermal box. Ready for pickup at kitchen desk..."
+                    style={{
+                      width: '100%',
+                      padding: '6px 8px',
+                      borderRadius: '3px',
+                      border: '1px solid var(--color-border, #ece7de)',
+                      backgroundColor: 'var(--color-bg, #fbf9f5)',
+                      fontSize: '0.74rem',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            {statusModal.targetStatus === 'cancelled' && (
+              <div>
+                <label style={{ fontSize: '0.72rem', fontWeight: 600, display: 'block', marginBottom: '3px', color: '#1e1b16' }}>
+                  Decline / Cancellation Reason (sent in email to client) *
+                </label>
+                <textarea
+                  rows="3"
+                  required
+                  value={statusModal.cancellationReason}
+                  onChange={(e) => setStatusModal({ ...statusModal, cancellationReason: e.target.value })}
+                  placeholder="Provide clear reason for declining this appointment..."
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    borderRadius: '3px',
+                    border: '1px solid var(--color-border, #ece7de)',
+                    backgroundColor: 'var(--color-bg, #fbf9f5)',
+                    fontSize: '0.74rem',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
               </div>
-            </form>
-          </div>
-        </div>
+            )}
+          </form>
+        </Dialog>
       )}
     </div>
   );

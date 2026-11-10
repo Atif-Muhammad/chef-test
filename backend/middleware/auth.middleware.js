@@ -102,8 +102,10 @@ async function optionalAuth(req, res, next) {
         const decoded = jwt.verify(accessToken, env.JWT_ACCESS_SECRET);
         const account = await resolveAccount(decoded);
         if (account) {
-          if (account.role === 'client' && account.status === 'terminated') {
+          if (account.role === 'client' && (account.status === 'terminated' || account.status !== 'active')) {
+            clearAuthCookie(res);
             req.user = null;
+            req.userTerminated = true;
             return next();
           }
           req.user = account;
@@ -120,8 +122,10 @@ async function optionalAuth(req, res, next) {
         const refreshDecoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
         const account = await resolveAccount(refreshDecoded);
         if (account) {
-          if (account.role === 'client' && account.status === 'terminated') {
+          if (account.role === 'client' && (account.status === 'terminated' || account.status !== 'active')) {
+            clearAuthCookie(res);
             req.user = null;
+            req.userTerminated = true;
             return next();
           }
           // Re-issue a fresh 7-day access token and set cookie
@@ -159,10 +163,12 @@ async function requireAuth(req, res, next) {
       const decoded = jwt.verify(accessToken, env.JWT_ACCESS_SECRET);
       const account = await resolveAccount(decoded);
       if (account) {
-        if (account.role === 'client' && account.status === 'terminated') {
+        if (account.role === 'client' && (account.status === 'terminated' || account.status !== 'active')) {
+          clearAuthCookie(res);
           return res.status(403).json({
             message: 'Access denied: Your account has been terminated by administrator.',
             terminated: true,
+            status: 'terminated',
           });
         }
         req.user = account;
@@ -180,10 +186,12 @@ async function requireAuth(req, res, next) {
       const refreshDecoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
       const account = await resolveAccount(refreshDecoded);
       if (account) {
-        if (account.role === 'client' && account.status === 'terminated') {
+        if (account.role === 'client' && (account.status === 'terminated' || account.status !== 'active')) {
+          clearAuthCookie(res);
           return res.status(403).json({
             message: 'Access denied: Your account has been terminated by administrator.',
             terminated: true,
+            status: 'terminated',
           });
         }
         const newAccessToken = signAccessToken(account, account.role);
@@ -213,21 +221,83 @@ function requireAdmin(req, res, next) {
 }
 
 /**
- * Requires client role.
+ * Requires client role and strictly active status.
  */
 function requireClient(req, res, next) {
-  requireAuth(req, res, () => {
-    if (req.user && req.user.role === 'client') {
-      if (req.user.status === 'terminated') {
+  requireAuth(req, res, async () => {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ message: 'Access denied: Client credentials required.' });
+    }
+
+    if (req.user.status === 'terminated' || req.user.status !== 'active') {
+      clearAuthCookie(res);
+      return res.status(403).json({
+        message: 'Access denied: Your account has been terminated by administrator.',
+        terminated: true,
+        status: 'terminated',
+      });
+    }
+
+    // Direct live DB check for instantaneous real-time termination enforcement
+    try {
+      const liveClient = await User.findById(req.user.id || req.user._id).select('status');
+      if (!liveClient || liveClient.status === 'terminated' || liveClient.status !== 'active') {
+        clearAuthCookie(res);
         return res.status(403).json({
           message: 'Access denied: Your account has been terminated by administrator.',
           terminated: true,
+          status: 'terminated',
         });
       }
+      req.user.status = liveClient.status;
       return next();
+    } catch (err) {
+      return next(err);
     }
-    return res.status(403).json({ message: 'Access denied: Client credentials required.' });
   });
+}
+
+/**
+ * checkClientActive:
+ * Middleware specifically checking if the client is active or terminated before processing request.
+ */
+async function checkClientActive(req, res, next) {
+  if (!req.user) {
+    return requireAuth(req, res, async () => {
+      if (!req.user) return;
+      return verifyClientStatus(req, res, next);
+    });
+  }
+  return verifyClientStatus(req, res, next);
+}
+
+async function verifyClientStatus(req, res, next) {
+  if (req.user && req.user.role === 'client') {
+    if (req.user.status === 'terminated' || req.user.status !== 'active') {
+      clearAuthCookie(res);
+      return res.status(403).json({
+        message: 'Access denied: Your account has been terminated by administrator.',
+        terminated: true,
+        status: 'terminated',
+      });
+    }
+
+    try {
+      const liveClient = await User.findById(req.user.id || req.user._id).select('status');
+      if (!liveClient || liveClient.status === 'terminated' || liveClient.status !== 'active') {
+        clearAuthCookie(res);
+        return res.status(403).json({
+          message: 'Access denied: Your account has been terminated by administrator.',
+          terminated: true,
+          status: 'terminated',
+        });
+      }
+      req.user.status = liveClient.status;
+    } catch (err) {
+      return next(err);
+    }
+  }
+  return next();
 }
 
 /**
@@ -309,6 +379,8 @@ module.exports = {
   requireAuth,
   requireAdmin,
   requireClient,
+  checkClientActive,
+  requireActiveClient: checkClientActive,
   setAuthCookie,
   setAuthCookies,
   clearAuthCookie,

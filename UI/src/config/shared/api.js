@@ -56,6 +56,15 @@ api.interceptors.response.use(
       }
     }
 
+    if (error.response?.status === 403 && (error.response?.data?.terminated || error.response?.data?.status === 'terminated')) {
+      try {
+        localStorage.removeItem('pcm_cart');
+      } catch {}
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/admin')) {
+        window.location.href = '/login?terminated=1';
+      }
+    }
+
     const message =
       error.response?.data?.message ||
       error.response?.data?.errors?.join(', ') ||

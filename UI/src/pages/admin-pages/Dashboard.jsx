@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { RotateCw, Eye, ClipboardList, Filter } from 'lucide-react';
 import api from '../../config/shared/api';
 import { EyeIcon } from '../../components/shared/Icons';
 import CustomDatePicker from '../../components/shared/CustomDatePicker';
+import KebabMenu from '../../components/shared/KebabMenu';
+import FilterDrawer from '../../components/shared/FilterDrawer';
+import { truncateWords } from '../../utils/formatters';
 import {
   KpiSkeleton,
   ChartSkeleton,
@@ -23,7 +27,9 @@ const getDefaultDates = () => {
 };
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [dateFilter, setDateFilter] = useState(getDefaultDates);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   const [stats, setStats] = useState({
     dishesCount: 0,
@@ -182,21 +188,65 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-page-container">
-      {/* Title & From-To Filter Header */}
-      <div className="admin-header-flex">
-        <div>
-          <h1 style={{ fontSize: '1.45rem', color: '#1a1814', marginBottom: '2px', letterSpacing: '-0.3px' }}>
-            Admin Dashboard
-          </h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem', margin: 0 }}>
-            Live overview of meal prep platform activity, client requests, and inventory.
-          </p>
-        </div>
+      {/* Title Row with Action Buttons at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1 className="admin-page-title" style={{ margin: 0 }}>
+          Admin Dashboard
+        </h1>
 
-        {/* From-To Date Range Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
-            <label htmlFor="filter-from" style={{ fontWeight: 600 }}>From:</label>
+        <div className="admin-title-actions" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => setFilterDrawerOpen(true)}
+            title="Filter by Date Range"
+            className={`admin-action-btn-outline ${
+              dateFilter.from !== getDefaultDates().from || dateFilter.to !== getDefaultDates().to
+                ? 'has-filters'
+                : ''
+            }`}
+            aria-label="Filter by Date Range"
+            style={
+              dateFilter.from !== getDefaultDates().from || dateFilter.to !== getDefaultDates().to
+                ? { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', color: '#15803d' }
+                : {}
+            }
+          >
+            <Filter size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => fetchAllData(dateFilter)}
+            title="Refresh dashboard stats"
+            className="admin-action-btn-outline"
+            aria-label="Refresh dashboard stats"
+          >
+            <RotateCw size={14} color="#6b665c" className={statsLoading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+      </div>
+      <p className="admin-page-subtitle">
+        Live overview of meal prep platform activity, client requests, and inventory.
+      </p>
+
+      {/* Date Range Filter Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        title="Dashboard Analytics Filter"
+        onReset={() => {
+          const d = getDefaultDates();
+          setDateFilter(d);
+          fetchAllData(d);
+        }}
+        activeFiltersCount={
+          dateFilter.from !== getDefaultDates().from || dateFilter.to !== getDefaultDates().to ? 1 : 0
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#4a453e', marginBottom: '6px' }}>
+              From Date
+            </label>
             <CustomDatePicker
               id="filter-from"
               value={dateFilter.from}
@@ -205,17 +255,15 @@ export default function AdminDashboard() {
                 setDateFilter(next);
                 fetchAllData(next);
               }}
-              style={{
-                height: '30px',
-                fontSize: '0.74rem',
-                width: '130px',
-              }}
-              wrapperStyle={{ width: '130px' }}
+              style={{ width: '100%', height: '36px', fontSize: '0.76rem' }}
+              wrapperStyle={{ width: '100%' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
-            <label htmlFor="filter-to" style={{ fontWeight: 600 }}>To:</label>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#4a453e', marginBottom: '6px' }}>
+              To Date
+            </label>
             <CustomDatePicker
               id="filter-to"
               value={dateFilter.to}
@@ -224,42 +272,53 @@ export default function AdminDashboard() {
                 setDateFilter(next);
                 fetchAllData(next);
               }}
-              style={{
-                height: '30px',
-                fontSize: '0.74rem',
-                width: '130px',
-              }}
-              wrapperStyle={{ width: '130px' }}
+              style={{ width: '100%', height: '36px', fontSize: '0.76rem' }}
+              wrapperStyle={{ width: '100%' }}
             />
           </div>
 
-          <button
-            onClick={() => fetchAllData(dateFilter)}
-            title="Refresh dashboard stats"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              backgroundColor: '#ffffff',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--border-radius-sm, 6px)',
-              padding: '5px 10px',
-              fontSize: '0.74rem',
-              fontWeight: 500,
-              color: 'var(--color-text)',
-              boxShadow: 'var(--shadow-sm)',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b665c" strokeWidth="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            <span>Refresh</span>
-          </button>
+          {/* Quick Date Presets */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.70rem', color: '#716c62', marginBottom: '6px' }}>
+              Quick Presets
+            </label>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { label: 'Past 7 Days', days: 7 },
+                { label: 'Past 30 Days', days: 30 },
+                { label: 'Past 90 Days', days: 90 },
+              ].map((preset) => (
+                <button
+                  key={preset.days}
+                  type="button"
+                  onClick={() => {
+                    const toDate = new Date();
+                    const fromDate = new Date();
+                    fromDate.setDate(fromDate.getDate() - preset.days);
+                    const next = {
+                      from: fromDate.toISOString().split('T')[0],
+                      to: toDate.toISOString().split('T')[0],
+                    };
+                    setDateFilter(next);
+                    fetchAllData(next);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--color-border, #ece7de)',
+                    backgroundColor: '#ffffff',
+                    fontSize: '0.68rem',
+                    color: '#4a453e',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </FilterDrawer>
 
       {/* Row 1: KPI Cards */}
       <div className="admin-kpi-grid">
@@ -651,52 +710,71 @@ export default function AdminDashboard() {
             </div>
 
             <div className="admin-table-scroll">
-              <table style={{ width: '100%', minWidth: '460px', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
                 <thead>
                   <tr style={{ color: '#8c857b', borderBottom: '1px solid #f0eee8', textAlign: 'left' }}>
-                    <th style={{ padding: '6px 4px 8px', fontWeight: 600 }}>Client Name</th>
-                    <th style={{ padding: '6px 4px 8px', fontWeight: 600 }}>Visit Date</th>
-                    <th style={{ padding: '6px 4px 8px', fontWeight: 600 }}>Dishes</th>
-                    <th style={{ padding: '6px 4px 8px', fontWeight: 600 }}>Status</th>
-                    <th style={{ padding: '6px 4px 8px', fontWeight: 600, textAlign: 'center' }}>Actions</th>
+                    <th style={{ padding: '6px 6px 8px', fontWeight: 600 }}>Client & Date</th>
+                    <th style={{ padding: '6px 6px 8px', fontWeight: 600 }}>Dishes & Status</th>
+                    <th style={{ padding: '6px 4px 8px', fontWeight: 600, width: '36px', textAlign: 'right' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentSubmissions.length > 0 ? (
                     recentSubmissions.map((row) => (
                       <tr key={row.id} style={{ borderBottom: '1px solid #f8f6f2' }}>
-                        <td style={{ padding: '8px 4px', color: 'var(--color-text)', fontWeight: 500 }}>{row.clientName}</td>
-                        <td style={{ padding: '8px 4px', color: 'var(--color-text-muted)' }}>{row.visitDate}</td>
-                        <td style={{ padding: '8px 4px', color: 'var(--color-text-muted)' }}>{row.dishes}</td>
-                        <td style={{ padding: '8px 4px' }}>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '0.70rem',
-                              fontWeight: 600,
-                              backgroundColor: row.status === 'Confirmed' ? '#e8f0fe' : '#e6f4ea',
-                              color: row.status === 'Confirmed' ? '#1a73e8' : '#137333',
-                            }}
-                          >
-                            {row.status}
+                        <td style={{ padding: '7px 6px' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--color-text)', display: 'block', fontSize: '0.76rem' }}>
+                            {row.clientName}
+                          </span>
+                          <span style={{ fontSize: '0.67rem', color: 'var(--color-text-muted)' }}>
+                            {row.visitDate}
                           </span>
                         </td>
-                        <td style={{ padding: '8px 4px', textAlign: 'center' }}>
-                          <Link
-                            to={`/admin/shopping-list/${row.id}`}
-                            style={{ color: '#6b665c', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                            title="View details"
-                          >
-                            <EyeIcon size={15} color="#6b665c" />
-                          </Link>
+                        <td style={{ padding: '7px 6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '1px 6px',
+                                borderRadius: '10px',
+                                fontSize: '0.65rem',
+                                fontWeight: 600,
+                                backgroundColor: row.status === 'Confirmed' ? '#e8f0fe' : '#e6f4ea',
+                                color: row.status === 'Confirmed' ? '#1a73e8' : '#137333',
+                              }}
+                            >
+                              {row.status}
+                            </span>
+                            <span
+                              style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}
+                              title={String(row.dishes || '')}
+                            >
+                              {truncateWords(String(row.dishes || ''), 4)}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '7px 4px', textAlign: 'right' }}>
+                          <KebabMenu
+                            ariaLabel={`Actions for ${row.clientName}`}
+                            items={[
+                              {
+                                label: 'View Selections',
+                                icon: <Eye size={13} />,
+                                onClick: () => navigate(`/admin/selections?visit=${row.id}`),
+                              },
+                              {
+                                label: 'Shopping List',
+                                icon: <ClipboardList size={13} />,
+                                onClick: () => navigate(`/admin/shopping-list/${row.id}`),
+                              },
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" style={{ padding: '24px 0', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                      <td colSpan="3" style={{ padding: '24px 0', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                         No client submissions recorded for this period.
                       </td>
                     </tr>

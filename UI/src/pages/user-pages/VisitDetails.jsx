@@ -147,7 +147,7 @@ export default function VisitDetails() {
   });
 
   return (
-    <div style={{ width: '100%', paddingBottom: '30px' }}>
+    <div className="user-page-container">
       {/* Back Breadcrumb */}
       <div style={{ marginBottom: '8px' }}>
         <Link
@@ -189,28 +189,10 @@ export default function VisitDetails() {
       )}
 
       {/* Header Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-          gap: '10px',
-        }}
-      >
+      <div className="user-title-row">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-            <h1
-              style={{
-                fontSize: '1.45rem',
-                color: '#1a1814',
-                margin: 0,
-                letterSpacing: '-0.3px',
-                fontWeight: 700,
-                fontFamily: 'var(--font-heading, serif)',
-              }}
-            >
+            <h1 className="user-page-title">
               Box Order Details
             </h1>
             <span
@@ -226,36 +208,22 @@ export default function VisitDetails() {
               #{visit._id?.slice(-6).toUpperCase()}
             </span>
           </div>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: 0 }}>
+          <p className="user-page-subtitle">
             Full menu selections, preparation notes, delivery/pickup window, and order status.
           </p>
         </div>
 
         {/* Top Header Actions */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="user-title-actions">
           <button
             type="button"
+            className="user-action-btn"
             onClick={useMenuAgain}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              backgroundColor: 'var(--color-primary, #2e3b12)',
-              color: '#ffffff',
-              border: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: 'none',
-              transition: 'opacity 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.92')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            title="Re-pack this box"
+            style={{ padding: '0 12px' }}
           >
             <RotateCcw size={13} />
-            <span>Re-pack This Box</span>
+            <span className="user-btn-text">Re-pack This Box</span>
           </button>
         </div>
       </div>
@@ -376,14 +344,7 @@ export default function VisitDetails() {
       </div>
 
       {/* 3 Metric Overview Cards (Box Date, Box Portions, Delivery/Pickup Window) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '12px',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="user-metric-3col" style={{ marginBottom: '16px' }}>
         {/* 1. Box Date */}
         <div
           style={{
@@ -497,7 +458,7 @@ export default function VisitDetails() {
       </div>
 
       {/* Main Content Layout: Dishes on Left, Summary & Notes on Right */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px', gap: '16px' }}>
+      <div className="user-split-2col">
         {/* Left Column: Dishes Packed in Box */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>

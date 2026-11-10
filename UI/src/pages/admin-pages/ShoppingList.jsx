@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Clock, Plus, Copy, RotateCw, Save, Printer, ArrowLeft } from 'lucide-react';
 import api from '../../config/shared/api';
 import Card from '../../components/shared/Card';
 import Button from '../../components/shared/Button';
@@ -164,161 +164,87 @@ export default function ShoppingList() {
 
   return (
     <div className="admin-page-container">
-      {/* Navigation & Print Bar */}
-      <div
-        className="no-print"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '12px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Title Row with Action Buttons at the End (justify-between) */}
+      <div className="admin-title-row no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Link
             to="/admin/selections"
-            style={{
-              color: 'var(--color-primary, #2e3b12)',
-              fontSize: '0.76rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontWeight: 600,
-            }}
+            className="admin-action-btn-outline"
+            title="Back to Client Selections"
+            style={{ width: '32px', height: '32px' }}
           >
-            <span>&larr;</span> Back to Client Selections
+            <ArrowLeft size={16} />
           </Link>
-          <span style={{ color: 'var(--color-border, #ece7de)' }}>&bull;</span>
-          <Link
-            to="/admin/shopping-lists"
-            style={{
-              color: 'var(--color-text-muted, #716c62)',
-              fontSize: '0.76rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            All Shopping Lists
-          </Link>
-        </div>
-
-        <button
-          type="button"
-          onClick={handlePrint}
-          style={{
-            background: 'var(--color-bg, #fbf9f5)',
-            border: '1px solid var(--color-border, #ece7de)',
-            borderRadius: '4px',
-            padding: '4px 10px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            color: '#1e1b16',
-            boxShadow: 'none',
-          }}
-        >
-          <PrinterIcon size={14} color="var(--color-primary, #2e3b12)" /> Print Shopping List
-        </button>
-      </div>
-
-      {/* Header Banner */}
-      <div className="admin-header-flex">
-        <div>
-          <h1
-            style={{
-              color: 'var(--color-primary, #2e3b12)',
-              fontSize: '1.25rem',
-              margin: '0 0 2px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <ClipboardIcon size={20} color="var(--color-primary, #2e3b12)" />
-            Visit Shopping List
+          <h1 className="admin-page-title" style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+            <ClipboardIcon size={18} color="var(--color-primary, #2e3b12)" style={{ flexShrink: 0 }} />
+            <span>Visit Shopping List</span>
           </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-            Client: <strong>{data.client?.name}</strong> &bull; Scheduled:{' '}
-            <strong>{formatLocalDate(data.visitDate)}</strong> &bull; Guests:{' '}
-            <strong>{data.guests}</strong> &bull; Items: <strong>{items.length}</strong>
-          </p>
         </div>
 
-        <div className="no-print" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          <Button
-            size="sm"
-            variant="outline"
+        <div className="admin-title-actions admin-title-actions-2col">
+          <button
+            type="button"
+            className="admin-action-btn"
             onClick={addItem}
-            style={{
-              borderRadius: '4px',
-              boxShadow: 'none',
-              height: '34px',
-              fontSize: '0.74rem',
-              padding: '0 12px',
-            }}
+            title="Add Ingredient Item"
           >
-            + Add Item
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
+            <Plus size={16} />
+          </button>
+          <button
+            type="button"
+            className="admin-action-btn-outline"
             onClick={handleOpenCopyModal}
-            style={{
-              borderRadius: '4px',
-              boxShadow: 'none',
-              height: '34px',
-              fontSize: '0.74rem',
-              padding: '0 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              borderColor: '#fed7aa',
-              backgroundColor: '#fff7ed',
-              color: '#9a3412',
-            }}
+            title="Fill from Previous Shopping List"
+            style={{ backgroundColor: '#fff7ed', borderColor: '#fed7aa', color: '#9a3412' }}
           >
-            <ClipboardIcon size={12} color="#9a3412" />
-            Fill from Prev List
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
+            <Copy size={15} />
+          </button>
+          <button
+            type="button"
+            className="admin-action-btn-outline"
             onClick={handleRegenerate}
             disabled={recalculating}
-            style={{
-              borderRadius: '4px',
-              boxShadow: 'none',
-              height: '34px',
-              fontSize: '0.74rem',
-              padding: '0 12px',
-            }}
+            title="Recalculate from Current Dish Recipes"
           >
-            {recalculating ? 'Recalculating...' : '↻ Recalculate'}
-          </Button>
-
-          <Button
-            size="sm"
-            variant="primary"
+            <RotateCw size={15} className={recalculating ? 'animate-spin' : ''} />
+          </button>
+          <button
+            type="button"
+            className="admin-action-btn"
             onClick={handleSave}
             disabled={saving}
-            style={{
-              borderRadius: '4px',
-              boxShadow: 'none',
-              height: '34px',
-              fontSize: '0.74rem',
-              padding: '0 14px',
-            }}
+            title="Save Shopping List"
           >
-            {saving ? 'Saving...' : '✓ Save Shopping List'}
-          </Button>
+            <Save size={15} />
+          </button>
+          <button
+            type="button"
+            className="admin-action-btn-outline"
+            onClick={handlePrint}
+            title="Print Shopping List"
+          >
+            <Printer size={15} />
+          </button>
         </div>
       </div>
+      <p className="admin-page-subtitle">
+        Client: <strong>{data.client?.name}</strong> &bull; Scheduled:{' '}
+        <strong>{formatLocalDate(data.visitDate)}</strong> &bull; Guests:{' '}
+        <strong>{data.guests}</strong> &bull; Items: <strong>{items.length}</strong>
+        <span style={{ color: 'var(--color-border, #ece7de)', margin: '0 6px' }}>&bull;</span>
+        <Link
+          to="/admin/shopping-lists"
+          style={{
+            color: 'var(--color-text-muted, #716c62)',
+            fontSize: '0.72rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '2px',
+          }}
+        >
+          All Shopping Lists &rarr;
+        </Link>
+      </p>
 
       {/* Client Overview Card */}
       <Card
@@ -646,7 +572,7 @@ export default function ShoppingList() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"

@@ -15,7 +15,7 @@ import {
 export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectUrl = searchParams.get('redirect') || '/catalogue';
+  const redirectUrl = searchParams.get('redirect') || '/home';
   const { user, registerClient } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -219,6 +219,33 @@ export default function Register() {
       {/* Right Side: Create Account Form (Seamless, No Floating Card Border) */}
       <div className="auth-right-panel">
         <div className="auth-form-container">
+          {/* Mobile Brand Crest (Visible only on mobile when left panel is hidden) */}
+          <div className="auth-mobile-brand" style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <img
+              src="/assets/logo-crest.png"
+              alt="Private Chef Missy Logo"
+              style={{
+                width: '64px',
+                height: 'auto',
+                margin: '0 auto 6px',
+                display: 'block',
+                mixBlendMode: 'multiply',
+              }}
+            />
+            <span
+              style={{
+                fontSize: '0.62rem',
+                letterSpacing: '2px',
+                color: '#7a7366',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                display: 'block',
+              }}
+            >
+              Fresh &bull; Thoughtful &bull; Curated
+            </span>
+          </div>
+
           {/* Heading & Subtitle */}
           <div style={{ marginBottom: '20px' }}>
             <h2

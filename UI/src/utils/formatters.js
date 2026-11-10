@@ -125,3 +125,13 @@ export function toDateInputValue(dateInput) {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+// Truncate text to a maximum number of words with trailing ellipsis
+export function truncateWords(text, maxWords = 4) {
+  if (!text || typeof text !== 'string') return '';
+  const clean = text.trim();
+  if (!clean) return '';
+  const words = clean.split(/\s+/);
+  if (words.length <= maxWords) return clean;
+  return words.slice(0, maxWords).join(' ') + '...';
+}

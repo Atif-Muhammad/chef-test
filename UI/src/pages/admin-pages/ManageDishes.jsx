@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, SlidersHorizontal, Eye, Edit3, Trash2 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Button from '../../components/shared/Button';
 import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { ManageDishesSkeleton } from '../../components/skeletons';
 import CustomSelect from '../../components/shared/CustomSelect';
+import FilterDrawer from '../../components/shared/FilterDrawer';
+import KebabMenu from '../../components/shared/KebabMenu';
+import { truncateWords } from '../../utils/formatters';
 import DataTable, {
   CategoryBadge,
   DietaryBadge,
@@ -44,6 +48,7 @@ export default function ManageDishes() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Modals & Menu State
   const [viewDish, setViewDish] = useState(null);
@@ -207,11 +212,17 @@ export default function ManageDishes() {
     return true;
   });
 
+  const activeFilterCount = [
+    selectedCategory,
+    selectedDietaryTag,
+    selectedAllergen,
+    selectedStatus,
+  ].filter(Boolean).length;
+
   const columns = [
     {
-      header: 'Image',
-      key: 'photoUrl',
-      width: '46px',
+      header: 'Dish',
+      key: 'name',
       render: (row) => {
         const primaryImg =
           (Array.isArray(row.photos) && row.photos.length > 0 && row.photos[0]) ||
@@ -219,233 +230,111 @@ export default function ManageDishes() {
           null;
 
         return (
-          <div
-            onClick={() => setViewDish(row)}
-            style={{
-              width: '38px',
-              height: '28px',
-              borderRadius: '3px',
-              overflow: 'hidden',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              border: '1px solid var(--color-border, #ece7de)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Click to view details"
-          >
-            {primaryImg ? (
-              <img
-                src={primaryImg}
-                alt={row.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-            ) : (
-              <CameraIcon size={14} color="#a8a29e" />
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Dish Name',
-      key: 'name',
-      render: (row) => (
-        <div>
-          <button
-            type="button"
-            onClick={() => setViewDish(row)}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              textAlign: 'left',
-              display: 'block',
-              fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              color: '#1a1814',
-              lineHeight: 1.25,
-            }}
-          >
-            {row.name}
-          </button>
-          <span
-            style={{
-              display: 'block',
-              fontSize: '0.66rem',
-              color: '#716c62',
-              marginTop: '1px',
-              maxWidth: '220px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: 1.25,
-            }}
-            title={row.description}
-          >
-            {row.description || 'Chef prepared seasonal specialty.'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: 'Category',
-      key: 'category',
-      render: (row) => <CategoryBadge category={row.categoryId?.name || row.course} />,
-    },
-    {
-      header: 'Dietary Tags',
-      key: 'dietaryTags',
-      render: (row) => {
-        const tags = row.dietaryTags || [];
-        return (
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {tags.length > 0 ? (
-              tags.map((t, i) => <DietaryBadge key={i} tag={t} />)
-            ) : (
-              <span style={{ fontSize: '0.68rem', color: '#a8a29e' }}>—</span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Allergens',
-      key: 'allergens',
-      render: (row) => {
-        const allergens = (row.allergens || []).map((a) => (typeof a === 'string' ? a : a.name || ''));
-        return (
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {allergens.length > 0 ? (
-              allergens.map((a, i) => <AllergenBadge key={i} allergen={a} />)
-            ) : (
-              <AllergenBadge allergen="None" />
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Status',
-      key: 'isPublished',
-      render: (row) => (
-        <StatusBadge active={row.isPublished} activeText="Active" inactiveText="Inactive" />
-      ),
-    },
-    {
-      header: 'Actions',
-      key: 'actions',
-      render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          {/* Status Toggler Switch */}
-          <button
-            type="button"
-            onClick={() => togglePublished(row)}
-            title={row.isPublished ? 'Deactivate dish (hide from catalogue)' : 'Activate dish (publish to catalogue)'}
-            style={{
-              width: '28px',
-              height: '16px',
-              borderRadius: '9px',
-              backgroundColor: row.isPublished ? '#15803d' : '#d1d5db',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '1.5px',
-              transition: 'background-color 0.2s ease',
-              display: 'inline-flex',
-              alignItems: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+            <div
+              onClick={() => setViewDish(row)}
               style={{
-                width: '13px',
-                height: '13px',
-                borderRadius: '50%',
-                backgroundColor: '#ffffff',
-                transition: 'transform 0.2s ease',
-                transform: row.isPublished ? 'translateX(12px)' : 'translateX(0)',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                display: 'block',
+                width: '38px',
+                height: '32px',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                backgroundColor: 'var(--color-bg, #fbf9f5)',
+                cursor: 'pointer',
+                flexShrink: 0,
+                border: '1px solid var(--color-border, #ece7de)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-            />
-          </button>
+              title="Click to view details"
+            >
+              {primaryImg ? (
+                <img
+                  src={primaryImg}
+                  alt={row.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <CameraIcon size={14} color="#a8a29e" />
+              )}
+            </div>
 
-          {/* Edit Button */}
-          <button
-            type="button"
-            onClick={() => navigate(`/admin/dishes/edit/${row._id}`)}
-            title="Edit recipe"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EditIcon size={11} color="#4b5563" />
-          </button>
+            <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setViewDish(row)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    color: '#1a1814',
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {row.name}
+                </button>
+                <CategoryBadge category={row.categoryId?.name || row.course} />
+                <StatusBadge active={row.isPublished} activeText="Active" inactiveText="Inactive" />
+              </div>
 
-          {/* Delete Button */}
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(row)}
-            title="Delete dish"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fee2e2',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fecaca')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-          >
-            <TrashIcon size={11} color="#dc2626" />
-          </button>
-
-          {/* View Details Button */}
-          <button
-            type="button"
-            onClick={() => setViewDish(row)}
-            title="View details"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EyeIcon size={11} color="#4b5563" />
-          </button>
-        </div>
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: '0.68rem',
+                  color: '#716c62',
+                  marginTop: '2px',
+                  lineHeight: 1.25,
+                }}
+                title={row.description}
+              >
+                {truncateWords(row.description || 'Chef prepared seasonal specialty.', 4)}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: '',
+      key: 'actions',
+      width: '38px',
+      align: 'right',
+      render: (row) => (
+        <KebabMenu
+          ariaLabel={`Actions for ${row.name}`}
+          items={[
+            {
+              label: 'View Recipe',
+              icon: <Eye size={13} />,
+              onClick: () => setViewDish(row),
+            },
+            {
+              label: 'Edit Recipe',
+              icon: <Edit3 size={13} />,
+              onClick: () => navigate(`/admin/dishes/edit/${row._id}`),
+            },
+            {
+              label: row.isPublished ? 'Deactivate' : 'Activate',
+              icon: <CheckCircleIcon size={13} color={row.isPublished ? '#d97706' : '#15803d'} />,
+              onClick: () => togglePublished(row),
+            },
+            {
+              label: 'Delete Dish',
+              icon: <Trash2 size={13} />,
+              variant: 'danger',
+              onClick: () => setDeleteTarget(row),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -454,215 +343,138 @@ export default function ManageDishes() {
 
   return (
     <div className="admin-page-container">
-      {/* Page Title & Add Button */}
-      <div className="admin-header-flex">
-        <div>
-          <h1 style={{ color: 'var(--color-primary)', fontSize: '1.45rem', margin: 0, fontWeight: 700 }}>
-            Manage Dishes
-          </h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem', margin: '2px 0 0' }}>
-            Master recipe oversight, allergen tags, and client catalogue controls ({dishes.length} total entries)
-          </p>
-        </div>
-
-        <Link to="/admin/dishes/new" style={{ textDecoration: 'none' }}>
-          <Button
-            variant="primary"
-            size="sm"
-            style={{
-              borderRadius: '4px',
-              gap: '6px',
-              padding: '0 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              boxShadow: 'none',
-            }}
+      {/* Title Row with Action Button at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1 className="admin-page-title" style={{ margin: 0 }}>
+          Manage Dishes
+        </h1>
+        <div className="admin-title-actions">
+          <Link
+            to="/admin/dishes/new"
+            className="admin-action-btn"
+            title="Add New Dish"
+            aria-label="Add New Dish"
           >
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, fontWeight: 500 }}>+</span>
-            <span>Add New Dish</span>
-          </Button>
-        </Link>
+            <Plus size={16} />
+          </Link>
+        </div>
       </div>
+      <p className="admin-page-subtitle">
+        Master recipe oversight, allergen tags, and client catalogue controls ({dishes.length} total entries)
+      </p>
 
-      {/* Top Filter Bar (matching parent background) */}
-      <div className="admin-filter-bar">
-        {/* Search */}
-        <div
-          className="admin-filter-search"
-          style={{
-            flex: '1 1 200px',
-            maxWidth: '240px',
-            height: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '7px',
-            backgroundColor: 'var(--color-bg, #fbf9f5)',
-            border: '1px solid var(--color-border, #ece7de)',
-            borderRadius: '4px',
-            padding: '0 9px',
-            boxShadow: 'none',
-          }}
-        >
+      {/* Main Page Search & Filter Toggle Bar */}
+      <div className="admin-search-filter-bar">
+        <div className="admin-search-box">
           <SearchIcon size={13} color="#9ca3af" />
           <input
             type="text"
             placeholder="Search dishes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              border: 'none',
-              outline: 'none',
-              width: '100%',
-              fontSize: '0.72rem',
-              color: '#1f2937',
-              backgroundColor: 'transparent',
-            }}
           />
         </div>
 
-        {/* All Categories dropdown */}
-        <div className="admin-filter-select">
-          <CustomSelect
-            value={selectedCategory}
-            onChange={(val) => setSelectedCategory(val)}
-            options={categoryOptions}
-            placeholder="All Categories"
-            size="sm"
-            leadingIcon={<LayersIcon size={13} color="#4b5563" />}
-            style={{ width: '140px' }}
-            triggerStyle={{
-              height: '28px',
-              minHeight: '28px',
-              padding: '0 8px',
-              fontSize: '0.72rem',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              boxShadow: 'none',
-            }}
-            menuStyle={{
-              minWidth: '100%',
-              width: 'max-content',
-              maxWidth: '220px',
-              borderRadius: '4px',
-              boxShadow: '0 8px 24px -2px rgba(25, 20, 15, 0.12)',
-            }}
-          />
-        </div>
-
-        {/* All Dietary Tags dropdown */}
-        <div className="admin-filter-select">
-          <CustomSelect
-            value={selectedDietaryTag}
-            onChange={(val) => setSelectedDietaryTag(val)}
-            options={dietaryOptions}
-            placeholder="All Dietary Tags"
-            size="sm"
-            leadingIcon={<LeafIcon size={13} color="#4b5563" />}
-            style={{ width: '145px' }}
-            triggerStyle={{
-              height: '28px',
-              minHeight: '28px',
-              padding: '0 8px',
-              fontSize: '0.72rem',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              boxShadow: 'none',
-            }}
-            menuStyle={{
-              minWidth: '100%',
-              width: 'max-content',
-              maxWidth: '220px',
-              borderRadius: '4px',
-              boxShadow: '0 8px 24px -2px rgba(25, 20, 15, 0.12)',
-            }}
-          />
-        </div>
-
-        {/* Allergens dropdown */}
-        <div className="admin-filter-select">
-          <CustomSelect
-            value={selectedAllergen}
-            onChange={(val) => setSelectedAllergen(val)}
-            options={allergenOptions}
-            placeholder="All Allergens"
-            size="sm"
-            leadingIcon={<ShieldIcon size={13} color="#4b5563" />}
-            style={{ width: '130px' }}
-            triggerStyle={{
-              height: '28px',
-              minHeight: '28px',
-              padding: '0 8px',
-              fontSize: '0.72rem',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              boxShadow: 'none',
-            }}
-            menuStyle={{
-              minWidth: '100%',
-              width: 'max-content',
-              maxWidth: '220px',
-              borderRadius: '4px',
-              boxShadow: '0 8px 24px -2px rgba(25, 20, 15, 0.12)',
-            }}
-          />
-        </div>
-
-        {/* All Statuses dropdown */}
-        <div className="admin-filter-select">
-          <CustomSelect
-            value={selectedStatus}
-            onChange={(val) => setSelectedStatus(val)}
-            options={statusOptions}
-            placeholder="All Statuses"
-            size="sm"
-            leadingIcon={<CheckCircleIcon size={13} color="#4b5563" />}
-            style={{ width: '120px' }}
-            triggerStyle={{
-              height: '28px',
-              minHeight: '28px',
-              padding: '0 8px',
-              fontSize: '0.72rem',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              boxShadow: 'none',
-            }}
-            menuStyle={{
-              minWidth: '100%',
-              width: 'max-content',
-              maxWidth: '220px',
-              borderRadius: '4px',
-              boxShadow: '0 8px 24px -2px rgba(25, 20, 15, 0.12)',
-            }}
-          />
-        </div>
-
-        {/* Reset button */}
         <button
           type="button"
-          onClick={resetFilters}
-          style={{
-            height: '28px',
-            padding: '0 12px',
-            borderRadius: '4px',
-            border: '1px solid var(--color-border, #ece7de)',
-            backgroundColor: 'var(--color-bg, #fbf9f5)',
-            fontSize: '0.72rem',
-            fontWeight: 500,
-            color: '#374151',
-            cursor: 'pointer',
-            boxShadow: 'none',
-            transition: 'background-color 0.15s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg, #fbf9f5)')}
+          className={`admin-filter-toggle-btn ${activeFilterCount > 0 ? 'has-filters' : ''}`}
+          onClick={() => setFilterDrawerOpen(true)}
+          title="Open filters sidebar"
         >
-          Reset
+          <SlidersHorizontal size={13} />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#15803d',
+                color: '#ffffff',
+                borderRadius: '10px',
+                padding: '1px 5px',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
         </button>
       </div>
+
+      {/* Filter Slide-out Sidebar Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        title="Filter Dishes"
+        activeCount={activeFilterCount}
+        onReset={resetFilters}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Category
+            </label>
+            <CustomSelect
+              value={selectedCategory}
+              onChange={(val) => setSelectedCategory(val)}
+              options={categoryOptions}
+              placeholder="All Categories"
+              size="sm"
+              leadingIcon={<LayersIcon size={13} color="#4b5563" />}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '32px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Dietary Tags
+            </label>
+            <CustomSelect
+              value={selectedDietaryTag}
+              onChange={(val) => setSelectedDietaryTag(val)}
+              options={dietaryOptions}
+              placeholder="All Dietary Tags"
+              size="sm"
+              leadingIcon={<LeafIcon size={13} color="#4b5563" />}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '32px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Allergens
+            </label>
+            <CustomSelect
+              value={selectedAllergen}
+              onChange={(val) => setSelectedAllergen(val)}
+              options={allergenOptions}
+              placeholder="All Allergens"
+              size="sm"
+              leadingIcon={<ShieldIcon size={13} color="#4b5563" />}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '32px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Status
+            </label>
+            <CustomSelect
+              value={selectedStatus}
+              onChange={(val) => setSelectedStatus(val)}
+              options={statusOptions}
+              placeholder="All Statuses"
+              size="sm"
+              leadingIcon={<CheckCircleIcon size={13} color="#4b5563" />}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '32px' }}
+            />
+          </div>
+        </div>
+      </FilterDrawer>
 
       {/* Dishes Table */}
       <DataTable
@@ -698,16 +510,16 @@ export default function ManageDishes() {
             padding: '16px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+            <div className="dialog-responsive-footer">
               <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted)' }}>
                 Base Servings: <strong>2 Standard</strong> &bull; {viewDish.categoryId?.name || viewDish.course || 'Uncategorized'}
               </span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="dialog-footer-actions">
                 <button
                   type="button"
                   onClick={() => setViewDish(null)}
                   style={{
-                    height: '28px',
+                    height: '32px',
                     padding: '0 14px',
                     borderRadius: '4px',
                     border: '1px solid var(--color-border, #ece7de)',
@@ -732,7 +544,7 @@ export default function ManageDishes() {
                     navigate(`/admin/dishes/edit/${dishId}`);
                   }}
                   style={{
-                    height: '28px',
+                    height: '32px',
                     padding: '0 14px',
                     borderRadius: '4px',
                     border: '1px solid var(--color-primary, #2e3b12)',
@@ -761,7 +573,7 @@ export default function ManageDishes() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: '12px',
               alignItems: 'start',
             }}
@@ -770,9 +582,8 @@ export default function ManageDishes() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Section 1: Overview & Media */}
               <div
+                className="dialog-dish-overview"
                 style={{
-                  display: 'flex',
-                  gap: '12px',
                   padding: '10px 12px',
                   backgroundColor: 'var(--color-bg, #fbf9f5)',
                   borderRadius: '4px',
@@ -790,6 +601,7 @@ export default function ManageDishes() {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
                       <div
+                        className="dialog-dish-thumb"
                         onClick={() => primaryPhoto && setPreviewImage(primaryPhoto)}
                         title={primaryPhoto ? "Click to view full photo" : undefined}
                         style={{
@@ -950,7 +762,7 @@ export default function ManageDishes() {
                   Preparation & Storage
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                <div className="dialog-prep-grid">
                   <div style={{ padding: '6px 8px', backgroundColor: '#ffffff', borderRadius: '4px', border: '1px solid #ede8df' }}>
                     <span style={{ fontSize: '0.64rem', color: '#716c62', display: 'block' }}>Prep Time</span>
                     <strong style={{ fontSize: '0.78rem', color: '#1e1b16' }}>
@@ -1162,73 +974,49 @@ export default function ManageDishes() {
 
       {/* Lightbox Image Preview Modal */}
       {previewImage && (
-        <div
-          onClick={() => setPreviewImage(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(20, 16, 12, 0.72)',
-            backdropFilter: 'blur(3px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-            padding: '16px',
-            cursor: 'zoom-out',
+        <Dialog
+          isOpen={Boolean(previewImage)}
+          onClose={() => setPreviewImage(null)}
+          title="Dish Photo Preview"
+          maxWidth="640px"
+          cardStyle={{
+            padding: '12px',
+            backgroundColor: '#1c1917',
+            border: '1px solid #292524',
           }}
+          footer={
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  color: '#ffffff',
+                  borderColor: '#57534e',
+                  backgroundColor: 'transparent',
+                  height: '28px',
+                  fontSize: '0.72rem',
+                }}
+              >
+                Close Preview
+              </Button>
+            </div>
+          }
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '85vh',
-              backgroundColor: '#ffffff',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-              border: '1px solid var(--color-border, #ece7de)',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setPreviewImage(null)}
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                width: '26px',
-                height: '26px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                border: 'none',
-                color: '#ffffff',
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 10,
-              }}
-              title="Close image preview"
-            >
-              &times;
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <img
               src={previewImage}
               alt="Dish full resolution preview"
               style={{
                 display: 'block',
                 maxWidth: '100%',
-                maxHeight: '80vh',
+                maxHeight: '68vh',
                 objectFit: 'contain',
+                borderRadius: '3px',
               }}
             />
           </div>
-        </div>
+        </Dialog>
       )}
 
       {/* =========================================================================
@@ -1247,7 +1035,7 @@ export default function ManageDishes() {
             padding: '16px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -1372,7 +1160,7 @@ export default function ManageDishes() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"

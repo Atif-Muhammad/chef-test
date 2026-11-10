@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Clock, Layers, SlidersHorizontal, Eye, Copy, ArrowLeft, ClipboardList } from 'lucide-react';
 import api from '../../config/shared/api';
 import Button from '../../components/shared/Button';
 import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { ManageShoppingListsSkeleton } from '../../components/skeletons';
 import DataTable from '../../components/shared/DataTable';
+import FilterDrawer from '../../components/shared/FilterDrawer';
+import KebabMenu from '../../components/shared/KebabMenu';
 import CustomSelect from '../../components/shared/CustomSelect';
 import CustomDatePicker from '../../components/shared/CustomDatePicker';
 import {
@@ -27,6 +29,7 @@ import {
   formatLocalDate,
   convert24To12,
   toDateInputValue,
+  truncateWords,
 } from '../../utils/formatters';
 
 export default function ManageShoppingLists() {
@@ -37,6 +40,7 @@ export default function ManageShoppingLists() {
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Date Filters
   const [startDate, setStartDate] = useState(() => toDateInputValue(new Date()));
@@ -214,13 +218,27 @@ export default function ManageShoppingLists() {
       return new Date(b.visitDate) - new Date(a.visitDate);
     });
 
-  // Table Columns Definition
+  const activeFilterCount =
+    (activeTab !== 'upcoming' ? 1 : 0) +
+    (startDate ? 1 : 0) +
+    (endDate ? 1 : 0) +
+    (selectedStatus !== 'All' ? 1 : 0);
+
+  const resetFilters = () => {
+    setSearch('');
+    setSelectedStatus('All');
+    handleTabChange('upcoming');
+  };
+
+  // Table Columns Definition (Max 3 columns including selectable checkbox)
   const columns = [
     {
-      header: 'Scheduled Date & Timing',
-      key: 'date',
-      width: '180px',
+      header: 'Reservation & Shopping Status',
+      key: 'client',
       render: (v) => {
+        const client = v.userId;
+        const clientName = client?.name || 'Private Client';
+        const clientId = client?._id || client?.id;
         const dateStr = formatLocalDate(v.visitDate, {
           weekday: 'short',
           month: 'short',
@@ -236,28 +254,39 @@ export default function ManageShoppingLists() {
           cancelled: { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' },
         };
         const sColor = statusColors[v.status] || statusColors.pending;
+        const list = v.shoppingList || [];
+        const hasItems = list.length > 0;
+        const dishNames = (v.dishes || []).map((d) => d.dishId?.name || 'Dish').join(', ');
 
         return (
-          <div>
-            <div style={{ fontWeight: 600, fontSize: '0.78rem', color: '#1a1814' }}>
-              {dateStr}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px', flexWrap: 'wrap' }}>
-              <span
-                style={{
-                  fontSize: '0.64rem',
-                  padding: '1.5px 5px',
-                  borderRadius: '3px',
-                  backgroundColor: '#f6f3eb',
-                  border: '1px solid #ede8df',
-                  color: '#4a453e',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-              >
-                <Clock size={10} color="#655e53" style={{ flexShrink: 0 }} /> {windowStr}
-              </span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              {clientId ? (
+                <Link
+                  to={`/admin/clients/${clientId}`}
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    color: 'var(--color-primary, #2e3b12)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {clientName}
+                </Link>
+              ) : (
+                <span
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    color: '#1a1814',
+                  }}
+                >
+                  {clientName}
+                </span>
+              )}
+              <span style={{ fontSize: '0.68rem', color: '#57534e' }}>• {dateStr}</span>
               <span
                 style={{
                   fontSize: '0.62rem',
@@ -273,104 +302,77 @@ export default function ManageShoppingLists() {
                 {v.status}
               </span>
             </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Client & Dossier',
-      key: 'client',
-      width: '180px',
-      render: (v) => {
-        const client = v.userId;
-        const clientName = client?.name || 'Private Client';
-        const clientId = client?._id || client?.id;
 
-        return (
-          <div>
-            {clientId ? (
-              <Link
-                to={`/admin/clients/${clientId}`}
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: 'var(--color-primary, #2e3b12)',
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                }}
-              >
-                {clientName}
-              </Link>
-            ) : (
-              <span
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: '#1a1814',
-                }}
-              >
-                {clientName}
-              </span>
-            )}
-            <div style={{ fontSize: '0.66rem', color: '#716c62', marginTop: '2px' }}>
-              {client?.location || 'Private Residence'}
-            </div>
-            <div style={{ fontSize: '0.64rem', color: '#8c857b', marginTop: '1px' }}>
-              {v.guests || (v.adults || 0) + (v.children || 0)} Guests ({v.adults || 0} adults, {v.children || 0} kids)
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Menu Selections',
-      key: 'dishes',
-      render: (v) => {
-        const dishList = v.dishes || [];
-        if (dishList.length === 0) {
-          return <span style={{ fontSize: '0.70rem', color: '#a8a29e', fontStyle: 'italic' }}>No dishes selected</span>;
-        }
-
-        const preview = dishList.slice(0, 3);
-        const remainder = dishList.length - preview.length;
-
-        return (
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {preview.map((d, i) => {
-              const name = d.dishId?.name || (typeof d.dishId === 'string' ? 'Dish' : 'Custom Course');
-              return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+              {windowStr && (
                 <span
-                  key={i}
                   style={{
-                    display: 'inline-block',
-                    padding: '1.5px 6px',
+                    fontSize: '0.64rem',
+                    padding: '1px 5px',
                     borderRadius: '3px',
                     backgroundColor: '#f6f3eb',
                     border: '1px solid #ede8df',
-                    fontSize: '0.67rem',
                     color: '#4a453e',
-                    lineHeight: 1.3,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
                   }}
                 >
-                  {name}
+                  <Clock size={10} color="#655e53" style={{ flexShrink: 0 }} /> {windowStr}
                 </span>
-              );
-            })}
-            {remainder > 0 && (
+              )}
+
+              {hasItems ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '1px 6px',
+                    borderRadius: '3px',
+                    fontSize: '0.64rem',
+                    fontWeight: 600,
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#15803d',
+                  }}
+                >
+                  <CheckCircleIcon size={10} color="#15803d" />
+                  {list.length} Items Scaled
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '1px 6px',
+                    borderRadius: '3px',
+                    fontSize: '0.64rem',
+                    fontWeight: 600,
+                    backgroundColor: '#fff7ed',
+                    border: '1px solid #fed7aa',
+                    color: '#c2410c',
+                  }}
+                >
+                  <WarningIcon size={10} color="#c2410c" />
+                  Needs Scaling
+                </span>
+              )}
+            </div>
+
+            {dishNames && (
               <span
                 style={{
-                  fontSize: '0.64rem',
-                  fontWeight: 600,
-                  color: 'var(--color-primary, #2e3b12)',
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
+                  display: 'block',
+                  fontSize: '0.66rem',
+                  color: '#716c62',
+                  marginTop: '2px',
+                  lineHeight: 1.25,
                 }}
+                title={dishNames}
               >
-                +{remainder} more
+                {truncateWords(dishNames, 4)}
               </span>
             )}
           </div>
@@ -378,143 +380,31 @@ export default function ManageShoppingLists() {
       },
     },
     {
-      header: 'Shopping List Status',
-      key: 'status',
-      width: '180px',
-      render: (v) => {
-        const list = v.shoppingList || [];
-        const hasItems = list.length > 0;
-
-        if (hasItems) {
-          return (
-            <div>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '2px 7px',
-                  borderRadius: '3px',
-                  fontSize: '0.66rem',
-                  fontWeight: 600,
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  color: '#15803d',
-                }}
-              >
-                <CheckCircleIcon size={11} color="#15803d" />
-                {list.length} Items Scaled
-              </span>
-              <div style={{ fontSize: '0.64rem', color: '#716c62', marginTop: '3px' }}>
-                {list.slice(0, 2).map((it) => it.name).join(', ')}
-                {list.length > 2 && '...'}
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <div>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 7px',
-                borderRadius: '3px',
-                fontSize: '0.66rem',
-                fontWeight: 600,
-                backgroundColor: '#fff7ed',
-                border: '1px solid #fed7aa',
-                color: '#c2410c',
-              }}
-            >
-              <WarningIcon size={11} color="#c2410c" />
-              Empty / Needs Scaling
-            </span>
-            <div style={{ fontSize: '0.64rem', color: '#8c857b', marginTop: '3px' }}>
-              Quick copy or auto-generate
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Actions',
+      header: '',
       key: 'actions',
-      width: '130px',
+      width: '38px',
       align: 'right',
       render: (v) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-          {/* Fill from Previous Shopping List Button */}
-          <button
-            type="button"
-            onClick={() => handleOpenCopyModal(v)}
-            title="Fill grocery list from a previous visit (Quick Copy)"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#fff7ed',
-              border: '1px solid #fed7aa',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ffedd5')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fff7ed')}
-          >
-            <SparkleIcon size={12} color="#c2410c" />
-          </button>
-
-          {/* Open / Edit Shopping List */}
-          <Link to={`/admin/shopping-list/${v._id}`} title="Open full shopping list and checklist">
-            <button
-              type="button"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '3px',
-                backgroundColor: '#f5f3ef',
-                border: '1px solid #e7e2d8',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-            >
-              <ClipboardIcon size={12} color="#2e3b12" />
-            </button>
-          </Link>
-
-          {/* View Client Selection / Details */}
-          <Link to={`/admin/selections?visit=${v._id}`} title="View client appointment selection">
-            <button
-              type="button"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '3px',
-                backgroundColor: '#f5f3ef',
-                border: '1px solid #e7e2d8',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-            >
-              <EyeIcon size={12} color="#4b5563" />
-            </button>
-          </Link>
-        </div>
+        <KebabMenu
+          ariaLabel={`Actions for shopping list ${v._id}`}
+          items={[
+            {
+              label: 'Open Shopping List',
+              icon: <ClipboardList size={13} />,
+              onClick: () => navigate(`/admin/shopping-list/${v._id}`),
+            },
+            {
+              label: 'Fill from Previous List',
+              icon: <Copy size={13} />,
+              onClick: () => handleOpenCopyModal(v),
+            },
+            {
+              label: 'View Appointment Selections',
+              icon: <Eye size={13} />,
+              onClick: () => navigate(`/admin/selections?visit=${v._id}`),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -522,257 +412,173 @@ export default function ManageShoppingLists() {
   return (
     <div className="admin-page-container">
       {/* Page Header */}
-      <div className="admin-header-flex">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-            <h1
-              style={{
-                color: 'var(--color-primary, #2e3b12)',
-                fontSize: '1.25rem',
-                margin: 0,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <ClipboardIcon size={20} color="var(--color-primary, #2e3b12)" />
-              Shopping Lists Directory
-            </h1>
-            <span
-              style={{
-                fontSize: '0.66rem',
-                fontWeight: 600,
-                padding: '2px 7px',
-                borderRadius: '3px',
-                backgroundColor: '#f6f3eb',
-                border: '1px solid #ede8df',
-                color: '#57534e',
-              }}
-            >
-              Ingredient Procurement Hub
-            </span>
-          </div>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-            Central grocery orders, recipe ingredient scaling, and quick list copy across client reservations ({visits.length} results).
-          </p>
-        </div>
+      {/* Title Row with Action Buttons at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1
+          className="admin-page-title"
+          style={{
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <ClipboardIcon size={18} color="var(--color-primary, #2e3b12)" />
+          <span>Shopping Lists</span>
+        </h1>
 
-        {/* Top Header Actions */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="admin-title-actions" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           {selectedIds.length > 0 && (
-            <Button
-              variant="primary"
-              size="sm"
+            <button
+              type="button"
               onClick={() => handleGenerateCombined(selectedIds)}
-              style={{
-                borderRadius: '4px',
-                height: '32px',
-                fontSize: '0.74rem',
-                padding: '0 12px',
-                backgroundColor: '#2e3b12',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="admin-action-btn"
+              title={`Combine Selected (${selectedIds.length})`}
+              aria-label={`Combine Selected (${selectedIds.length})`}
             >
-              <ClipboardIcon size={12} color="#ffffff" />
-              Combine Selected ({selectedIds.length})
-            </Button>
+              <Layers size={16} />
+            </button>
           )}
 
-          <Link to="/admin/selections">
-            <Button
-              variant="outline"
-              size="sm"
-              style={{
-                borderRadius: '4px',
-                height: '32px',
-                fontSize: '0.74rem',
-                padding: '0 12px',
-                backgroundColor: 'var(--color-bg, #fbf9f5)',
-                border: '1px solid var(--color-border, #ece7de)',
-              }}
-            >
-              &larr; Client Selections
-            </Button>
+          <Link
+            to="/admin/selections"
+            className="admin-action-btn-outline"
+            title="Client Selections"
+            aria-label="Client Selections"
+          >
+            <ArrowLeft size={16} />
           </Link>
         </div>
       </div>
+      <p className="admin-page-subtitle">
+        Procurement orders, ingredient scaling, and multi-visit consolidating ({visits.length} records)
+      </p>
 
-      {/* Tabs Row */}
-      <div className="admin-tab-scroll" style={{ borderBottom: '1px solid var(--color-border, #ece7de)', marginBottom: '14px' }}>
-        <button
-          type="button"
-          onClick={() => handleTabChange('upcoming')}
-          style={{
-            padding: '7px 12px',
-            fontSize: '0.76rem',
-            fontWeight: 600,
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'upcoming' ? '2px solid var(--color-primary, #2e3b12)' : '2px solid transparent',
-            color: activeTab === 'upcoming' ? 'var(--color-primary, #2e3b12)' : '#716c62',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginBottom: '-1px',
-          }}
-        >
-          Upcoming Visits
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange('past')}
-          style={{
-            padding: '7px 12px',
-            fontSize: '0.76rem',
-            fontWeight: 600,
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'past' ? '2px solid var(--color-primary, #2e3b12)' : '2px solid transparent',
-            color: activeTab === 'past' ? 'var(--color-primary, #2e3b12)' : '#716c62',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginBottom: '-1px',
-          }}
-        >
-          Past / Completed
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange('all')}
-          style={{
-            padding: '7px 12px',
-            fontSize: '0.76rem',
-            fontWeight: 600,
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'all' ? '2px solid var(--color-primary, #2e3b12)' : '2px solid transparent',
-            color: activeTab === 'all' ? 'var(--color-primary, #2e3b12)' : '#716c62',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginBottom: '-1px',
-          }}
-        >
-          All Visits
-        </button>
-      </div>
-
-      {/* Filter and Date Range Bar (Filtered directly via Backend API) */}
-      <div className="admin-filter-bar">
-        {/* Search query (searches client, email, phone, dishes, and notes) */}
-        <div className="admin-filter-search" style={{ position: 'relative', flex: '1 1 240px', maxWidth: '340px' }}>
-          <span
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <SearchIcon size={14} color="#716c62" />
-          </span>
+      {/* Search & Filter Bar */}
+      <div className="admin-search-filter-bar">
+        <div className="admin-search-box">
+          <SearchIcon size={13} color="#9ca3af" />
           <input
             type="text"
-            placeholder="Search client, email, dishes, notes..."
+            placeholder="Search client, dishes, notes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 10px 6px 30px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              fontSize: '0.76rem',
-              outline: 'none',
-              height: '34px',
-              color: 'var(--color-text, #1e1b16)',
-            }}
           />
         </div>
 
-        {/* From Date Picker */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <label style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', whiteSpace: 'nowrap' }}>
-            From:
-          </label>
-          <CustomDatePicker
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{
-              height: '34px',
-              fontSize: '0.74rem',
-              width: '135px',
-            }}
-            wrapperStyle={{ width: '135px' }}
-          />
-        </div>
-
-        {/* To Date Picker */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <label style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', whiteSpace: 'nowrap' }}>
-            To:
-          </label>
-          <CustomDatePicker
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={{
-              height: '34px',
-              fontSize: '0.74rem',
-              width: '135px',
-            }}
-            wrapperStyle={{ width: '135px' }}
-          />
-        </div>
-
-        {/* List status filter */}
-        <div style={{ width: '150px' }}>
-          <CustomSelect
-            value={selectedStatus}
-            onChange={(val) => setSelectedStatus(val)}
-            options={[
-              { value: 'All', label: 'All Statuses' },
-              { value: 'confirmed', label: 'Confirmed' },
-              { value: 'pending', label: 'Pending Review' },
-              { value: 'completed', label: 'Completed' },
-            ]}
-          />
-        </div>
-
-        {(search || startDate || endDate || selectedStatus !== 'All') && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearch('');
-              setSelectedStatus('All');
-              handleTabChange(activeTab);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.72rem',
-              color: 'var(--color-text-muted, #716c62)',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: '4px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Reset Filters
-          </button>
-        )}
+        <button
+          type="button"
+          className={`admin-filter-toggle-btn ${activeFilterCount > 0 ? 'has-filters' : ''}`}
+          onClick={() => setFilterDrawerOpen(true)}
+          title="Open filters sidebar"
+        >
+          <SlidersHorizontal size={13} />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#15803d',
+                color: '#ffffff',
+                borderRadius: '10px',
+                padding: '1px 5px',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Filter Slide-out Sidebar Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        title="Filter Shopping Lists"
+        activeCount={activeFilterCount}
+        onReset={resetFilters}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              View Mode
+            </label>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {[
+                { id: 'upcoming', label: 'Upcoming' },
+                { id: 'past', label: 'Past' },
+                { id: 'all', label: 'All' },
+              ].map((tab) => {
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleTabChange(tab.id)}
+                    style={{
+                      flex: 1,
+                      padding: '7px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: isSelected ? 'var(--color-primary, #2e3b12)' : '#ffffff',
+                      color: isSelected ? '#ffffff' : '#4a453e',
+                      border: '1px solid ' + (isSelected ? 'var(--color-primary, #2e3b12)' : '#e7e2d8'),
+                      fontSize: '0.72rem',
+                      fontWeight: isSelected ? 600 : 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Status
+            </label>
+            <CustomSelect
+              value={selectedStatus}
+              onChange={(val) => setSelectedStatus(val)}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'confirmed', label: 'Confirmed' },
+                { value: 'pending', label: 'Pending Review' },
+                { value: 'completed', label: 'Completed' },
+              ]}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '34px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              From Date
+            </label>
+            <CustomDatePicker
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{ height: '34px', fontSize: '0.76rem', width: '100%' }}
+              wrapperStyle={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              To Date
+            </label>
+            <CustomDatePicker
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{ height: '34px', fontSize: '0.76rem', width: '100%' }}
+              wrapperStyle={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      </FilterDrawer>
 
       {/* Main DataTable */}
       {loading ? (
@@ -867,7 +673,7 @@ export default function ManageShoppingLists() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="dialog-responsive-footer">
               <div>
                 {copySuccessMsg && (
                   <Link to={`/admin/shopping-list/${copyModalVisit._id}`}>
@@ -887,23 +693,25 @@ export default function ManageShoppingLists() {
                   </Link>
                 )}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCopyModalVisit(null)}
-                disabled={copySubmitting}
-                style={{
-                  borderRadius: '4px',
-                  boxShadow: 'none',
-                  border: '1px solid var(--color-border, #ece7de)',
-                  backgroundColor: 'var(--color-bg, #fbf9f5)',
-                  height: '32px',
-                  fontSize: '0.74rem',
-                  padding: '0 14px',
-                }}
-              >
-                Close
-              </Button>
+              <div className="dialog-footer-actions">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCopyModalVisit(null)}
+                  disabled={copySubmitting}
+                  style={{
+                    borderRadius: '4px',
+                    boxShadow: 'none',
+                    border: '1px solid var(--color-border, #ece7de)',
+                    backgroundColor: 'var(--color-bg, #fbf9f5)',
+                    height: '32px',
+                    fontSize: '0.74rem',
+                    padding: '0 14px',
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           }
         >
@@ -1117,11 +925,11 @@ export default function ManageShoppingLists() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="dialog-responsive-footer">
               <span style={{ fontSize: '0.70rem', color: '#716c62' }}>
                 Total items aggregated across {combinedData?.visitsCount || selectedIds.length} client visit(s).
               </span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="dialog-footer-actions">
                 <Button
                   variant="outline"
                   size="sm"
@@ -1213,6 +1021,7 @@ export default function ManageShoppingLists() {
 
               {/* Aggregated Items Table */}
               <div
+                className="dialog-table-wrapper"
                 style={{
                   maxHeight: '340px',
                   overflowY: 'auto',

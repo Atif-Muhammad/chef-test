@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import {
   Check,
@@ -167,11 +168,9 @@ export default function SelectionCart() {
           dishes: visitDishes.length > 0 ? visitDishes : cart.dishes,
         });
 
-        // If it's a partial appointment and date or timeslot is missing, stay on Step 1, otherwise Step 2
+        // Do not auto-advance to Step 2 on date selection; wait for user's manual Next button click
         if (partialFlag && (!hasAdminWindow || !vDateStr)) {
           setActiveStep(1);
-        } else {
-          setActiveStep(2);
         }
       } else {
         // No appointment on this date: clear prefilled linked visit & partial status
@@ -353,7 +352,7 @@ export default function SelectionCart() {
     cart.arrivalWindow || (startTime && endTime ? `${convert24To12(startTime)} – ${convert24To12(endTime)}` : '11:00 AM – 1:00 PM');
 
   return (
-    <div style={{ width: '100%', paddingBottom: '30px' }}>
+    <div className="user-page-container">
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -516,7 +515,7 @@ export default function SelectionCart() {
       {/* Back Link */}
       <div style={{ marginBottom: '10px' }}>
         <Link
-          to="/"
+          to="/home"
           style={{
             fontSize: '0.74rem',
             color: 'var(--color-text-muted, #716c62)',
@@ -702,6 +701,7 @@ export default function SelectionCart() {
 
       {/* Stepper with Lucide Tick */}
       <div
+        className="user-stepper-wrap"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -735,10 +735,12 @@ export default function SelectionCart() {
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', zIndex: 2 }}>
           {/* Step 1 */}
           <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
+            className="user-stepper-item"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => setActiveStep(1)}
           >
             <div
+              className="user-stepper-circle"
               style={{
                 width: '32px',
                 height: '32px',
@@ -757,6 +759,7 @@ export default function SelectionCart() {
               {activeStep > 1 ? <Check size={16} color="#ffffff" strokeWidth={3} /> : '1'}
             </div>
             <span
+              className="user-stepper-label"
               style={{
                 fontSize: '0.74rem',
                 marginTop: '6px',
@@ -764,10 +767,13 @@ export default function SelectionCart() {
                 color: activeStep === 1 ? 'var(--color-primary, #2e3b12)' : '#4a463e',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '4px',
+                textAlign: 'center',
               }}
             >
-              <span>Pack Your Box</span>
+              <span className="user-stepper-text-desktop">Pack Your Box</span>
+              <span className="user-stepper-text-mobile">Pack Box</span>
               {(isDateMissing || isTimeslotMissing) && (
                 <span
                   style={{
@@ -776,6 +782,7 @@ export default function SelectionCart() {
                     borderRadius: '50%',
                     backgroundColor: '#d97706',
                     display: 'inline-block',
+                    flexShrink: 0,
                   }}
                   title="Required details missing"
                 />
@@ -785,7 +792,8 @@ export default function SelectionCart() {
 
           {/* Step 2 */}
           <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
+            className="user-stepper-item"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => {
               if (!cart.visitDate) {
                 setError('Please select a box preparation/delivery date first.');
@@ -800,6 +808,7 @@ export default function SelectionCart() {
             }}
           >
             <div
+              className="user-stepper-circle"
               style={{
                 width: '32px',
                 height: '32px',
@@ -818,6 +827,7 @@ export default function SelectionCart() {
               {activeStep > 2 ? <Check size={16} color="#ffffff" strokeWidth={3} /> : '2'}
             </div>
             <span
+              className="user-stepper-label"
               style={{
                 fontSize: '0.74rem',
                 marginTop: '6px',
@@ -825,10 +835,13 @@ export default function SelectionCart() {
                 color: activeStep === 2 ? 'var(--color-primary, #2e3b12)' : '#4a463e',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '4px',
+                textAlign: 'center',
               }}
             >
-              <span>Select Dishes</span>
+              <span className="user-stepper-text-desktop">Select Dishes</span>
+              <span className="user-stepper-text-mobile">Dishes</span>
               {isDishesMissing && (
                 <span
                   style={{
@@ -837,6 +850,7 @@ export default function SelectionCart() {
                     borderRadius: '50%',
                     backgroundColor: '#d97706',
                     display: 'inline-block',
+                    flexShrink: 0,
                   }}
                   title="Dishes required"
                 />
@@ -846,7 +860,8 @@ export default function SelectionCart() {
 
           {/* Step 3 */}
           <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
+            className="user-stepper-item"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => {
               if (!cart.visitDate) {
                 setError('Please select a box preparation/delivery date first.');
@@ -865,6 +880,7 @@ export default function SelectionCart() {
             }}
           >
             <div
+              className="user-stepper-circle"
               style={{
                 width: '32px',
                 height: '32px',
@@ -883,20 +899,30 @@ export default function SelectionCart() {
               {activeStep > 3 ? <Check size={16} color="#ffffff" strokeWidth={3} /> : '3'}
             </div>
             <span
+              className="user-stepper-label"
               style={{
                 fontSize: '0.74rem',
                 marginTop: '6px',
                 fontWeight: activeStep === 3 ? 700 : 500,
                 color: activeStep === 3 ? 'var(--color-primary, #2e3b12)' : '#4a463e',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
               }}
             >
-              Review Your Box
+              <span className="user-stepper-text-desktop">Review Your Box</span>
+              <span className="user-stepper-text-mobile">Review</span>
             </span>
           </div>
 
           {/* Step 4 */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div
+            className="user-stepper-item"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '25%' }}
+          >
             <div
+              className="user-stepper-circle"
               style={{
                 width: '32px',
                 height: '32px',
@@ -915,14 +941,20 @@ export default function SelectionCart() {
               {activeStep === 4 ? <Check size={16} color="#ffffff" strokeWidth={3} /> : '4'}
             </div>
             <span
+              className="user-stepper-label"
               style={{
                 fontSize: '0.74rem',
                 marginTop: '6px',
                 fontWeight: activeStep === 4 ? 700 : 500,
                 color: activeStep === 4 ? 'var(--color-primary, #2e3b12)' : '#4a463e',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
               }}
             >
-              Menu Submitted
+              <span className="user-stepper-text-desktop">Menu Submitted</span>
+              <span className="user-stepper-text-mobile">Submitted</span>
             </span>
           </div>
         </div>
@@ -1028,10 +1060,10 @@ export default function SelectionCart() {
           {/* What Happens Next Section */}
           <h3
             style={{
-              fontSize: '1.05rem',
+              fontSize: '0.90rem',
               fontWeight: 700,
               color: '#111827',
-              margin: '0 0 18px',
+              margin: '0 0 12px',
               textAlign: 'left',
               fontFamily: 'inherit',
             }}
@@ -1039,7 +1071,7 @@ export default function SelectionCart() {
             What happens next?
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
             {[
               {
                 num: 1,
@@ -1073,19 +1105,19 @@ export default function SelectionCart() {
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: '12px',
+                  gap: '10px',
                   textAlign: 'left',
                   animationDelay: `${0.08 + idx * 0.08}s`,
                 }}
               >
                 <div
                   style={{
-                    width: '26px',
-                    height: '26px',
+                    width: '22px',
+                    height: '22px',
                     borderRadius: '50%',
                     backgroundColor: '#f3f4f6',
                     color: '#111827',
-                    fontSize: '0.78rem',
+                    fontSize: '0.72rem',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
@@ -1097,10 +1129,10 @@ export default function SelectionCart() {
                   {step.num}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#111827', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.76rem', fontWeight: 600, color: '#111827', lineHeight: 1.35 }}>
                     {step.en}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '3px', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.66rem', color: '#6b7280', marginTop: '2px', lineHeight: 1.35 }}>
                     {step.jp}
                   </div>
                 </div>
@@ -1110,23 +1142,24 @@ export default function SelectionCart() {
 
           {/* Booking Summary Box */}
           <div
+            className="cart-submitted-summary"
             style={{
-              padding: '12px 16px',
+              padding: '10px 14px',
               backgroundColor: '#fbf9f5',
               borderRadius: '6px',
               border: '1px solid #ece7de',
-              marginBottom: '22px',
+              marginBottom: '18px',
               textAlign: 'left',
-              fontSize: '0.76rem',
+              fontSize: '0.72rem',
               color: '#4a463e',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ color: '#716c62' }}>Status</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Status</span>
               <span style={{ fontWeight: 600, color: '#059669' }}>Submitted</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ color: '#716c62' }}>Target Date</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Target Date</span>
               <span style={{ fontWeight: 600, color: '#1a1814' }}>
                 {confirmedVisit?.visitDate
                   ? new Date(confirmedVisit.visitDate).toLocaleDateString(undefined, {
@@ -1139,7 +1172,7 @@ export default function SelectionCart() {
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#716c62' }}>Timeslot / Window</span>
+              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Timeslot / Window</span>
               <span style={{ fontWeight: 600, color: '#1a1814' }}>
                 {confirmedVisit?.arrivalWindow || formattedTimeslotPreview}
               </span>
@@ -1147,38 +1180,47 @@ export default function SelectionCart() {
           </div>
 
           {/* Action Links */}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <div
+            className="cart-submitted-actions"
+            style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}
+          >
             <Link
               to="/history"
-              className="btn-anim"
+              className="btn-anim cart-submitted-btn-primary"
               style={{
-                padding: '8px 18px',
+                padding: '7px 14px',
                 borderRadius: '4px',
                 backgroundColor: 'var(--color-primary, #2e3b12)',
                 color: '#ffffff',
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 fontWeight: 600,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '5px',
+                whiteSpace: 'nowrap',
               }}
             >
               <span>View in Box History</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={12} />
             </Link>
             <Link
               to="/catalogue"
-              className="btn-anim"
+              className="btn-anim cart-submitted-btn-secondary"
               style={{
-                padding: '8px 18px',
+                padding: '7px 14px',
                 borderRadius: '4px',
                 backgroundColor: '#ffffff',
                 color: 'var(--color-primary, #2e3b12)',
                 border: '1px solid var(--color-border, #ece7de)',
-                fontSize: '0.78rem',
+                fontSize: '0.72rem',
                 fontWeight: 600,
                 textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
               }}
             >
               Browse Menu
@@ -1187,7 +1229,7 @@ export default function SelectionCart() {
         </div>
       ) : activeStep === 3 ? (
         /* Step 3: Review Your Box */
-        <div key="step-3" className="step-transition" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '18px' }}>
+        <div key="step-3" className="step-transition user-split-2col">
           <div>
             {/* Selected Courses Grouped */}
             <div
@@ -1463,7 +1505,7 @@ export default function SelectionCart() {
         </div>
       ) : (
         /* Steps 1 & 2: Form & Dish Catalogue Grid */
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
+        <div className="user-split-2col">
           {/* Left Column */}
           <div>
             {/* Step 1: Pack Your Box Details Form */}
@@ -1493,7 +1535,7 @@ export default function SelectionCart() {
                 </h3>
 
                 {/* Date & Portions Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '18px' }}>
+                <div className="user-form-2col" style={{ marginBottom: '18px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
                       <label
@@ -1621,10 +1663,11 @@ export default function SelectionCart() {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div className="cart-timeslot-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Clock size={13} color={isTimeslotMissing ? '#d97706' : 'var(--color-primary, #2e3b12)'} />
                       <label
+                        className="cart-timeslot-label"
                         style={{
                           fontSize: '0.76rem',
                           fontWeight: 600,
@@ -1632,7 +1675,7 @@ export default function SelectionCart() {
                           margin: 0,
                         }}
                       >
-                        Delivery / Pickup Timeslot (12-Hour Window) *
+                        Delivery / Pickup Timeslot *
                       </label>
                       {isTimeslotMissing && (
                         <span
@@ -1651,6 +1694,7 @@ export default function SelectionCart() {
                       )}
                     </div>
                     <span
+                      className="cart-timeslot-badge"
                       style={{
                         fontSize: '0.70rem',
                         fontWeight: 700,
@@ -1665,7 +1709,7 @@ export default function SelectionCart() {
                   </div>
 
                   {/* Custom Delivery / Pickup Timepicker Inputs */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '4px' }}>
+                  <div className="user-form-2col" style={{ marginTop: '4px' }}>
                     <div>
                       <span style={{ fontSize: '0.69rem', color: '#57534e', display: 'block', marginBottom: '3px', fontWeight: 500 }}>
                         From Time
@@ -1960,14 +2004,14 @@ export default function SelectionCart() {
                     No dishes found matching your search.
                   </div>
                 ) : (
-                  <div key={activeCat + '_' + search} className="course-grid-transition" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '14px' }}>
+                  <div key={activeCat + '_' + search} className="course-grid-transition cart-dishes-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '14px' }}>
                     {filteredDishes.map((dish) => {
                       const inCart = cart.dishes.some((d) => d._id === dish._id);
                       const dishConflict = getDishConflict(dish);
                       return (
                         <div
                           key={dish._id}
-                          className="dish-card-anim"
+                          className="dish-card-anim cart-dish-card"
                           onClick={() => (inCart ? removeFromCart(dish._id) : addToCart(dish))}
                           style={{
                             backgroundColor: inCart ? (dishConflict ? '#fef2f2' : '#fbfaf6') : '#ffffff',
@@ -1991,7 +2035,7 @@ export default function SelectionCart() {
                           }}
                         >
                           {/* Image Box */}
-                          <div style={{ height: '140px', position: 'relative', backgroundColor: '#f5eee3' }}>
+                          <div className="cart-dish-card-img-wrap" style={{ height: '140px', position: 'relative', backgroundColor: '#f5eee3' }}>
                             <img
                               src={dish.photoUrl || '/assets/dishes/lemon-herb-salmon.png'}
                               alt={dish.name}
@@ -2009,6 +2053,7 @@ export default function SelectionCart() {
                                 setViewingDish(dish);
                               }}
                               title="View dish details"
+                              className="cart-dish-eye-btn"
                               style={{
                                 position: 'absolute',
                                 top: '8px',
@@ -2040,12 +2085,12 @@ export default function SelectionCart() {
                                 e.currentTarget.style.transform = 'scale(1)';
                               }}
                             >
-                              <Eye size={15} color="#2e3b12" style={{ display: 'block', flexShrink: 0 }} />
+                              <Eye size={14} color="#2e3b12" style={{ display: 'block', flexShrink: 0 }} />
                             </button>
 
                             {/* Selection Checkmark Indicator (Top Right) */}
                             <div
-                              className={inCart ? 'animate-pop-check' : ''}
+                              className={`cart-dish-check-btn ${inCart ? 'animate-pop-check' : ''}`}
                               key={inCart ? `checked-${dish._id}` : `plus-${dish._id}`}
                               style={{
                                 position: 'absolute',
@@ -2071,15 +2116,16 @@ export default function SelectionCart() {
                               title={inCart ? 'Selected in box (click to remove)' : 'Click card to pack into box'}
                             >
                               {inCart ? (
-                                <Check size={15} color="#ffffff" strokeWidth={3} style={{ display: 'block', flexShrink: 0 }} />
+                                <Check size={14} color="#ffffff" strokeWidth={3} style={{ display: 'block', flexShrink: 0 }} />
                               ) : (
-                                <Plus size={15} color="#716c62" strokeWidth={2.4} style={{ display: 'block', flexShrink: 0 }} />
+                                <Plus size={14} color="#716c62" strokeWidth={2.4} style={{ display: 'block', flexShrink: 0 }} />
                               )}
                             </div>
 
                             {/* Time-Intensive Badge */}
                             {dish.isTimeIntensive && (
                               <span
+                                className="cart-dish-time-badge"
                                 style={{
                                   position: 'absolute',
                                   bottom: '6px',
@@ -2098,7 +2144,7 @@ export default function SelectionCart() {
                           </div>
 
                           {/* Card Content */}
-                          <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                          <div className="cart-dish-card-body" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                             <div
                               style={{
                                 display: 'flex',
@@ -2108,10 +2154,11 @@ export default function SelectionCart() {
                                 marginBottom: '4px',
                               }}
                             >
-                              <h4 style={{ fontSize: '0.86rem', color: '#1a1814', margin: 0, fontWeight: 700, lineHeight: 1.3 }}>
+                              <h4 className="cart-dish-card-title" style={{ fontSize: '0.86rem', color: '#1a1814', margin: 0, fontWeight: 700, lineHeight: 1.3 }}>
                                 {dish.name}
                               </h4>
                               <span
+                                className="cart-dish-card-type"
                                 style={{
                                   fontSize: '0.62rem',
                                   padding: '1.5px 5px',
@@ -2233,8 +2280,9 @@ export default function SelectionCart() {
           </div>
 
           {/* Right Column: "Your Box" Selection Panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0, maxWidth: '100%' }}>
             <div
+              className="cart-your-box-panel"
               style={{
                 backgroundColor: '#ffffff',
                 borderRadius: '4px',
@@ -2242,6 +2290,8 @@ export default function SelectionCart() {
                 padding: '16px',
                 boxShadow: 'none',
                 transition: 'border-color 0.15s ease',
+                overflowX: 'hidden',
+                boxSizing: 'border-box',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -2456,23 +2506,25 @@ export default function SelectionCart() {
       )}
 
       {/* DISH DETAILS DIALOG BOX MODAL */}
-      {viewingDish && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '16px',
-          }}
-          onClick={() => setViewingDish(null)}
-        >
+      {viewingDish &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '16px',
+            }}
+            onClick={() => setViewingDish(null)}
+          >
           <div
             style={{
               backgroundColor: '#ffffff',
@@ -2856,7 +2908,8 @@ export default function SelectionCart() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

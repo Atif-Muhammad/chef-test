@@ -97,31 +97,11 @@ export default function UserNotifications() {
     : notifications;
 
   return (
-    <div style={{ maxWidth: '100%', margin: '0', padding: '0 2px 16px' }}>
+    <div className="user-page-container">
       {/* Page Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-          marginBottom: '10px',
-        }}
-      >
+      <div className="user-title-row">
         <div>
-          <h1
-            style={{
-              fontSize: '1.20rem',
-              color: 'var(--color-primary, #2e3b12)',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 700,
-              margin: '0 0 2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
+          <h1 className="user-page-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>Your Notifications</span>
             {unreadCount > 0 && (
               <span
@@ -139,33 +119,27 @@ export default function UserNotifications() {
               </span>
             )}
           </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.74rem', margin: 0 }}>
+          <p className="user-page-subtitle">
             Updates on your meal boxes, preparation status, schedule confirmations, and fresh prep alerts.
           </p>
         </div>
 
         {/* Action Controls */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <div className="user-title-actions">
           <button
             type="button"
             onClick={fetchNotifications}
             title="Refresh notifications"
+            className="user-action-btn"
             style={{
-              padding: '4px 8px',
-              borderRadius: '4px',
               backgroundColor: '#ffffff',
-              border: '1px solid var(--color-border, #ece7de)',
+              borderColor: 'var(--color-border, #ece7de)',
               color: '#57534e',
-              fontSize: '0.72rem',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              boxShadow: 'none',
+              padding: '0 10px',
             }}
           >
             <RefreshCw size={12} className={loading ? 'spin' : ''} />
-            <span>Refresh</span>
+            <span className="user-btn-text">Refresh</span>
           </button>
 
           {unreadCount > 0 && (
@@ -173,24 +147,15 @@ export default function UserNotifications() {
               type="button"
               onClick={handleMarkAllRead}
               disabled={actionLoading}
+              className="user-action-btn"
+              title="Mark all as read"
               style={{
-                padding: '4px 10px',
-                borderRadius: '4px',
-                backgroundColor: 'var(--color-primary, #2e3b12)',
-                border: 'none',
-                color: '#ffffff',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                boxShadow: 'none',
                 opacity: actionLoading ? 0.7 : 1,
+                padding: '0 10px',
               }}
             >
               <CheckCheck size={13} />
-              <span>Mark all as read</span>
+              <span className="user-btn-text">Mark read</span>
             </button>
           )}
         </div>

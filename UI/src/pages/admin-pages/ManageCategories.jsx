@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, Edit3, Trash2 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Card from '../../components/shared/Card';
 import Button from '../../components/shared/Button';
@@ -7,6 +8,7 @@ import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { ManageCategoriesSkeleton } from '../../components/skeletons';
 import DataTable, { CategoryBadge } from '../../components/shared/DataTable';
+import KebabMenu from '../../components/shared/KebabMenu';
 import { EditIcon, TrashIcon, WarningIcon, LayersIcon } from '../../components/shared/Icons';
 
 export default function ManageCategories() {
@@ -18,6 +20,23 @@ export default function ManageCategories() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Responsive state: on small screens, category form opens inside a Dialog
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     fetchCategories();
@@ -49,6 +68,7 @@ export default function ManageCategories() {
       setName('');
       setOrder(0);
       setEditingId(null);
+      setFormDialogOpen(false);
       await fetchCategories();
     } catch (err) {
       alert(`Save error: ${err.response?.data?.message || err.message}`);
@@ -61,7 +81,11 @@ export default function ManageCategories() {
     setEditingId(cat._id);
     setName(cat.name);
     setOrder(cat.order || 0);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (isMobile) {
+      setFormDialogOpen(true);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleDelete = async () => {
@@ -80,111 +104,75 @@ export default function ManageCategories() {
 
   const columns = [
     {
-      header: 'Order',
-      key: 'order',
-      width: '70px',
-      render: (row) => (
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2px 7px',
-            borderRadius: '3px',
-            backgroundColor: '#f6f3eb',
-            border: '1px solid #ede8df',
-            color: '#4a453e',
-            fontSize: '0.72rem',
-            fontWeight: 700,
-          }}
-        >
-          #{row.order ?? 0}
-        </span>
-      ),
-    },
-    {
       header: 'Category Name',
       key: 'name',
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           <CategoryBadge category={row.name} />
-          <strong style={{ fontSize: '0.78rem', color: 'var(--color-text, #1e1b16)' }}>
+          <strong style={{ fontSize: '0.80rem', color: 'var(--color-text, #1e1b16)' }}>
             {row.name}
           </strong>
         </div>
       ),
     },
     {
-      header: 'Slug / URL Identifier',
+      header: 'Order & Identifier',
       key: 'slug',
       render: (row) => (
-        <code
-          style={{
-            fontSize: '0.72rem',
-            backgroundColor: 'var(--color-bg, #fbf9f5)',
-            padding: '2px 6px',
-            borderRadius: '3px',
-            border: '1px solid var(--color-border, #ece7de)',
-            color: 'var(--color-text-muted, #716c62)',
-          }}
-        >
-          {row.slug}
-        </code>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexWrap: 'wrap' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1px 5px',
+              borderRadius: '3px',
+              backgroundColor: '#f6f3eb',
+              border: '1px solid #ede8df',
+              color: '#4a453e',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+            }}
+          >
+            #{row.order ?? 0}
+          </span>
+          <code
+            style={{
+              fontSize: '0.68rem',
+              backgroundColor: 'var(--color-bg, #fbf9f5)',
+              padding: '1.5px 5px',
+              borderRadius: '3px',
+              border: '1px solid var(--color-border, #ece7de)',
+              color: 'var(--color-text-muted, #716c62)',
+            }}
+          >
+            {row.slug}
+          </code>
+        </div>
       ),
     },
     {
-      header: 'Actions',
+      header: '',
       key: 'actions',
-      width: '80px',
+      width: '38px',
       align: 'right',
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-          {/* Edit Button */}
-          <button
-            type="button"
-            onClick={() => handleEdit(row)}
-            title="Edit category"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EditIcon size={11} color="#4b5563" />
-          </button>
-
-          {/* Delete Button */}
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(row)}
-            title="Delete category"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fee2e2',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fecaca')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-          >
-            <TrashIcon size={11} color="#dc2626" />
-          </button>
-        </div>
+        <KebabMenu
+          ariaLabel={`Actions for category ${row.name}`}
+          items={[
+            {
+              label: 'Edit Category',
+              icon: <Edit3 size={13} />,
+              onClick: () => handleEdit(row),
+            },
+            {
+              label: 'Delete Category',
+              icon: <Trash2 size={13} />,
+              variant: 'danger',
+              onClick: () => setDeleteTarget(row),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -193,115 +181,194 @@ export default function ManageCategories() {
 
   return (
     <div className="admin-page-container">
-      {/* Page Header */}
-      <div style={{ marginBottom: '16px' }}>
+      {/* Title Row with Action Button at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
         <h1
+          className="admin-page-title"
           style={{
-            color: 'var(--color-primary, #2e3b12)',
-            fontSize: '1.25rem',
-            margin: '0 0 2px',
-            fontWeight: 700,
-            display: 'flex',
+            margin: 0,
+            display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '6px',
           }}
         >
-          <LayersIcon size={20} color="var(--color-primary, #2e3b12)" />
-          Manage Menu Categories
+          <LayersIcon size={18} color="var(--color-primary, #2e3b12)" />
+          <span>Manage Categories</span>
         </h1>
-        <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-          Organize courses, culinary classifications, and presentation order across all client menu catalogues.
-        </p>
-      </div>
-
-      {/* Add / Edit Form Card */}
-      <Card
-        style={{
-          backgroundColor: 'var(--color-bg, #fbf9f5)',
-          borderRadius: '4px',
-          border: '1px solid var(--color-border, #ece7de)',
-          boxShadow: 'none',
-          padding: '16px 20px',
-          marginBottom: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primary, #2e3b12)' }}>
-              {editingId ? 'Edit Category' : 'Add New Category'}
-            </h3>
-            <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--color-text-muted, #716c62)' }}>
-              {editingId
-                ? 'Update category display name and sorting order.'
-                : 'Create a new course or category grouping for client seasonal menu selections.'}
-            </p>
-          </div>
-          {editingId && (
-            <span
-              style={{
-                fontSize: '0.66rem',
-                fontWeight: 600,
-                padding: '2px 8px',
-                borderRadius: '3px',
-                backgroundColor: '#fef3e2',
-                color: '#9a5b13',
-                border: '1px solid #fde68a',
-              }}
-            >
-              Editing Mode
-            </span>
-          )}
+        <div className="admin-title-actions">
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(null);
+              setName('');
+              setOrder(0);
+              if (isMobile) {
+                setFormDialogOpen(true);
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="admin-action-btn"
+            title="Add Category"
+            aria-label="Add Category"
+          >
+            <Plus size={16} />
+          </button>
         </div>
+      </div>
+      <p className="admin-page-subtitle">
+        Organize courses, culinary classifications, and presentation order ({categories.length} total).
+      </p>
 
-        <form onSubmit={handleSave} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 240px' }}>
+      {/* Add / Edit Category Dialog for Small / Mobile Screens */}
+      {isMobile && (
+        <Dialog
+          isOpen={formDialogOpen}
+          onClose={() => {
+            if (!submitting) {
+              setFormDialogOpen(false);
+              setEditingId(null);
+              setName('');
+              setOrder(0);
+            }
+          }}
+          title={editingId ? 'Edit Category' : 'Add New Category'}
+          maxWidth="460px"
+        >
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <FormInput
               label="Category Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Mains - Seafood, Japanese & Asian Fusion..."
+              placeholder="e.g. Mains - Seafood, Japanese..."
               required
-              style={{ marginBottom: 0 }}
+              autoFocus
             />
-          </div>
-          <div style={{ width: '110px' }}>
             <FormInput
               label="Display Order"
               type="number"
               value={order}
               onChange={(e) => setOrder(e.target.value)}
               placeholder="0"
-              style={{ marginBottom: 0 }}
             />
-          </div>
-          <div style={{ display: 'flex', gap: '6px', height: '38px', alignItems: 'center' }}>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={submitting}
-              style={{ borderRadius: '4px', boxShadow: 'none', height: '38px', fontSize: '0.76rem', padding: '0 14px' }}
-            >
-              {submitting ? 'Saving...' : editingId ? '✓ Save Changes' : '+ Add Category'}
-            </Button>
-            {editingId && (
+            <div className="dialog-footer-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px', width: '100%' }}>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => {
+                  setFormDialogOpen(false);
                   setEditingId(null);
                   setName('');
                   setOrder(0);
                 }}
                 disabled={submitting}
-                style={{ borderRadius: '4px', boxShadow: 'none', height: '38px', fontSize: '0.76rem', padding: '0 14px' }}
               >
                 Cancel
               </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={submitting || !name.trim()}
+              >
+                {submitting ? 'Saving...' : editingId ? '✓ Save Changes' : '+ Add Category'}
+              </Button>
+            </div>
+          </form>
+        </Dialog>
+      )}
+
+      {/* Add / Edit Form Card (Desktop / Wide screens only) */}
+      {!isMobile && (
+        <Card
+          style={{
+            backgroundColor: 'var(--color-bg, #fbf9f5)',
+            borderRadius: '4px',
+            border: '1px solid var(--color-border, #ece7de)',
+            boxShadow: 'none',
+            padding: '16px 20px',
+            marginBottom: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primary, #2e3b12)' }}>
+                {editingId ? 'Edit Category' : 'Add New Category'}
+              </h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--color-text-muted, #716c62)' }}>
+                {editingId
+                  ? 'Update category display name and sorting order.'
+                  : 'Create a new course or category grouping for client seasonal menu selections.'}
+              </p>
+            </div>
+            {editingId && (
+              <span
+                style={{
+                  fontSize: '0.66rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '3px',
+                  backgroundColor: '#fef3e2',
+                  color: '#9a5b13',
+                  border: '1px solid #fde68a',
+                }}
+              >
+                Editing Mode
+              </span>
             )}
           </div>
-        </form>
-      </Card>
+
+          <form onSubmit={handleSave} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 240px' }}>
+              <FormInput
+                label="Category Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Mains - Seafood, Japanese & Asian Fusion..."
+                required
+                style={{ marginBottom: 0 }}
+              />
+            </div>
+            <div style={{ width: '110px' }}>
+              <FormInput
+                label="Display Order"
+                type="number"
+                value={order}
+                onChange={(e) => setOrder(e.target.value)}
+                placeholder="0"
+                style={{ marginBottom: 0 }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '6px', height: '38px', alignItems: 'center' }}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={submitting}
+                style={{ borderRadius: '4px', boxShadow: 'none', height: '38px', fontSize: '0.76rem', padding: '0 14px' }}
+              >
+                {submitting ? 'Saving...' : editingId ? '✓ Save Changes' : '+ Add Category'}
+              </Button>
+              {editingId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditingId(null);
+                    setName('');
+                    setOrder(0);
+                  }}
+                  disabled={submitting}
+                  style={{ borderRadius: '4px', boxShadow: 'none', height: '38px', fontSize: '0.76rem', padding: '0 14px' }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
+        </Card>
+      )}
 
       {/* Modern DataTable */}
       <DataTable
@@ -326,7 +393,7 @@ export default function ManageCategories() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"

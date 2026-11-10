@@ -206,6 +206,7 @@ export default function CustomSelect({
       {label && (
         <label
           htmlFor={id}
+          className="custom-select-label"
           style={{
             fontSize: 'var(--font-size-sm, 0.82rem)',
             fontWeight: 600,
@@ -232,6 +233,7 @@ export default function CustomSelect({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        className="custom-select-trigger"
         tabIndex={disabled ? -1 : 0}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}

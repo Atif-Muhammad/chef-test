@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Clock, Package } from 'lucide-react';
+import { Clock, Package, Plus, SlidersHorizontal, Eye, ClipboardList, Trash2 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Button from '../../components/shared/Button';
 import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { ClientSelectionsSkeleton } from '../../components/skeletons';
 import DataTable from '../../components/shared/DataTable';
+import FilterDrawer from '../../components/shared/FilterDrawer';
+import KebabMenu from '../../components/shared/KebabMenu';
 import CustomDatePicker from '../../components/shared/CustomDatePicker';
 import {
   CalendarIcon,
@@ -26,6 +28,7 @@ import {
   convert24To12,
   parseTo24Time,
   toDateInputValue,
+  truncateWords,
 } from '../../utils/formatters';
 
 export default function ClientSelections() {
@@ -36,6 +39,7 @@ export default function ClientSelections() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const statusDropdownRef = useRef(null);
   const clientDropdownRef = useRef(null);
   const [search, setSearch] = useState('');
@@ -443,42 +447,22 @@ export default function ClientSelections() {
     );
   };
 
+  const activeFilterCount =
+    (activeTab !== 'all' ? 1 : 0) + (startDate ? 1 : 0) + (endDate ? 1 : 0);
+
+  const resetFilters = () => {
+    setActiveTab('all');
+    setStartDate('');
+    setEndDate('');
+    setSearch('');
+  };
+
   const columns = [
     {
-      header: 'Client & Contact',
+      header: 'Client & Date',
       key: 'client',
       render: (v) => {
         const client = v.userId || {};
-        return (
-          <div>
-            <strong style={{ fontSize: '0.78rem', color: '#1a1814', display: 'block' }}>
-              {client.name || 'Private Client'}
-            </strong>
-            <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #716c62)', display: 'block' }}>
-              {client.email || '—'}
-            </span>
-            {client.phone && (
-              <span
-                style={{
-                  fontSize: '0.66rem',
-                  color: '#655e53',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  marginTop: '1px',
-                }}
-              >
-                <PhoneIcon size={10} color="#655e53" /> {client.phone}
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Scheduled Date & Timing',
-      key: 'date',
-      render: (v) => {
         const formattedDate = formatLocalDate(v.visitDate, {
           month: 'short',
           day: 'numeric',
@@ -487,62 +471,64 @@ export default function ClientSelections() {
         const formattedWindow = formatArrivalWindow(v.arrivalWindow);
 
         return (
-          <div>
-            <strong style={{ fontSize: '0.78rem', color: '#1a1814', display: 'block' }}>
-              {formattedDate}
-            </strong>
-            {v.arrivalWindow ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  fontSize: '0.66rem',
-                  color: '#065f46',
-                  fontWeight: 600,
-                  backgroundColor: '#ecfdf5',
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                  border: '1px solid #a7f3d0',
-                  marginTop: '2px',
-                }}
-              >
-                <Clock size={11} color="#065f46" style={{ flexShrink: 0 }} /> {formattedWindow}
-              </span>
-            ) : (
-              <span style={{ display: 'block', fontSize: '0.68rem', color: '#b45309', marginTop: '2px' }}>
-                Timing pending
-              </span>
-            )}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <strong style={{ fontSize: '0.80rem', color: '#1a1814' }}>
+                {client.name || 'Private Client'}
+              </strong>
+              <span style={{ fontSize: '0.68rem', color: '#57534e' }}>• {formattedDate}</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+              {v.arrivalWindow ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    fontSize: '0.64rem',
+                    color: '#065f46',
+                    fontWeight: 600,
+                    backgroundColor: '#ecfdf5',
+                    padding: '1px 5px',
+                    borderRadius: '3px',
+                    border: '1px solid #a7f3d0',
+                  }}
+                >
+                  <Clock size={10} color="#065f46" style={{ flexShrink: 0 }} /> {formattedWindow}
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.66rem', color: '#b45309' }}>Timing pending</span>
+              )}
+
+              {client.phone && (
+                <span style={{ fontSize: '0.64rem', color: '#716c62', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  <PhoneIcon size={9} color="#716c62" /> {client.phone}
+                </span>
+              )}
+            </div>
           </div>
         );
       },
     },
     {
-      header: 'Menu & Guests',
+      header: 'Menu & Status',
       key: 'menu',
       render: (v) => {
         const dishNames = (v.dishes || [])
           .map((d) => (d.dishId && typeof d.dishId === 'object' ? d.dishId.name : ''))
           .filter(Boolean);
+        const hasConflicts = v.allergyFlags && v.allergyFlags.length > 0;
+
         return (
-          <div>
-            <span style={{ fontWeight: 700, color: '#1a1814', fontSize: '0.78rem' }}>
-              {v.guests} Guests
-            </span>
-            <span
-              style={{
-                marginLeft: '6px',
-                fontSize: '0.64rem',
-                backgroundColor: '#f6f3eb',
-                border: '1px solid #ede8df',
-                padding: '1px 5px',
-                borderRadius: '3px',
-                color: '#57534e',
-              }}
-            >
-              {v.dishes?.length || 0} dishes
-            </span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              {getStatusBadge(v.status)}
+              <span style={{ fontSize: '0.68rem', color: '#4a453e', fontWeight: 600 }}>
+                {v.guests} Guests ({v.dishes?.length || 0} dishes)
+              </span>
+            </div>
+
             {dishNames.length > 0 && (
               <span
                 style={{
@@ -550,14 +536,46 @@ export default function ClientSelections() {
                   fontSize: '0.66rem',
                   color: 'var(--color-text-muted, #716c62)',
                   marginTop: '2px',
-                  maxWidth: '220px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  lineHeight: 1.25,
                 }}
                 title={dishNames.join(', ')}
               >
-                {dishNames.join(', ')}
+                {truncateWords(dishNames.join(', '), 4)}
+              </span>
+            )}
+
+            {hasConflicts ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  padding: '1px 5px',
+                  borderRadius: '3px',
+                  backgroundColor: '#fee2e2',
+                  border: '1px solid #fecaca',
+                  color: '#b91c1c',
+                  fontSize: '0.62rem',
+                  fontWeight: 600,
+                  marginTop: '2px',
+                }}
+                title={v.allergyFlags.map((f) => `${f.dishName}: ${f.conflictAllergen}`).join('; ')}
+              >
+                <WarningIcon size={9} color="#b91c1c" /> Allergy Flag
+              </span>
+            ) : (
+              <span
+                style={{
+                  color: '#15803d',
+                  fontSize: '0.64rem',
+                  fontWeight: 500,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  marginTop: '2px',
+                }}
+              >
+                <CheckCircleIcon size={10} color="#15803d" /> Safe
               </span>
             )}
           </div>
@@ -565,234 +583,64 @@ export default function ClientSelections() {
       },
     },
     {
-      header: 'Allergy Safety',
-      key: 'allergies',
-      render: (v) => {
-        const hasConflicts = v.allergyFlags && v.allergyFlags.length > 0;
-        return hasConflicts ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            {v.allergyFlags.map((flag, idx) => (
-              <span
-                key={idx}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  padding: '1.5px 6px',
-                  borderRadius: '3px',
-                  backgroundColor: '#fee2e2',
-                  border: '1px solid #fecaca',
-                  color: '#b91c1c',
-                  fontSize: '0.64rem',
-                  fontWeight: 600,
-                  maxWidth: '200px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                title={`${flag.dishName}: ${flag.conflictAllergen}`}
-              >
-                <WarningIcon size={10} color="#b91c1c" /> {flag.dishName}: {flag.conflictAllergen}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <span
-            style={{
-              color: '#15803d',
-              fontSize: '0.70rem',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <CheckCircleIcon size={12} color="#15803d" /> No Conflicts
-          </span>
-        );
-      },
-    },
-    {
-      header: 'Status',
-      key: 'status',
-      width: '110px',
-      render: (v) => getStatusBadge(v.status),
-    },
-    {
-      header: 'Actions',
+      header: '',
       key: 'actions',
-      width: '180px',
+      width: '38px',
       align: 'right',
-      render: (v) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-          {/* View Details */}
-          <button
-            type="button"
-            onClick={() => setDetailModalVisit(v)}
-            title="View dining appointment dossier"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EyeIcon size={11} color="#4b5563" />
-          </button>
+      render: (v) => {
+        const items = [
+          {
+            label: 'View Dossier',
+            icon: <Eye size={13} />,
+            onClick: () => setDetailModalVisit(v),
+          },
+          {
+            label: 'Shopping List',
+            icon: <ClipboardList size={13} />,
+            onClick: () => navigate(`/admin/shopping-list/${v._id}`),
+          },
+        ];
 
-          {/* Shopping List */}
-          <Link to={`/admin/shopping-list/${v._id}`} title="View & edit visit shopping list">
-            <button
-              type="button"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '3px',
-                backgroundColor: '#f5f3ef',
-                border: '1px solid #e7e2d8',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-            >
-              <ClipboardIcon size={11} color="#2e3b12" />
-            </button>
-          </Link>
+        if (v.status === 'pending') {
+          items.push({
+            label: 'Confirm Appointment',
+            icon: <CheckCircleIcon size={13} color="#15803d" />,
+            onClick: () => openStatusModal(v, 'confirmed'),
+          });
+          items.push({
+            label: 'Decline / Cancel',
+            icon: <Trash2 size={13} />,
+            variant: 'danger',
+            onClick: () => openStatusModal(v, 'cancelled'),
+          });
+        } else if (v.status === 'confirmed') {
+          items.push({
+            label: 'Mark Ready',
+            icon: <Package size={13} color="#6d28d9" />,
+            onClick: () => openStatusModal(v, 'ready'),
+          });
+          items.push({
+            label: 'Cancel Appointment',
+            icon: <Trash2 size={13} />,
+            variant: 'danger',
+            onClick: () => openStatusModal(v, 'cancelled'),
+          });
+        } else if (v.status === 'ready') {
+          items.push({
+            label: 'Mark Completed',
+            icon: <CheckCircleIcon size={13} color="#2563eb" />,
+            onClick: () => openStatusModal(v, 'completed'),
+          });
+          items.push({
+            label: 'Cancel Appointment',
+            icon: <Trash2 size={13} />,
+            variant: 'danger',
+            onClick: () => openStatusModal(v, 'cancelled'),
+          });
+        }
 
-          {/* Status Quick Action Buttons */}
-          {v.status === 'pending' && (
-            <button
-              type="button"
-              onClick={() => openStatusModal(v, 'confirmed')}
-              title="Confirm appointment"
-              style={{
-                padding: '0 9px',
-                height: '25px',
-                borderRadius: '4px',
-                border: '1px solid #242e0e',
-                backgroundColor: '#2e3b12',
-                color: '#ffffff',
-                fontSize: '0.70rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                transition: 'background-color 0.15s ease',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#232d0e')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2e3b12')}
-            >
-              <CheckCircleIcon size={11} color="#ffffff" />
-              <span>Confirm</span>
-            </button>
-          )}
-
-          {v.status === 'confirmed' && (
-            <button
-              type="button"
-              onClick={() => openStatusModal(v, 'ready')}
-              title="Mark order ready for pickup or dispatch"
-              style={{
-                padding: '0 9px',
-                height: '25px',
-                borderRadius: '4px',
-                border: '1px solid #5b21b6',
-                backgroundColor: '#6d28d9',
-                color: '#ffffff',
-                fontSize: '0.70rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                transition: 'background-color 0.15s ease',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#5b21b6')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6d28d9')}
-            >
-              <Package size={11} color="#ffffff" />
-              <span>Ready</span>
-            </button>
-          )}
-
-          {v.status === 'ready' && (
-            <button
-              type="button"
-              onClick={() => openStatusModal(v, 'completed')}
-              title="Mark visit as completed"
-              style={{
-                padding: '0 9px',
-                height: '25px',
-                borderRadius: '4px',
-                border: '1px solid #1d4ed8',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                fontSize: '0.70rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                transition: 'background-color 0.15s ease',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
-            >
-              <CheckCircleIcon size={11} color="#ffffff" />
-              <span>Complete</span>
-            </button>
-          )}
-
-          {v.status === 'pending' && (
-            <button
-              type="button"
-              onClick={() => openStatusModal(v, 'cancelled')}
-              title="Decline / Cancel appointment"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '3px',
-                border: '1px solid #fee2e2',
-                backgroundColor: '#fef2f2',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'background-color 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fee2e2')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-            >
-              <TrashIcon size={10} color="#dc2626" />
-            </button>
-          )}
-        </div>
-      ),
+        return <KebabMenu ariaLabel={`Actions for appointment ${v._id}`} items={items} />;
+      },
     },
   ];
 
@@ -800,75 +648,43 @@ export default function ClientSelections() {
 
   return (
     <div className="admin-page-container">
-      {/* Page Header */}
-      <div className="admin-header-flex">
-        <div>
-          <h1
-            style={{
-              color: 'var(--color-primary, #2e3b12)',
-              fontSize: '1.25rem',
-              margin: '0 0 2px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <CalendarIcon size={20} color="var(--color-primary, #2e3b12)" />
-            Client Dining Appointments & Selections
-          </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-            Manage client booking requests, set confirmed arrival windows, check allergy safety, and manage shopping lists ({visits.length} total).
-          </p>
-        </div>
-
-        {/* Top-Right Action Buttons - Compact */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Button
-            variant="primary"
-            size="sm"
+      {/* Title Row with Action Buttons at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1
+          className="admin-page-title"
+          style={{
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <CalendarIcon size={18} color="var(--color-primary, #2e3b12)" />
+          <span>Client Selections</span>
+        </h1>
+        <div className="admin-title-actions" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
             onClick={openCreateModal}
-            style={{
-              borderRadius: '3px',
-              height: '28px',
-              fontSize: '0.72rem',
-              padding: '0 10px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              backgroundColor: 'var(--color-primary, #2e3b12)',
-              color: '#ffffff',
-              fontWeight: 600,
-              boxShadow: 'none',
-            }}
+            className="admin-action-btn"
+            title="Create Appointment"
+            aria-label="Create Appointment"
           >
-            <span style={{ fontSize: '0.86rem', fontWeight: 700, lineHeight: 1 }}>+</span>
-            <span>Create Appointment</span>
-          </Button>
-
-          <Link to="/admin/shopping-lists">
-            <Button
-              variant="outline"
-              size="sm"
-              style={{
-                borderRadius: '3px',
-                boxShadow: 'none',
-                border: '1px solid var(--color-border, #ece7de)',
-                backgroundColor: 'var(--color-bg, #fbf9f5)',
-                height: '28px',
-                fontSize: '0.72rem',
-                padding: '0 10px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-            >
-              <ClipboardIcon size={12} color="var(--color-primary, #2e3b12)" />
-              <span>All Shopping Lists</span>
-            </Button>
+            <Plus size={16} />
+          </button>
+          <Link
+            to="/admin/shopping-lists"
+            className="admin-action-btn-outline"
+            title="All Shopping Lists"
+            aria-label="All Shopping Lists"
+          >
+            <ClipboardList size={15} />
           </Link>
         </div>
       </div>
+      <p className="admin-page-subtitle">
+        Manage client booking requests, set confirmed arrival windows, check allergy safety ({visits.length} total).
+      </p>
 
       {/* Success Notification Alert */}
       {createSuccessMsg && (
@@ -891,153 +707,114 @@ export default function ClientSelections() {
         </div>
       )}
 
-      {/* Filter & Search Bar */}
-      <div className="admin-filter-bar">
-        {/* Left Side: Status Dropdown & From-To Date Range Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: '1 1 auto' }}>
-          {/* Status Filter Custom Dropdown */}
-          <div ref={statusDropdownRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ fontSize: '0.74rem', color: '#655e53', fontWeight: 600 }}>
-              Status:
-            </label>
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                style={{
-                  height: '32px',
-                  minWidth: '135px',
-                  padding: '0 10px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-border, #ece7de)',
-                  backgroundColor: 'var(--color-bg, #fbf9f5)',
-                  fontSize: '0.74rem',
-                  color: '#1e1b16',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  boxShadow: 'none',
-                }}
-              >
-                <span>{currentStatusOption.label}</span>
-                <span style={{ fontSize: '0.60rem', color: '#716c62' }}>{statusDropdownOpen ? '▲' : '▼'}</span>
-              </button>
+      {/* Search & Filter Bar */}
+      <div className="admin-search-filter-bar">
+        <div className="admin-search-box">
+          <SearchIcon size={13} color="#9ca3af" />
+          <input
+            type="text"
+            placeholder="Search client, email, phone, or dish..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
-              {/* Custom Dropdown Menu */}
-              {statusDropdownOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 4px)',
-                    left: 0,
-                    minWidth: '145px',
-                    zIndex: 40,
-                    backgroundColor: 'var(--color-bg, #fbf9f5)',
-                    border: '1px solid var(--color-border, #ece7de)',
-                    borderRadius: '4px',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                    padding: '4px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px',
-                  }}
-                >
-                  {statusOptions.map((opt) => {
-                    const isSelected = activeTab === opt.id;
-                    return (
-                      <div
-                        key={opt.id}
-                        onClick={() => {
-                          setActiveTab(opt.id);
-                          setStatusDropdownOpen(false);
-                        }}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '3px',
-                          backgroundColor: isSelected ? 'var(--color-primary, #2e3b12)' : 'transparent',
-                          color: isSelected ? '#ffffff' : '#1e1b16',
-                          fontSize: '0.72rem',
-                          fontWeight: isSelected ? 600 : 500,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.1s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSelected) e.currentTarget.style.backgroundColor = '#f3efe6';
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <span>{opt.label}</span>
-                        {isSelected && <CheckCircleIcon size={11} color="#ffffff" />}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+        <button
+          type="button"
+          className={`admin-filter-toggle-btn ${activeFilterCount > 0 ? 'has-filters' : ''}`}
+          onClick={() => setFilterDrawerOpen(true)}
+          title="Open filters sidebar"
+        >
+          <SlidersHorizontal size={13} />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#15803d',
+                color: '#ffffff',
+                borderRadius: '10px',
+                padding: '1px 5px',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Filter Slide-out Sidebar Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        title="Filter Appointments"
+        activeCount={activeFilterCount}
+        onReset={resetFilters}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Status
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {statusOptions.map((opt) => {
+                const isSelected = activeTab === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setActiveTab(opt.id)}
+                    style={{
+                      padding: '7px 10px',
+                      borderRadius: '4px',
+                      backgroundColor: isSelected ? 'var(--color-primary, #2e3b12)' : '#ffffff',
+                      color: isSelected ? '#ffffff' : '#1e1b16',
+                      border: '1px solid ' + (isSelected ? 'var(--color-primary, #2e3b12)' : '#e7e2d8'),
+                      fontSize: '0.74rem',
+                      fontWeight: isSelected ? 600 : 500,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.12s ease',
+                    }}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected && <CheckCircleIcon size={12} color="#ffffff" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* From Date Picker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ fontSize: '0.74rem', color: '#655e53', fontWeight: 600 }}>From:</label>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              From Date
+            </label>
             <CustomDatePicker
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={{
-                height: '32px',
-                fontSize: '0.74rem',
-                width: '135px',
-              }}
-              wrapperStyle={{ width: '135px' }}
+              style={{ height: '34px', fontSize: '0.76rem', width: '100%' }}
+              wrapperStyle={{ width: '100%' }}
             />
           </div>
 
-          {/* To Date Picker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ fontSize: '0.74rem', color: '#655e53', fontWeight: 600 }}>To:</label>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              To Date
+            </label>
             <CustomDatePicker
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={{
-                height: '32px',
-                fontSize: '0.74rem',
-                width: '135px',
-              }}
-              wrapperStyle={{ width: '135px' }}
+              style={{ height: '34px', fontSize: '0.76rem', width: '100%' }}
+              wrapperStyle={{ width: '100%' }}
             />
           </div>
 
-          {/* Quick Date Range Reset / 10-Day Window Toggle */}
-          {(startDate || endDate) ? (
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate('');
-                setEndDate('');
-              }}
-              title="Clear date filter to view all appointment records"
-              style={{
-                padding: '0 8px',
-                height: '32px',
-                borderRadius: '4px',
-                border: '1px solid var(--color-border, #ece7de)',
-                backgroundColor: 'var(--color-bg, #fbf9f5)',
-                fontSize: '0.70rem',
-                color: '#716c62',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Clear Dates
-            </button>
-          ) : (
+          <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
             <button
               type="button"
               onClick={() => {
@@ -1048,60 +825,42 @@ export default function ClientSelections() {
                 setStartDate(toDateInputValue(prev5));
                 setEndDate(toDateInputValue(ahead5));
               }}
-              title="View appointments within 10 days (5 days prev, 5 days ahead)"
               style={{
-                padding: '0 8px',
-                height: '32px',
+                flex: 1,
+                padding: '6px 8px',
                 borderRadius: '4px',
                 border: '1px solid var(--color-border, #ece7de)',
-                backgroundColor: 'var(--color-bg, #fbf9f5)',
+                backgroundColor: '#ffffff',
                 fontSize: '0.70rem',
                 color: 'var(--color-primary, #2e3b12)',
                 fontWeight: 600,
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
               }}
             >
-              10-Day Window (&plusmn;5d)
+              &plusmn;5-Day Preset
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              style={{
+                flex: 1,
+                padding: '6px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--color-border, #ece7de)',
+                backgroundColor: '#ffffff',
+                fontSize: '0.70rem',
+                color: '#716c62',
+                cursor: 'pointer',
+              }}
+            >
+              All Dates
+            </button>
+          </div>
         </div>
-
-        {/* Search */}
-        <div className="admin-filter-search" style={{ position: 'relative', width: '250px' }}>
-          <span
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <SearchIcon size={13} color="#716c62" />
-          </span>
-          <input
-            type="text"
-            placeholder="Search client, email, phone, or dish..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '5px 10px 5px 30px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              fontSize: '0.74rem',
-              boxShadow: 'none',
-              outline: 'none',
-              height: '32px',
-              color: 'var(--color-text, #1e1b16)',
-            }}
-          />
-        </div>
-      </div>
+      </FilterDrawer>
 
       {/* Main DataTable */}
       <DataTable
@@ -1129,7 +888,7 @@ export default function ClientSelections() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="dialog-responsive-footer">
               <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)' }}>
                 Scheduled:{' '}
                 <strong>
@@ -1143,7 +902,7 @@ export default function ClientSelections() {
                 &bull; Guests: <strong>{detailModalVisit.guests}</strong>
               </span>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="dialog-footer-actions">
                 <Button
                   variant="outline"
                   size="sm"
@@ -1436,7 +1195,7 @@ export default function ClientSelections() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -1496,7 +1255,7 @@ export default function ClientSelections() {
 
             {statusModal.targetStatus === 'confirmed' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="dialog-grid-2col">
                   <div>
                     <label style={{ fontSize: '0.74rem', fontWeight: 600, display: 'block', marginBottom: '4px', color: '#1e1b16' }}>
                       Confirmed Date *
@@ -1541,7 +1300,7 @@ export default function ClientSelections() {
                   <label style={{ fontSize: '0.74rem', fontWeight: 600, display: 'block', marginBottom: '4px', color: '#1e1b16' }}>
                     Arrival Time Range *
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className="dialog-grid-2col">
                     <div>
                       <span style={{ fontSize: '0.67rem', color: '#716c62', display: 'block', marginBottom: '2px' }}>
                         Start Time
@@ -1730,7 +1489,7 @@ export default function ClientSelections() {
           title="Schedule Appointment for Client"
           maxWidth="760px"
           footer={
-            <>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -1766,7 +1525,7 @@ export default function ClientSelections() {
                   ? 'Schedule Appointment'
                   : 'Schedule & Send Menu Invitation'}
               </Button>
-            </>
+            </div>
           }
         >
           <form
@@ -2075,10 +1834,8 @@ export default function ClientSelections() {
 
             {/* Step / Section 2: Visit Date & Timing */}
             <div
+              className="dialog-grid-2col"
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
                 padding: '10px 12px',
                 backgroundColor: 'var(--color-bg, #fbf9f5)',
                 borderRadius: '4px',
@@ -2155,7 +1912,7 @@ export default function ClientSelections() {
                 >
                   Arrival Time Range (Start & End)
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="dialog-grid-2col">
                   <input
                     type="time"
                     value={createForm.startTime}
@@ -2325,7 +2082,7 @@ export default function ClientSelections() {
             </div>
 
             {/* Special Notes & Requests */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="dialog-grid-2col">
               <div>
                 <label
                   style={{

@@ -92,60 +92,90 @@ export default function Settings() {
 
   const reminderColumns = [
     {
-      header: 'Client',
+      header: 'Client & Scheduled Visit',
       accessor: 'userId',
-      render: (row) => <strong>{row.userId?.name || 'Client'}</strong>,
+      render: (row) => (
+        <div>
+          <strong style={{ fontSize: '0.80rem', color: '#1a1814', display: 'block' }}>
+            {row.userId?.name || 'Private Client'}
+          </strong>
+          <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>
+            {new Date(row.visitDate).toLocaleDateString()} &bull; {row.guests || 2} guests
+          </span>
+        </div>
+      ),
     },
     {
-      header: 'Scheduled Visit',
-      accessor: 'visitDate',
-      render: (row) => new Date(row.visitDate).toLocaleDateString(),
-    },
-    {
-      header: 'Guests',
-      accessor: 'guests',
-    },
-    {
-      header: '48h Reminder Status (PRD § 49)',
+      header: 'Reminder Status',
       accessor: 'reminderSent',
       render: (row) => (
         <span
           className={`badge ${row.reminderSent ? 'badge-primary' : 'badge-time-intensive'}`}
-          style={{ fontSize: '0.68rem', padding: '2px 7px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+          style={{ fontSize: '0.66rem', padding: '2px 7px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
           {row.reminderSent ? (
             <>
-              <CheckCircleIcon size={12} color="#ffffff" /> Reminder Sent
+              <CheckCircleIcon size={11} color="#ffffff" /> Reminder Sent
             </>
           ) : (
             <>
-              <Clock size={12} color="#92400e" style={{ flexShrink: 0 }} /> Queued (Pending 48h Window)
+              <Clock size={11} color="#92400e" style={{ flexShrink: 0 }} /> Queued (48h Window)
             </>
           )}
         </span>
+      ),
+    },
+    {
+      header: '',
+      accessor: '_id',
+      width: '38px',
+      align: 'right',
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => navigate(`/admin/selections?visit=${row._id}`)}
+          title="View Visit Dossier"
+          style={{
+            width: '26px',
+            height: '26px',
+            borderRadius: '4px',
+            border: '1px solid #e7e2d8',
+            backgroundColor: '#ffffff',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <Clock size={13} color="#4a453e" />
+        </button>
       ),
     },
   ];
 
   return (
     <div className="admin-page-container" style={{ maxWidth: '900px' }}>
-      <div className="admin-header-flex">
-        <div>
-          <h1 style={{ color: 'var(--color-primary)', fontSize: '1.25rem', margin: 0 }}>System Settings & Controls</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.76rem', margin: '2px 0 0' }}>
-            Chef Missy admin credentials, email notification provider & automatic reminder monitor (PRD § 26, 28, 49)
-          </p>
+      {/* Title Row with Action Button at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1 className="admin-page-title" style={{ margin: 0 }}>
+          System Settings
+        </h1>
+        <div className="admin-title-actions">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="admin-action-btn"
+            title="Sign Out of Admin"
+            aria-label="Sign Out of Admin"
+            style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+          >
+            <LogOut size={15} />
+          </button>
         </div>
-        <Button
-          type="button"
-          variant="danger"
-          size="sm"
-          onClick={handleLogout}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-        >
-          <LogOut size={13} /> Sign Out of Admin
-        </Button>
       </div>
+      <p className="admin-page-subtitle">
+        Chef Missy admin credentials, email notification provider & automatic reminder monitor.
+      </p>
 
       <div className="admin-two-col-grid" style={{ marginBottom: 'var(--spacing-md)' }}>
         {/* Admin Account Settings */}

@@ -98,74 +98,44 @@ export default function AdminNotifications() {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0', padding: '0 2px 16px' }}>
-      {/* Page Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-          marginBottom: '10px',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '1.20rem',
-              color: 'var(--color-primary, #2e3b12)',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 700,
-              margin: '0 0 2px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <span>In-System Notifications</span>
-            {unreadCount > 0 && (
-              <span
-                style={{
-                  fontSize: '0.64rem',
-                  backgroundColor: '#fee2e2',
-                  color: '#b91c1c',
-                  border: '1px solid #fecaca',
-                  padding: '1px 6px',
-                  borderRadius: '10px',
-                  fontWeight: 700,
-                }}
-              >
-                {unreadCount} unread
-              </span>
-            )}
-          </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.74rem', margin: 0 }}>
-            Operational updates for client box orders, appointment confirmations, and menu preferences.
-          </p>
-        </div>
+      {/* Title Row with Action Buttons at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1
+          className="admin-page-title"
+          style={{
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>Notifications</span>
+          {unreadCount > 0 && (
+            <span
+              style={{
+                fontSize: '0.64rem',
+                backgroundColor: '#fee2e2',
+                color: '#b91c1c',
+                border: '1px solid #fecaca',
+                padding: '1px 6px',
+                borderRadius: '10px',
+                fontWeight: 700,
+              }}
+            >
+              {unreadCount} unread
+            </span>
+          )}
+        </h1>
 
-        {/* Action Controls */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <div className="admin-title-actions" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           <button
             type="button"
             onClick={fetchNotifications}
             title="Refresh notifications"
-            style={{
-              padding: '4px 8px',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff',
-              border: '1px solid var(--color-border, #ece7de)',
-              color: '#57534e',
-              fontSize: '0.72rem',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              boxShadow: 'none',
-            }}
+            className="admin-action-btn-outline"
+            aria-label="Refresh notifications"
           >
-            <RefreshCw size={12} className={loading ? 'spin' : ''} />
-            <span>Refresh</span>
+            <RefreshCw size={14} className={loading ? 'spin' : ''} />
           </button>
 
           {unreadCount > 0 && (
@@ -173,28 +143,18 @@ export default function AdminNotifications() {
               type="button"
               onClick={handleMarkAllRead}
               disabled={actionLoading}
-              style={{
-                padding: '4px 10px',
-                borderRadius: '4px',
-                backgroundColor: 'var(--color-primary, #2e3b12)',
-                border: 'none',
-                color: '#ffffff',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                boxShadow: 'none',
-                opacity: actionLoading ? 0.7 : 1,
-              }}
+              title="Mark all as read"
+              className="admin-action-btn"
+              aria-label="Mark all as read"
             >
-              <CheckCheck size={13} />
-              <span>Mark all as read</span>
+              <CheckCheck size={15} />
             </button>
           )}
         </div>
       </div>
+      <p className="admin-page-subtitle">
+        Operational updates for client box orders, appointment confirmations, and menu preferences.
+      </p>
 
       {/* Filter Tabs */}
       <div

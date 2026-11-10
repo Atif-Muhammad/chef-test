@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   User,
@@ -404,59 +405,31 @@ export default function Profile() {
     : 'Member';
 
   return (
-    <div style={{ width: '100%', paddingBottom: '40px' }}>
+    <div className="user-page-container">
       {/* Page Title & Breadcrumb Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
+      <div className="user-title-row">
         <div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-heading, serif)',
-              fontSize: '1.45rem',
-              color: '#1a1814',
-              margin: '0 0 4px',
-              fontWeight: 700,
-            }}
-          >
+          <h1 className="user-page-title">
             My Profile & Preferences
           </h1>
-          <p style={{ color: '#655e53', fontSize: '0.78rem', margin: 0 }}>
+          <p className="user-page-subtitle">
             Manage your personal dossier, dietary regimen, allergen safeguards, and bespoke culinary notes.
           </p>
         </div>
 
         {/* Quick Edit Profile Action Button */}
-        <button
-          type="button"
-          onClick={() => handleOpenEdit('personal')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '4px',
-            backgroundColor: '#2e3b12',
-            color: '#ffffff',
-            border: 'none',
-            fontSize: '0.80rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 1px 3px rgba(46, 59, 18, 0.15)',
-            transition: 'background-color 0.15s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#3b4b18')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2e3b12')}
-        >
-          <Edit3 size={14} /> Edit Profile
-        </button>
+        <div className="user-title-actions">
+          <button
+            type="button"
+            className="user-action-btn"
+            onClick={() => handleOpenEdit('personal')}
+            title="Edit Profile"
+            style={{ padding: '0 12px' }}
+          >
+            <Edit3 size={14} />
+            <span className="user-btn-text">Edit Profile</span>
+          </button>
+        </div>
       </div>
 
       {/* Alert / Notification Feedback */}
@@ -502,6 +475,7 @@ export default function Profile() {
 
       {/* TOP PROFILE CARD (Clean, Full-Width, Luxurious - No Squished Right Promo Image) */}
       <div
+        className="profile-top-card"
         style={{
           backgroundColor: '#ffffff',
           borderRadius: '4px',
@@ -512,6 +486,7 @@ export default function Profile() {
         }}
       >
         <div
+          className="profile-top-card-inner"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -521,10 +496,11 @@ export default function Profile() {
           }}
         >
           {/* Left: Avatar & Identity */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: '280px' }}>
+          <div className="profile-identity-wrap" style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: '1 1 auto' }}>
             {/* Avatar with Photo Upload */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div
+                className="profile-avatar-wrap"
                 style={{
                   width: '66px',
                   height: '66px',
@@ -606,9 +582,10 @@ export default function Profile() {
             </div>
 
             {/* User Meta Information */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                 <h2
+                  className="profile-name-title"
                   style={{
                     fontSize: '1.25rem',
                     color: '#1a1814',
@@ -634,44 +611,65 @@ export default function Profile() {
                 </span>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  fontSize: '0.74rem',
-                  color: '#655e53',
-                  marginTop: '5px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <Mail size={12} color="#716c62" /> {user?.email}
-                </span>
-                {user?.location && (
-                  <>
-                    <span>&bull;</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <MapPin size={12} color="#716c62" /> {user.location}
+              <div className="profile-meta-list" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                {user?.email && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.74rem',
+                      color: '#655e53',
+                      minWidth: 0,
+                    }}
+                  >
+                    <Mail size={12} color="#716c62" style={{ flexShrink: 0 }} />
+                    <span
+                      style={{
+                        wordBreak: 'break-all',
+                        overflowWrap: 'break-word',
+                      }}
+                    >
+                      {user.email}
                     </span>
-                  </>
+                  </div>
                 )}
-                {user?.phone && (
-                  <>
-                    <span>&bull;</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <Phone size={12} color="#716c62" /> {user.phone}
-                    </span>
-                  </>
+
+                {(user?.location || user?.phone) && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flexWrap: 'wrap',
+                      fontSize: '0.72rem',
+                      color: '#655e53',
+                      marginTop: '1px',
+                    }}
+                  >
+                    {user?.location && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <MapPin size={12} color="#716c62" style={{ flexShrink: 0 }} />
+                        <span>{user.location}</span>
+                      </span>
+                    )}
+                    {user?.phone && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <Phone size={12} color="#716c62" style={{ flexShrink: 0 }} />
+                        <span>{user.phone}</span>
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
           {/* Right: Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="profile-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               type="button"
+              className="profile-btn-photo"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingPhoto}
               style={{
@@ -704,6 +702,7 @@ export default function Profile() {
 
             <button
               type="button"
+              className="profile-btn-edit"
               onClick={() => handleOpenEdit('personal')}
               style={{
                 padding: '6px 14px',
@@ -727,6 +726,7 @@ export default function Profile() {
 
             <button
               type="button"
+              className="profile-btn-signout"
               onClick={handleLogout}
               title="Sign Out of Account"
               style={{
@@ -882,7 +882,7 @@ export default function Profile() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '18px',
           marginBottom: '20px',
         }}
@@ -946,79 +946,75 @@ export default function Profile() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px 14px' }}>
               <div>
                 <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
                   Full Name
                 </span>
-                <span style={{ fontSize: '0.80rem', fontWeight: 600, color: '#1a1814' }}>
+                <span style={{ fontSize: '0.80rem', fontWeight: 600, color: '#1a1814', wordBreak: 'break-word' }}>
                   {user?.name || '—'}
                 </span>
               </div>
 
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
                     Email Address
                   </span>
                   <span
                     style={{
-                      fontSize: '0.64rem',
+                      fontSize: '0.62rem',
                       color: '#065f46',
                       backgroundColor: '#ecfdf5',
-                      padding: '1px 5px',
+                      padding: '1px 4px',
                       borderRadius: '3px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '3px',
+                      gap: '2px',
                     }}
                   >
-                    <Lock size={9} /> Verified ID
+                    <Lock size={8} /> Verified
                   </span>
                 </div>
-                <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
+                <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814', wordBreak: 'break-all' }}>
                   {user?.email || '—'}
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
-                    Phone Number
-                  </span>
-                  <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
-                    {user?.phone || 'Not provided'}
-                  </span>
-                </div>
-
-                <div>
-                  <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
-                    Delivery Location
-                  </span>
-                  <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
-                    {user?.location || 'Not provided'}
-                  </span>
-                </div>
+              <div>
+                <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
+                  Phone Number
+                </span>
+                <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814', wordBreak: 'break-word' }}>
+                  {user?.phone || 'Not provided'}
+                </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
-                    Date of Birth
-                  </span>
-                  <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
-                    {user?.dob || 'Not specified'}
-                  </span>
-                </div>
+              <div>
+                <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
+                  Delivery Location
+                </span>
+                <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814', wordBreak: 'break-word' }}>
+                  {user?.location || 'Not provided'}
+                </span>
+              </div>
 
-                <div>
-                  <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
-                    Gender
-                  </span>
-                  <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
-                    {user?.gender || 'Prefer not to say'}
-                  </span>
-                </div>
+              <div>
+                <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
+                  Date of Birth
+                </span>
+                <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
+                  {user?.dob || 'Not specified'}
+                </span>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
+                  Gender
+                </span>
+                <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814' }}>
+                  {user?.gender || 'Prefer not to say'}
+                </span>
               </div>
             </div>
           </div>
@@ -1416,6 +1412,7 @@ export default function Profile() {
         }}
       >
         <div
+          className="profile-fav-header"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -1423,30 +1420,38 @@ export default function Profile() {
             marginBottom: '14px',
             borderBottom: '1px solid #f2ede4',
             paddingBottom: '8px',
+            flexWrap: 'wrap',
+            gap: '8px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Heart size={15} color="#dc2626" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
+            <Heart size={15} color="#dc2626" style={{ flexShrink: 0 }} />
             <h3
               style={{
-                fontSize: '0.92rem',
+                fontSize: '0.90rem',
                 color: '#1a1814',
                 margin: 0,
                 fontWeight: 700,
                 fontFamily: 'var(--font-heading, serif)',
+                whiteSpace: 'nowrap',
               }}
             >
               My Saved Favorites
             </h3>
             {favourites.length > 0 && (
               <span
+                className="profile-fav-badge"
                 style={{
                   fontSize: '0.66rem',
-                  padding: '1px 6px',
+                  padding: '2px 7px',
                   borderRadius: '3px',
                   backgroundColor: '#fee2e2',
                   color: '#991b1b',
                   fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
                 {favourites.length} {favourites.length === 1 ? 'Dish' : 'Dishes'}
@@ -1456,6 +1461,7 @@ export default function Profile() {
 
           <Link
             to="/favourites"
+            className="profile-fav-link"
             style={{
               color: '#2e3b12',
               fontSize: '0.74rem',
@@ -1464,9 +1470,14 @@ export default function Profile() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
+              whiteSpace: 'nowrap',
+              marginLeft: 'auto',
+              flexShrink: 0,
             }}
           >
-            View All Favorites <ArrowRight size={12} />
+            <span className="profile-fav-link-desktop">View All Favorites</span>
+            <span className="profile-fav-link-mobile">View All</span>
+            <ArrowRight size={12} />
           </Link>
         </div>
 
@@ -1676,25 +1687,30 @@ export default function Profile() {
       {/* =========================================================================
        * EDIT PROFILE MODAL (PRE-LOADED FORM SECTIONS)
        * ========================================================================= */}
-      {isEditModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(30, 27, 22, 0.55)',
-            backdropFilter: 'blur(3px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '16px',
-            animation: 'fadeIn 0.15s ease-out',
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) handleCloseEdit();
-          }}
-        >
+      {isEditModalOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
           <div
+            className="profile-edit-modal-overlay"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(30, 27, 22, 0.55)',
+              backdropFilter: 'blur(3px)',
+              WebkitBackdropFilter: 'blur(3px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '16px',
+              animation: 'fadeIn 0.15s ease-out',
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseEdit();
+            }}
+          >
+          <div
+            className="profile-edit-modal-card"
             style={{
               width: '100%',
               maxWidth: '720px',
@@ -1710,6 +1726,7 @@ export default function Profile() {
           >
             {/* Modal Header */}
             <div
+              className="profile-edit-modal-header"
               style={{
                 padding: '16px 22px',
                 borderBottom: '1px solid #ece7de',
@@ -1717,10 +1734,12 @@ export default function Profile() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 backgroundColor: '#fbf9f5',
+                gap: '10px',
               }}
             >
               <div>
                 <h2
+                  className="profile-edit-modal-title"
                   style={{
                     fontSize: '1.05rem',
                     color: '#1a1814',
@@ -1731,7 +1750,7 @@ export default function Profile() {
                 >
                   Edit Profile & Dining Preferences
                 </h2>
-                <p style={{ fontSize: '0.72rem', color: '#716c62', margin: 0 }}>
+                <p className="profile-edit-modal-subtitle" style={{ fontSize: '0.72rem', color: '#716c62', margin: 0 }}>
                   Pre-loaded with your current client details, dietary regimen, and safety safeguards.
                 </p>
               </div>
@@ -1749,6 +1768,7 @@ export default function Profile() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
                 <X size={18} />
@@ -1757,6 +1777,7 @@ export default function Profile() {
 
             {/* Modal Navigation Tabs */}
             <div
+              className="profile-edit-modal-tabs"
               style={{
                 display: 'flex',
                 borderBottom: '1px solid #ece7de',
@@ -1764,11 +1785,15 @@ export default function Profile() {
                 padding: '0 20px',
                 gap: '8px',
                 overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch',
               }}
             >
               <button
                 type="button"
                 onClick={() => setModalTab('personal')}
+                className="profile-edit-tab-btn"
                 style={{
                   padding: '10px 14px',
                   border: 'none',
@@ -1782,14 +1807,18 @@ export default function Profile() {
                   alignItems: 'center',
                   gap: '6px',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                <User size={13} /> Personal Info
+                <User size={13} />
+                <span className="profile-tab-text-desktop">Personal Info</span>
+                <span className="profile-tab-text-mobile">Personal</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setModalTab('dietary')}
+                className="profile-edit-tab-btn"
                 style={{
                   padding: '10px 14px',
                   border: 'none',
@@ -1803,9 +1832,12 @@ export default function Profile() {
                   alignItems: 'center',
                   gap: '6px',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                <Leaf size={13} /> Dietary Preferences
+                <Leaf size={13} />
+                <span className="profile-tab-text-desktop">Dietary Preferences</span>
+                <span className="profile-tab-text-mobile">Dietary</span>
                 {editSelectedDietary.length > 0 && (
                   <span
                     style={{
@@ -1824,6 +1856,7 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => setModalTab('allergies')}
+                className="profile-edit-tab-btn"
                 style={{
                   padding: '10px 14px',
                   border: 'none',
@@ -1837,9 +1870,12 @@ export default function Profile() {
                   alignItems: 'center',
                   gap: '6px',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                <ShieldAlert size={13} /> Allergies & Safety
+                <ShieldAlert size={13} />
+                <span className="profile-tab-text-desktop">Allergies & Safety</span>
+                <span className="profile-tab-text-mobile">Allergies</span>
                 {editSelectedAllergens.length > 0 && (
                   <span
                     style={{
@@ -1858,6 +1894,7 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => setModalTab('notes')}
+                className="profile-edit-tab-btn"
                 style={{
                   padding: '10px 14px',
                   border: 'none',
@@ -1871,9 +1908,12 @@ export default function Profile() {
                   alignItems: 'center',
                   gap: '6px',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                <FileText size={13} /> Culinary Notes
+                <FileText size={13} />
+                <span className="profile-tab-text-desktop">Culinary Notes</span>
+                <span className="profile-tab-text-mobile">Notes</span>
               </button>
             </div>
 
@@ -1900,6 +1940,7 @@ export default function Profile() {
             {/* Modal Body / Scrollable Content */}
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <div
+                className="profile-edit-modal-body"
                 style={{
                   padding: '20px 22px',
                   overflowY: 'auto',
@@ -1910,7 +1951,7 @@ export default function Profile() {
                 {/* TAB 1: PERSONAL INFO */}
                 {modalTab === 'personal' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="user-form-2col">
                       <div>
                         <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#1a1814', display: 'block', marginBottom: '5px' }}>
                           Full Name *
@@ -1959,7 +2000,7 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="user-form-2col">
                       <div>
                         <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#1a1814', display: 'block', marginBottom: '5px' }}>
                           Phone Number
@@ -2005,7 +2046,7 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="user-form-2col">
                       <div>
                         <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#1a1814', display: 'block', marginBottom: '5px' }}>
                           Date of Birth
@@ -2311,6 +2352,7 @@ export default function Profile() {
 
               {/* Modal Footer Actions */}
               <div
+                className="profile-edit-modal-footer"
                 style={{
                   padding: '14px 22px',
                   borderTop: '1px solid #ece7de',
@@ -2318,12 +2360,14 @@ export default function Profile() {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   backgroundColor: '#fbf9f5',
+                  gap: '10px',
                 }}
               >
                 <button
                   type="button"
                   onClick={handleCloseEdit}
                   disabled={savingProfile}
+                  className="profile-edit-cancel-btn"
                   style={{
                     padding: '8px 16px',
                     borderRadius: '4px',
@@ -2333,6 +2377,7 @@ export default function Profile() {
                     fontWeight: 600,
                     color: '#716c62',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   Cancel
@@ -2341,8 +2386,9 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={savingProfile}
+                  className="profile-edit-save-btn"
                   style={{
-                    padding: '8px 20px',
+                    padding: '8px 18px',
                     borderRadius: '4px',
                     backgroundColor: '#2e3b12',
                     border: 'none',
@@ -2350,26 +2396,29 @@ export default function Profile() {
                     fontWeight: 600,
                     color: '#ffffff',
                     cursor: savingProfile ? 'not-allowed' : 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap',
                     boxShadow: '0 1px 3px rgba(46, 59, 18, 0.2)',
                   }}
                 >
                   {savingProfile ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" /> Saving...
+                      <Loader2 size={13} className="animate-spin" /> Saving...
                     </>
                   ) : (
                     <>
-                      <Check size={14} /> Save Profile Changes
+                      <Check size={13} /> Save Changes
                     </>
                   )}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

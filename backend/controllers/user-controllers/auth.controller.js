@@ -224,14 +224,16 @@ exports.logout = (req, res) => {
 };
 
 exports.getMe = (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Not authenticated.' });
-  }
-  if (req.user.role === 'client' && req.user.status === 'terminated') {
+  if (req.userTerminated || (req.user && req.user.role === 'client' && (req.user.status === 'terminated' || req.user.status !== 'active'))) {
+    clearAuthCookie(res);
     return res.status(403).json({
       message: 'Your account has been terminated by administrator. Access revoked.',
       terminated: true,
+      status: 'terminated',
     });
+  }
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated.' });
   }
   return res.json({ user: req.user });
 };

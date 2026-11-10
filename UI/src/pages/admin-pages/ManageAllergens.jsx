@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, Edit3, Trash2 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Button from '../../components/shared/Button';
 import FormInput from '../../components/shared/FormInput';
@@ -6,6 +7,7 @@ import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { ManageAllergensSkeleton } from '../../components/skeletons';
 import DataTable from '../../components/shared/DataTable';
+import KebabMenu from '../../components/shared/KebabMenu';
 import { WarningIcon, ShieldIcon, EditIcon, TrashIcon, SearchIcon } from '../../components/shared/Icons';
 
 export default function ManageAllergens() {
@@ -126,7 +128,7 @@ export default function ManageAllergens() {
       ),
     },
     {
-      header: 'System Slug / URL Identifier',
+      header: 'Identifier',
       key: 'slug',
       render: (row) => (
         <code
@@ -145,58 +147,27 @@ export default function ManageAllergens() {
       ),
     },
     {
-      header: 'Actions',
+      header: '',
       key: 'actions',
-      width: '80px',
+      width: '38px',
       align: 'right',
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-          {/* Edit Button */}
-          <button
-            type="button"
-            onClick={() => handleEdit(row)}
-            title="Edit allergen"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EditIcon size={11} color="#4b5563" />
-          </button>
-
-          {/* Delete Button */}
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(row)}
-            title="Delete allergen"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fee2e2',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fecaca')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-          >
-            <TrashIcon size={11} color="#dc2626" />
-          </button>
-        </div>
+        <KebabMenu
+          ariaLabel={`Actions for allergen ${row.name}`}
+          items={[
+            {
+              label: 'Edit Allergen',
+              icon: <Edit3 size={13} />,
+              onClick: () => handleEdit(row),
+            },
+            {
+              label: 'Delete Allergen',
+              icon: <Trash2 size={13} />,
+              variant: 'danger',
+              onClick: () => setDeleteTarget(row),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -205,98 +176,47 @@ export default function ManageAllergens() {
 
   return (
     <div className="admin-page-container">
-      {/* Page Header */}
-      <div className="admin-header-flex">
-        <div>
-          <h1
-            style={{
-              color: 'var(--color-primary, #2e3b12)',
-              fontSize: '1.25rem',
-              margin: '0 0 2px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <ShieldIcon size={20} color="var(--color-primary, #2e3b12)" />
-            Master Allergens Directory
-          </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-            Standard dietary allergens matched automatically against client safety profiles for kitchen warnings ({allergens.length} recorded).
-          </p>
-        </div>
-
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleOpenAdd}
+      {/* Title Row with Action Button at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1
+          className="admin-page-title"
           style={{
-            borderRadius: '4px',
-            boxShadow: 'none',
-            height: '34px',
-            fontSize: '0.76rem',
-            padding: '0 14px',
-            fontWeight: 600,
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
           }}
         >
-          + Add Allergen
-        </Button>
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div className="admin-filter-bar">
-        <div className="admin-filter-search" style={{ position: 'relative', flex: '1 1 260px', maxWidth: '360px' }}>
-          <span
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-            }}
+          <ShieldIcon size={18} color="var(--color-primary, #2e3b12)" />
+          <span>Master Allergens</span>
+        </h1>
+        <div className="admin-title-actions">
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="admin-action-btn"
+            title="Add Allergen"
+            aria-label="Add Allergen"
           >
-            <SearchIcon size={14} color="#716c62" />
-          </span>
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+      <p className="admin-page-subtitle">
+        Standard dietary allergens matched automatically against client safety profiles ({allergens.length} total).
+      </p>
+
+      {/* Search Bar */}
+      <div className="admin-search-filter-bar">
+        <div className="admin-search-box">
+          <SearchIcon size={13} color="#9ca3af" />
           <input
             type="text"
             placeholder="Search allergens by name or slug..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 10px 6px 30px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              fontSize: '0.76rem',
-              boxShadow: 'none',
-              outline: 'none',
-              height: '34px',
-              color: 'var(--color-text, #1e1b16)',
-            }}
           />
         </div>
-
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.72rem',
-              color: 'var(--color-text-muted, #716c62)',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: '4px',
-            }}
-          >
-            Clear Search
-          </button>
-        )}
       </div>
 
       {/* Modern DataTable */}
@@ -327,7 +247,7 @@ export default function ManageAllergens() {
             overflow: 'visible',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -411,7 +331,7 @@ export default function ManageAllergens() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"

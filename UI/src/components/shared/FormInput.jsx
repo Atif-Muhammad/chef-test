@@ -49,9 +49,9 @@ export default function FormInput({
   };
 
   return (
-    <div style={containerStyle} className={className}>
+    <div style={containerStyle} className={`form-input-container ${className}`}>
       {label && (
-        <label htmlFor={id} style={labelStyle}>
+        <label htmlFor={id} className="form-input-label" style={labelStyle}>
           {label} {required && <span style={{ color: 'var(--color-danger)' }}>*</span>}
           {optional && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.68rem', fontWeight: 400, marginLeft: '4px' }}>(opt)</span>}
         </label>
@@ -60,6 +60,7 @@ export default function FormInput({
       {type === 'textarea' ? (
         <textarea
           id={id}
+          className="form-input-control"
           value={value}
           onChange={onChange}
           placeholder={placeholder}
@@ -73,6 +74,7 @@ export default function FormInput({
         <input
           id={id}
           type={type}
+          className="form-input-control"
           value={value}
           onChange={onChange}
           placeholder={placeholder}
@@ -84,9 +86,9 @@ export default function FormInput({
       )}
 
       {error ? (
-        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)' }}>{error}</span>
+        <span className="form-input-error" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)' }}>{error}</span>
       ) : helperText ? (
-        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{helperText}</span>
+        <span className="form-input-helper" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{helperText}</span>
       ) : null}
     </div>
   );

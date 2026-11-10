@@ -33,6 +33,7 @@ export default function DishRecipeStep({
 
       {/* Secret Admin-Only Cooking Instructions */}
       <div
+        className="dish-secret-instructions-card"
         style={{
           padding: '12px 14px',
           backgroundColor: '#fff7ed',
@@ -59,6 +60,7 @@ export default function DishRecipeStep({
           Your confidential culinary secrets: precise sous-vide water bath temperatures, emulsion techniques, reduction timing, and presentation notes.
         </p>
         <textarea
+          className="dish-secret-instructions-textarea"
           rows={4}
           value={formData.cookingInstructions || ''}
           onChange={(e) => onFieldChange('cookingInstructions', e.target.value)}

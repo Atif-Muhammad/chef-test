@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   MailIcon,
   LockIcon,
   EyeIcon,
   EyeOffIcon,
-  GlobeIcon,
   UsersIcon,
 } from '../../components/shared/Icons';
 
@@ -20,7 +19,6 @@ export default function AdminLogin() {
     email: '',
     password: '',
   });
-  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,22 +40,6 @@ export default function AdminLogin() {
       navigate(redirectUrl, { replace: true });
     } catch (err) {
       setError(err.message || 'Invalid administrative credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSharedAuth = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      const defaultEmail = 'admin@privatechefmissy.com';
-      const defaultPass = 'admin123';
-      setFormData({ email: defaultEmail, password: defaultPass });
-      await loginAdmin(defaultEmail, defaultPass);
-      navigate(redirectUrl, { replace: true });
-    } catch {
-      setError('Shared authentication failed. Please enter your credentials manually.');
     } finally {
       setLoading(false);
     }
@@ -194,43 +176,38 @@ export default function AdminLogin() {
 
       {/* Right Side: Admin Login Form (No Floating Card Border) */}
       <div className="auth-right-panel">
-        {/* Top-Right Language Switcher */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '24px',
-            right: '28px',
-            zIndex: 10,
-          }}
-        >
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '5px 12px',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '9999px',
-              border: '1px solid #e7e5e4',
-              fontSize: '0.76rem',
-              color: '#292524',
-              fontWeight: 500,
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              cursor: 'pointer',
-              userSelect: 'none',
-            }}
-            title="Language: English"
-          >
-            <GlobeIcon size={14} color="#445428" />
-            <span>English</span>
-            <span style={{ fontSize: '0.58rem', color: '#78716c', marginLeft: '1px' }}>▼</span>
-          </div>
-        </div>
-
         <div className="auth-form-container">
+          {/* Mobile Brand Crest (Visible only on mobile when left panel is hidden) */}
+          <div className="auth-mobile-brand" style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <img
+              src="/assets/logo-crest.png"
+              alt="Private Chef Missy Logo"
+              style={{
+                width: '64px',
+                height: 'auto',
+                margin: '0 auto 6px',
+                display: 'block',
+                mixBlendMode: 'multiply',
+              }}
+            />
+            <span
+              style={{
+                fontSize: '0.62rem',
+                letterSpacing: '2px',
+                color: '#7a7366',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                display: 'block',
+              }}
+            >
+              Chef Missy &bull; Admin Console
+            </span>
+          </div>
+
           {/* Title & Subtitle */}
-          <div style={{ marginBottom: '22px' }}>
+          <div className="auth-form-header" style={{ marginBottom: '20px' }}>
             <h2
+              className="auth-form-title"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
                 fontSize: '1.85rem',
@@ -242,6 +219,7 @@ export default function AdminLogin() {
               Admin Login
             </h2>
             <p
+              className="auth-form-subtitle"
               style={{
                 fontSize: '0.82rem',
                 color: '#78716c',
@@ -278,6 +256,7 @@ export default function AdminLogin() {
             <div style={{ marginBottom: '11px' }}>
               <label
                 htmlFor="admin-email"
+                className="auth-form-label"
                 style={{
                   display: 'block',
                   fontSize: '0.74rem',
@@ -302,6 +281,7 @@ export default function AdminLogin() {
                 </span>
                 <input
                   id="admin-email"
+                  className="auth-form-input"
                   type="email"
                   required
                   placeholder="admin@example.com"
@@ -311,24 +291,31 @@ export default function AdminLogin() {
                     width: '100%',
                     padding: '8px 12px 8px 34px',
                     borderRadius: '8px',
-                    border: '1px solid #e7e5e4',
+                    border: '1.5px solid #8c8273',
                     fontSize: '0.8rem',
                     color: '#1c1917',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'transparent',
                     outline: 'none',
-                    transition: 'border-color 0.15s ease',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
-                  onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#36441c';
+                    e.target.style.boxShadow = '0 0 0 1px #36441c';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#8c8273';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '18px' }}>
               <label
                 htmlFor="admin-password"
+                className="auth-form-label"
                 style={{
                   display: 'block',
                   fontSize: '0.74rem',
@@ -353,6 +340,7 @@ export default function AdminLogin() {
                 </span>
                 <input
                   id="admin-password"
+                  className="auth-form-input"
                   type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="Enter your password"
@@ -362,16 +350,22 @@ export default function AdminLogin() {
                     width: '100%',
                     padding: '8px 34px 8px 34px',
                     borderRadius: '8px',
-                    border: '1px solid #e7e5e4',
+                    border: '1.5px solid #8c8273',
                     fontSize: '0.8rem',
                     color: '#1c1917',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'transparent',
                     outline: 'none',
-                    transition: 'border-color 0.15s ease',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
-                  onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#36441c';
+                    e.target.style.boxShadow = '0 0 0 1px #36441c';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#8c8273';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
                 <button
                   type="button"
@@ -393,50 +387,10 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password Row */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '16px',
-                fontSize: '0.74rem',
-              }}
-            >
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  color: '#292524',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{ accentColor: '#36441c', cursor: 'pointer' }}
-                />
-                Remember me
-              </label>
-
-              <Link
-                to="/forgot-password"
-                style={{
-                  color: '#36441c',
-                  textDecoration: 'underline',
-                  fontWeight: 500,
-                }}
-              >
-                Forgot password?
-              </Link>
-            </div>
-
             {/* Primary Login Button */}
             <button
               type="submit"
+              className="auth-submit-btn"
               disabled={loading}
               style={{
                 width: '100%',
@@ -463,55 +417,6 @@ export default function AdminLogin() {
               }}
             >
               {loading ? 'Authenticating...' : 'Login →'}
-            </button>
-
-            {/* Divider "or" */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                margin: '14px 0',
-                color: '#a8a29e',
-                fontSize: '0.72rem',
-              }}
-            >
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e5e4' }} />
-              <span style={{ padding: '0 10px' }}>or</span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e5e4' }} />
-            </div>
-
-            {/* Shared Authentication Button */}
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleSharedAuth}
-              style={{
-                width: '100%',
-                padding: '9px',
-                backgroundColor: '#ffffff',
-                color: '#292524',
-                border: '1px solid #78716c',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 500,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#fbf9f5';
-                e.currentTarget.style.borderColor = '#36441c';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ffffff';
-                e.currentTarget.style.borderColor = '#78716c';
-              }}
-            >
-              <UsersIcon size={14} color="#36441c" />
-              <span>Continue with Shared Authentication →</span>
             </button>
           </form>
         </div>

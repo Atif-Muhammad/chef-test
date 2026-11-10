@@ -57,25 +57,9 @@ export default function DishBasicStep({
   const photo3 = photos[2] || null;
 
   return (
-    <div
-      className="dish-step-basic"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.95fr)',
-        gap: '24px',
-        alignItems: 'start',
-      }}
-    >
-      <style>{`
-        @media (max-width: 860px) {
-          .dish-step-basic {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
-
+    <div className="dish-step-basic">
       {/* LEFT COLUMN: Dish Core Details */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div className="dish-basic-left-col" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {/* Dish Name */}
         <FormInput
           label="Dish Name"
@@ -89,9 +73,10 @@ export default function DishBasicStep({
 
         {/* Category & Course Type in 2-column grid */}
         <div
+          className="dish-basic-category-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '12px',
             marginBottom: 'var(--spacing-sm, 10px)',
           }}
@@ -155,6 +140,7 @@ export default function DishBasicStep({
 
       {/* RIGHT COLUMN: Dish Photography Uploader (max 3 images) */}
       <div
+        className="dish-photo-uploader-card"
         style={{
           backgroundColor: 'var(--color-bg, #fbf9f5)',
           borderRadius: '4px',
@@ -211,6 +197,7 @@ export default function DishBasicStep({
 
           {coverPhoto ? (
             <div
+              className="dish-cover-photo-slot"
               style={{
                 position: 'relative',
                 height: '180px',
@@ -277,6 +264,7 @@ export default function DishBasicStep({
             </div>
           ) : (
             <div
+              className="dish-cover-dropzone"
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -314,6 +302,7 @@ export default function DishBasicStep({
           </div>
 
           <div
+            className="dish-secondary-slots"
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -323,6 +312,7 @@ export default function DishBasicStep({
             {/* Slot 2 */}
             {photo2 ? (
               <div
+                className="dish-secondary-photo-slot"
                 style={{
                   position: 'relative',
                   height: '100px',
@@ -430,6 +420,7 @@ export default function DishBasicStep({
             {/* Slot 3 */}
             {photo3 ? (
               <div
+                className="dish-secondary-photo-slot"
                 style={{
                   position: 'relative',
                   height: '100px',

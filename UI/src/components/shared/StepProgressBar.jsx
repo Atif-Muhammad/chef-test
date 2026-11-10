@@ -22,24 +22,14 @@ export default function StepProgressBar({
       className={`step-progress-bar ${className}`}
       style={{
         width: '100%',
-        padding: '12px 14px 16px',
         backgroundColor: '#f6f3eb',
         borderRadius: '4px',
         border: '1px solid var(--color-border, #ece7de)',
-        marginBottom: 'var(--spacing-md, 14px)',
         boxShadow: 'none',
         ...style,
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          width: '100%',
-          position: 'relative',
-        }}
-      >
+      <div className="step-progress-track">
         {steps.map((step, idx) => {
           const stepNum = idx + 1;
           const isCompleted = stepNum < currentStep;
@@ -55,42 +45,27 @@ export default function StepProgressBar({
             <React.Fragment key={idx}>
               {/* Step Circle & Label Node */}
               <div
+                className="step-progress-node"
                 onClick={() => isClickable && onStepClick(stepNum)}
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  flex: '0 0 auto',
                   cursor: isClickable ? 'pointer' : 'default',
-                  userSelect: 'none',
-                  minWidth: '76px',
-                  maxWidth: '120px',
-                  textAlign: 'center',
                   transition: 'transform 0.15s ease',
                 }}
                 title={isClickable ? `Jump to Step ${stepNum}: ${title}` : undefined}
               >
                 {/* Step Circle */}
                 <div
+                  className="step-progress-circle"
                   style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '50%',
                     backgroundColor: isCompleted || isActive ? '#15803d' : '#d1d5db',
                     color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    boxShadow: 'none',
                     transition: 'all 0.2s ease',
                   }}
                 >
                   {isCompleted ? (
                     <svg
-                      width="17"
-                      height="17"
+                      width="16"
+                      height="16"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -107,12 +82,10 @@ export default function StepProgressBar({
 
                 {/* Step Title Label */}
                 <span
+                  className="step-progress-title"
                   style={{
-                    marginTop: '6px',
-                    fontSize: '0.72rem',
                     fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
                     color: isActive ? '#15803d' : isCompleted ? '#2e3b12' : '#888277',
-                    lineHeight: 1.2,
                   }}
                 >
                   {title}
@@ -135,14 +108,9 @@ export default function StepProgressBar({
               {/* Connecting Line Between Steps */}
               {idx < steps.length - 1 && (
                 <div
+                  className="step-progress-line"
                   style={{
-                    flex: 1,
-                    height: '4px',
                     backgroundColor: currentStep > stepNum ? '#15803d' : '#e5e7eb',
-                    marginTop: '15px', // Aligns vertically with the center of the 34px circle
-                    marginLeft: '8px',
-                    marginRight: '8px',
-                    borderRadius: '2px',
                     transition: 'background-color 0.25s ease',
                   }}
                 />

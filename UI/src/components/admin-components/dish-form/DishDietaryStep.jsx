@@ -28,6 +28,7 @@ export default function DishDietaryStep({
     <div className="dish-step-dietary">
       {/* Standard Base Servings Notice */}
       <div
+        className="dish-dietary-banner"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -140,6 +141,7 @@ export default function DishDietaryStep({
 
       {/* Storage Duration & Storage Instructions */}
       <div
+        className="dish-dietary-storage-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',

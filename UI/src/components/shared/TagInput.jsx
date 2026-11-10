@@ -62,10 +62,11 @@ export default function TagInput({
   };
 
   return (
-    <div style={{ marginBottom: 'var(--spacing-sm, 10px)', width: '100%', ...style }} className={className}>
+    <div style={{ marginBottom: 'var(--spacing-sm, 10px)', width: '100%', ...style }} className={`tag-input-container ${className}`}>
       {label && (
         <label
           htmlFor={id}
+          className="tag-input-label"
           style={{
             display: 'block',
             fontSize: 'var(--font-size-sm, 0.75rem)',
@@ -81,6 +82,7 @@ export default function TagInput({
 
       {/* Selected tags container with input */}
       <div
+        className="tag-input-box"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -97,6 +99,7 @@ export default function TagInput({
         {currentTags.map((tag, idx) => (
           <span
             key={idx}
+            className="tag-pill"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -135,6 +138,7 @@ export default function TagInput({
         <input
           id={id}
           type="text"
+          className="tag-input-field"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -157,7 +161,7 @@ export default function TagInput({
 
       {/* Suggested Quick Presets */}
       {presets.length > 0 && (
-        <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '5px', alignItems: 'center' }}>
+        <div className="tag-presets-wrap" style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '5px', alignItems: 'center' }}>
           <span style={{ fontSize: '0.66rem', color: 'var(--color-text-muted, #716c62)', marginRight: '2px', fontWeight: 500 }}>
             Quick suggestions:
           </span>
@@ -167,6 +171,7 @@ export default function TagInput({
               <button
                 key={preset}
                 type="button"
+                className="tag-preset-btn"
                 onClick={() => handleTogglePreset(preset)}
                 style={{
                   display: 'inline-flex',

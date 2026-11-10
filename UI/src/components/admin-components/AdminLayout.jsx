@@ -344,7 +344,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area - Full height with mobile header bar */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', zIndex: 1 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}>
         {/* Mobile Sticky Header Bar with Burger Menu Button (visible on mobile only) */}
         <header
           className="admin-mobile-header"
@@ -354,7 +354,7 @@ export default function AdminLayout() {
             borderBottom: '1px solid var(--color-border)',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 14px',
+            padding: isMobile ? '0 8px' : '0 14px',
             position: 'sticky',
             top: 0,
             zIndex: 40,
@@ -441,7 +441,7 @@ export default function AdminLayout() {
         </header>
 
         {/* View Outlet - Responsive padding for mobile and desktop */}
-        <main style={{ padding: isMobile ? '12px 12px 28px' : '16px 20px', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <main style={{ padding: isMobile ? '6px 4px 14px' : '16px 20px', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           <Outlet />
         </main>
       </div>

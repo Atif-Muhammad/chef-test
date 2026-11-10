@@ -53,6 +53,7 @@ export default function IngredientsEditor({
       }}
     >
       <div
+        className="ingredients-editor-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -62,10 +63,11 @@ export default function IngredientsEditor({
         }}
       >
         <div>
-          <label style={{ fontWeight: 700, fontSize: '0.8rem', color: error ? 'var(--color-danger)' : 'var(--color-text, #1e1b16)' }}>
+          <label className="ingredients-editor-title" style={{ fontWeight: 700, fontSize: '0.8rem', color: error ? 'var(--color-danger)' : 'var(--color-text, #1e1b16)' }}>
             Recipe Ingredients <span style={{ color: 'var(--color-danger)' }}>*</span> (Standard 2 Servings Base)
           </label>
           <span
+            className="ingredients-editor-help"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -88,6 +90,7 @@ export default function IngredientsEditor({
           type="button"
           size="sm"
           variant="outline"
+          className="ingredients-add-btn"
           disabled={disabled}
           onClick={onAddRow}
           style={{
@@ -113,113 +116,119 @@ export default function IngredientsEditor({
 
       {/* Table Headers & Rows in responsive scroll wrapper */}
       <div className="admin-table-scroll">
-        <div style={{ minWidth: '340px' }}>
+        <div className="ingredients-table-track" style={{ minWidth: '320px' }}>
           {/* Table Headers */}
           <div
+            className="ingredients-table-header"
             style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 85px 75px 30px',
-          gap: '6px',
-          padding: '5px 8px',
-          backgroundColor: '#f6f3eb',
-          borderRadius: '3px',
-          border: '1px solid #ede8df',
-          marginBottom: '6px',
-        }}
-      >
-        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#4a453e' }}>
-          Ingredient Name
-        </span>
-        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#4a453e', textAlign: 'right' }}>
-          Qty / 2
-        </span>
-        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#4a453e' }}>
-          Unit
-        </span>
-        <span />
-      </div>
+              display: 'grid',
+              gridTemplateColumns: '1fr 85px 75px 30px',
+              gap: '6px',
+              padding: '5px 8px',
+              backgroundColor: '#f6f3eb',
+              borderRadius: '3px',
+              border: '1px solid #ede8df',
+              marginBottom: '6px',
+            }}
+          >
+            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#4a453e' }}>
+              Ingredient Name
+            </span>
+            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#4a453e', textAlign: 'right' }}>
+              Qty / 2
+            </span>
+            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#4a453e' }}>
+              Unit
+            </span>
+            <span />
+          </div>
 
-      {/* Ingredient Rows */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-        {ingredients.map((ing, idx) => {
-          const isRowMissingName = Boolean(error && !ing.name?.trim());
-          return (
-            <div
-              key={idx}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 85px 75px 30px',
-                gap: '6px',
-                alignItems: 'center',
-              }}
-            >
-              <input
-                type="text"
-                list="master-ingredients-datalist"
-                placeholder="e.g. Ribeye Steak, Salmon Fillet, Fresh Thyme"
-                value={ing.name}
-                disabled={disabled}
-                onChange={(e) => handleFieldChange(idx, 'name', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '5px 8px',
-                  borderRadius: '4px',
-                  border: isRowMissingName
-                    ? '1px solid var(--color-danger, #c53030)'
-                    : '1px solid var(--color-border, #ece7de)',
-                  backgroundColor: isRowMissingName ? '#fef2f2' : 'var(--color-bg, #fbf9f5)',
-                  fontSize: '0.76rem',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  height: '32px',
-                }}
-              />
+          {/* Ingredient Rows */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {ingredients.map((ing, idx) => {
+              const isRowMissingName = Boolean(error && !ing.name?.trim());
+              return (
+                <div
+                  key={idx}
+                  className="ingredients-table-row"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 85px 75px 30px',
+                    gap: '6px',
+                    alignItems: 'center',
+                  }}
+                >
+                  <input
+                    type="text"
+                    list="master-ingredients-datalist"
+                    className="ingredients-input-name"
+                    placeholder="e.g. Ribeye Steak, Salmon Fillet, Fresh Thyme"
+                    value={ing.name}
+                    disabled={disabled}
+                    onChange={(e) => handleFieldChange(idx, 'name', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: isRowMissingName
+                        ? '1px solid var(--color-danger, #c53030)'
+                        : '1px solid var(--color-border, #ece7de)',
+                      backgroundColor: isRowMissingName ? '#fef2f2' : 'var(--color-bg, #fbf9f5)',
+                      fontSize: '0.76rem',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      height: '32px',
+                    }}
+                  />
 
-              <input
-                type="number"
-                placeholder="Qty"
-                step="any"
-                min="0"
-                value={ing.qtyPer2 === 0 ? '' : ing.qtyPer2}
-                disabled={disabled}
-                onChange={(e) => handleFieldChange(idx, 'qtyPer2', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '5px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-border, #ece7de)',
-                  fontSize: '0.76rem',
-                  backgroundColor: 'var(--color-bg, #fbf9f5)',
-                  textAlign: 'right',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  height: '32px',
-                }}
-              />
+                  <input
+                    type="number"
+                    className="ingredients-input-qty"
+                    placeholder="Qty"
+                    step="any"
+                    min="0"
+                    value={ing.qtyPer2 === 0 ? '' : ing.qtyPer2}
+                    disabled={disabled}
+                    onChange={(e) => handleFieldChange(idx, 'qtyPer2', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid var(--color-border, #ece7de)',
+                      fontSize: '0.76rem',
+                      backgroundColor: 'var(--color-bg, #fbf9f5)',
+                      textAlign: 'right',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      height: '32px',
+                    }}
+                  />
 
-              <input
-                type="text"
-                placeholder="Unit"
-                value={ing.unit}
-                disabled={disabled}
-                onChange={(e) => handleFieldChange(idx, 'unit', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '5px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-border, #ece7de)',
-                  fontSize: '0.76rem',
-                  backgroundColor: 'var(--color-bg, #fbf9f5)',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  height: '32px',
-                }}
-              />
+                  <input
+                    type="text"
+                    className="ingredients-input-unit"
+                    placeholder="Unit"
+                    value={ing.unit}
+                    disabled={disabled}
+                    onChange={(e) => handleFieldChange(idx, 'unit', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '5px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid var(--color-border, #ece7de)',
+                      fontSize: '0.76rem',
+                      backgroundColor: 'var(--color-bg, #fbf9f5)',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      height: '32px',
+                    }}
+                  />
 
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <button
-                  type="button"
-                  disabled={disabled || ingredients.length <= 1}
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      className="ingredients-remove-btn"
+                      disabled={disabled || ingredients.length <= 1}
                   onClick={() => onRemoveRow && onRemoveRow(idx)}
                   style={{
                     width: '24px',

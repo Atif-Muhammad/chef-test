@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../config/shared/api';
 import { useAuth } from '../../context/AuthContext';
@@ -67,15 +68,17 @@ export default function Favourites() {
   if (loading) return <Loader message="Loading favourite dishes..." />;
 
   return (
-    <div style={{ width: '100%', paddingBottom: '30px' }}>
+    <div className="user-page-container">
       {/* Title Bar */}
-      <div style={{ marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '1.35rem', color: '#1a1814', margin: '0 0 2px', letterSpacing: '-0.3px', fontWeight: 700 }}>
-          My Favourites
-        </h1>
-        <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: 0 }}>
-          Your personally saved dishes, ready to add to upcoming chef boxes.
-        </p>
+      <div className="user-title-row">
+        <div>
+          <h1 className="user-page-title">
+            My Favourites
+          </h1>
+          <p className="user-page-subtitle">
+            Your personally saved dishes, ready to add to upcoming chef boxes.
+          </p>
+        </div>
       </div>
 
       {favourites.length === 0 ? (
@@ -150,7 +153,7 @@ export default function Favourites() {
           )}
 
           {/* Dish Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+          <div className="user-dish-grid">
             {filtered.map((dish) => {
               const inCart = cart.dishes.some((d) => d._id === dish._id);
               return (
@@ -287,101 +290,104 @@ export default function Favourites() {
       )}
 
       {/* Remove Confirmation Dialog Modal */}
-      {dishToRemove && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '16px',
-          }}
-          onClick={() => setDishToRemove(null)}
-        >
+      {dishToRemove &&
+        typeof document !== 'undefined' &&
+        createPortal(
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              maxWidth: '400px',
-              width: '100%',
-              padding: '20px 22px',
-              boxShadow: 'none',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '16px',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setDishToRemove(null)}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#fef2f2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <HeartIcon filled={true} size={16} color="#dc2626" />
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '4px',
+                border: '1px solid var(--color-border, #ece7de)',
+                maxWidth: '400px',
+                width: '100%',
+                padding: '20px 22px',
+                boxShadow: 'none',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: '#fef2f2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <HeartIcon filled={true} size={16} color="#dc2626" />
+                </div>
+                <h3 style={{ margin: 0, fontSize: '0.98rem', color: '#1a1814', fontWeight: 700 }}>
+                  Remove from Favourites?
+                </h3>
               </div>
-              <h3 style={{ margin: 0, fontSize: '0.98rem', color: '#1a1814', fontWeight: 700 }}>
-                Remove from Favourites?
-              </h3>
-            </div>
 
-            <p style={{ fontSize: '0.76rem', color: '#57534e', margin: '0 0 18px', lineHeight: 1.45 }}>
-              Are you sure you want to remove <strong>{dishToRemove.name}</strong> from your saved favourites?
-            </p>
+              <p style={{ fontSize: '0.76rem', color: '#57534e', margin: '0 0 18px', lineHeight: 1.45 }}>
+                Are you sure you want to remove <strong>{dishToRemove.name}</strong> from your saved favourites?
+              </p>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => setDishToRemove(null)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '4px',
-                  border: '1px solid #dcd5ca',
-                  backgroundColor: '#ffffff',
-                  fontSize: '0.74rem',
-                  fontWeight: 600,
-                  color: '#4a463e',
-                  cursor: 'pointer',
-                  boxShadow: 'none',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  removeFav(dishToRemove._id);
-                  setDishToRemove(null);
-                }}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '4px',
-                  border: 'none',
-                  backgroundColor: '#dc2626',
-                  fontSize: '0.74rem',
-                  fontWeight: 600,
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  boxShadow: 'none',
-                }}
-              >
-                Remove
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setDishToRemove(null)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '4px',
+                    border: '1px solid #dcd5ca',
+                    backgroundColor: '#ffffff',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    color: '#4a463e',
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeFav(dishToRemove._id);
+                    setDishToRemove(null);
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    backgroundColor: '#dc2626',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

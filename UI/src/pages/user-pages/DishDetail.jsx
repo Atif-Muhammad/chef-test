@@ -11,12 +11,12 @@ import {
   HeartIcon,
 } from '../../components/shared/Icons';
 
-// Helper to render tags with +N overflow badge when tags > 4 for a category
-function renderTagsWithOverflow(tags, type = 'dietary') {
+// Helper to render tags with +N overflow badge when tags > maxVisible for a category
+function renderTagsWithOverflow(tags, type = 'dietary', maxVisible = 4) {
   if (!tags || tags.length === 0) return null;
   const isDietary = type === 'dietary';
-  const visible = tags.slice(0, 4);
-  const extraCount = tags.length - 4;
+  const visible = tags.slice(0, maxVisible);
+  const extraCount = tags.length - maxVisible;
 
   const badgeStyle = isDietary
     ? { backgroundColor: '#ecfdf5', color: '#065f46', border: '1px solid #d1fae5' }
@@ -46,7 +46,7 @@ function renderTagsWithOverflow(tags, type = 'dietary') {
       ))}
       {extraCount > 0 && (
         <span
-          title={tags.slice(4).join(', ')}
+          title={tags.slice(maxVisible).join(', ')}
           style={{
             fontSize: '0.68rem',
             padding: '2px 7px',
@@ -298,10 +298,10 @@ export default function DishDetail() {
   const hasLeftDetails = hasNotes || hasStorage;
 
   return (
-    <div style={{ maxWidth: '1080px', margin: '0 auto', paddingBottom: '30px' }}>
+    <div className="user-page-container">
       {/* Breadcrumb Navigation Bar (Flat, No Shadows) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', color: '#655e53' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', color: '#655e53', flexWrap: 'wrap' }}>
           <Link to="/catalogue" style={{ color: 'inherit', textDecoration: 'none' }}>
             Browse Menu
           </Link>
@@ -325,17 +325,10 @@ export default function DishDetail() {
       </div>
 
       {/* TOP SECTION: Hero Showcase (Photo on Left, Details & CTAs on Right - Equal Height Baseline) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: '24px',
-          marginBottom: '20px',
-          alignItems: 'stretch',
-        }}
-      >
+      <div className="dish-detail-hero-grid">
         {/* Left Column: Main Hero Dish Photo */}
         <div
+          className="dish-detail-hero-photo"
           style={{
             minHeight: '360px',
             height: '100%',
@@ -688,9 +681,10 @@ export default function DishDetail() {
       {/* MIDDLE SECTION: Aligned Details & Ingredients Cards Grid */}
       {(hasLeftDetails || hasIngredients) && (
         <div
+          className={hasLeftDetails && hasIngredients ? 'dish-detail-middle-grid' : ''}
           style={{
             display: 'grid',
-            gridTemplateColumns: hasLeftDetails && hasIngredients ? 'repeat(auto-fit, minmax(360px, 1fr))' : '1fr',
+            gridTemplateColumns: hasLeftDetails && hasIngredients ? undefined : '1fr',
             gap: '24px',
             marginBottom: '20px',
             alignItems: 'stretch',
@@ -890,15 +884,7 @@ export default function DishDetail() {
 
       {/* BOTTOM SECTION: Similar Seasonal Selections Row (Flush Full Width, Perfect Uniform Top Spacing) */}
       {similarDishes.length > 0 && (
-        <div
-          style={{
-            padding: '20px 22px',
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border, #ece7de)',
-            boxShadow: 'none',
-          }}
-        >
+        <div className="dish-similar-section">
           <div style={{ marginBottom: '14px' }}>
             <h3
               style={{
@@ -916,30 +902,12 @@ export default function DishDetail() {
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '16px',
-            }}
-          >
+          <div className="dish-similar-grid">
             {similarDishes.map((s) => {
               const inSimilarCart = cart?.dishes?.some((d) => d._id === s.id);
               return (
-                <div
-                  key={s.id}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '8px',
-                    border: '1px solid #ece7de',
-                    overflow: 'hidden',
-                    boxShadow: 'none',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    height: '130px',
-                  }}
-                >
-                  <div style={{ width: '130px', backgroundColor: '#f2ece2', flexShrink: 0 }}>
+                <div key={s.id} className="dish-similar-card">
+                  <div className="dish-similar-thumb">
                     <img
                       src={s.img}
                       alt={s.name}
@@ -950,19 +918,11 @@ export default function DishDetail() {
                     />
                   </div>
 
-                  <div
-                    style={{
-                      padding: '10px 14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      flex: 1,
-                      minWidth: 0,
-                    }}
-                  >
+                  <div className="dish-similar-content">
                     <div>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginBottom: '4px' }}>
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
                         <span
+                          className="dish-similar-cat-badge"
                           style={{
                             fontSize: '0.64rem',
                             color: '#594f42',
@@ -970,6 +930,10 @@ export default function DishDetail() {
                             padding: '1px 6px',
                             borderRadius: '3px',
                             fontWeight: 600,
+                            maxWidth: '120px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {s.categoryName}
@@ -991,41 +955,35 @@ export default function DishDetail() {
 
                       <Link
                         to={`/dishes/${s.id}`}
-                        style={{
-                          textDecoration: 'none',
-                          color: '#1a1814',
-                          fontWeight: 700,
-                          fontSize: '0.86rem',
-                          fontFamily: 'var(--font-heading)',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 1,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          marginBottom: '4px',
-                        }}
+                        className="dish-similar-title"
                       >
                         {s.name}
                       </Link>
 
-                      {renderTagsWithOverflow(s.dietaryTags, 'dietary')}
+                      <div className="dish-similar-tags">
+                        {renderTagsWithOverflow(s.dietaryTags, 'dietary', 2)}
+                      </div>
                     </div>
 
                     <div
+                      className="dish-similar-footer-row"
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         marginTop: '6px',
+                        gap: '6px',
                       }}
                     >
                       <Link
                         to={`/dishes/${s.id}`}
+                        className="dish-similar-view-link"
                         style={{
                           fontSize: '0.72rem',
                           color: '#2e3b12',
                           fontWeight: 600,
                           textDecoration: 'none',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         View &rarr;
@@ -1034,8 +992,9 @@ export default function DishDetail() {
                       <button
                         type="button"
                         onClick={() => addToCart(s.dishObj || { _id: s.id, name: s.name })}
+                        className="dish-similar-select-btn"
                         style={{
-                          padding: '3px 10px',
+                          padding: '4px 10px',
                           borderRadius: '4px',
                           backgroundColor: inSimilarCart ? '#eef3e9' : '#2e3b12',
                           color: inSimilarCart ? '#2e3b12' : '#ffffff',
@@ -1044,6 +1003,8 @@ export default function DishDetail() {
                           fontWeight: 600,
                           cursor: 'pointer',
                           boxShadow: 'none',
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {inSimilarCart ? '✓ Selected' : '+ Select'}

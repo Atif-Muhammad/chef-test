@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import api from '../../config/shared/api';
 import Card from '../../components/shared/Card';
 import Button from '../../components/shared/Button';
@@ -367,34 +368,29 @@ export default function DishForm() {
 
   return (
     <div className="admin-page-container">
-      {/* Back to Catalogue Link */}
-      <Link
-        to="/admin/dishes"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          marginBottom: 'var(--spacing-xs, 4px)',
-          color: 'var(--color-primary, #2e3b12)',
-          fontSize: '0.78rem',
-          textDecoration: 'none',
-          fontWeight: 600,
-        }}
-      >
-        &larr; Back to Dish Catalogue
-      </Link>
-
-      <Card style={{ backgroundColor: 'var(--color-bg, #fbf9f5)', borderRadius: '4px', border: '1px solid var(--color-border, #ece7de)', boxShadow: 'none', padding: '24px' }}>
-        {/* Header */}
-        <div style={{ marginBottom: 'var(--spacing-md, 12px)' }}>
-          <h1 style={{ color: 'var(--color-primary, #2e3b12)', fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>
-            {isEdit ? 'Edit Dish Recipe' : 'Create New Dish'}
-          </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: '2px 0 0' }}>
+      {/* Module Title Row with Icon Action Button */}
+      <div className="admin-title-row" style={{ marginBottom: '14px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link
+              to="/admin/dishes"
+              className="admin-action-btn-outline"
+              title="Back to Dish Catalogue"
+              style={{ width: '32px', height: '32px' }}
+            >
+              <ArrowLeft size={16} />
+            </Link>
+            <h1 className="admin-page-title" style={{ margin: 0 }}>
+              {isEdit ? 'Edit Dish Recipe' : 'Create New Dish'}
+            </h1>
+          </div>
+          <p className="admin-page-subtitle">
             Standardized 2-serving base recipes, allergen controls, and confidential preparation methods.
           </p>
         </div>
+      </div>
 
+      <Card className="dish-form-card" style={{ backgroundColor: 'var(--color-bg, #fbf9f5)', borderRadius: '4px', border: '1px solid var(--color-border, #ece7de)', boxShadow: 'none' }}>
         {/* Multi-Step Nav Pan (Matching visual reference) */}
         <StepProgressBar
           steps={steps}
@@ -474,71 +470,71 @@ export default function DishForm() {
           )}
 
           {/* Stepper Navigation Footer */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              marginTop: 'var(--spacing-lg, 16px)',
-              paddingTop: '12px',
-              borderTop: '1px solid var(--color-border, #ece7de)',
-              gap: '10px',
-            }}
-          >
-            {/* Previous Step Button */}
-            {currentStep > 1 ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="md"
-                onClick={handlePrevStep}
-                disabled={submitting}
-                style={{ fontSize: '0.78rem', borderRadius: '4px', boxShadow: 'none' }}
-              >
-                &larr; Previous Step
-              </Button>
-            ) : (
-              <Link
-                to="/admin/dishes"
-                style={{
-                  fontSize: '0.76rem',
-                  color: 'var(--color-text-muted, #716c62)',
-                  textDecoration: 'none',
-                }}
-              >
-                Cancel
-              </Link>
-            )}
-
+          <div className="dish-form-footer">
             {/* Step Counter Indicator */}
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #716c62)', fontWeight: 600 }}>
+            <span className="dish-form-footer-counter" style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #716c62)', fontWeight: 600 }}>
               Step {currentStep} of {steps.length} &bull; {steps[currentStep - 1].title}
             </span>
 
-            {/* Next or Save Button */}
-            {currentStep < steps.length ? (
-              <Button
-                type="button"
-                variant="primary"
-                size="md"
-                onClick={handleNextStep}
-                style={{ fontSize: '0.78rem', borderRadius: '4px', boxShadow: 'none' }}
-              >
-                Next Step: {steps[currentStep].title} &rarr;
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="primary"
-                size="md"
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={{ fontSize: '0.8rem', minWidth: '130px', borderRadius: '4px', boxShadow: 'none' }}
-              >
-                {submitting ? 'Saving Dish...' : isEdit ? '✓ Save Changes' : '✓ Create Dish'}
-              </Button>
-            )}
+            <div className="dish-form-footer-actions">
+              {/* Previous Step Button */}
+              {currentStep > 1 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  onClick={handlePrevStep}
+                  disabled={submitting}
+                  style={{ fontSize: '0.76rem', borderRadius: '4px', boxShadow: 'none' }}
+                >
+                  &larr; Previous Step
+                </Button>
+              ) : (
+                <Link
+                  to="/admin/dishes"
+                  className="dish-form-cancel-link"
+                  style={{
+                    fontSize: '0.76rem',
+                    color: 'var(--color-text-muted, #716c62)',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '34px',
+                    padding: '0 12px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--color-border, #ece7de)',
+                    backgroundColor: 'var(--color-bg, #fbf9f5)',
+                  }}
+                >
+                  Cancel
+                </Link>
+              )}
+
+              {/* Next or Save Button */}
+              {currentStep < steps.length ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={handleNextStep}
+                  style={{ fontSize: '0.76rem', borderRadius: '4px', boxShadow: 'none' }}
+                >
+                  Next Step: {steps[currentStep].title} &rarr;
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  style={{ fontSize: '0.78rem', minWidth: '130px', borderRadius: '4px', boxShadow: 'none' }}
+                >
+                  {submitting ? 'Saving Dish...' : isEdit ? '✓ Save Changes' : '✓ Create Dish'}
+                </Button>
+              )}
+            </div>
           </div>
         </form>
       </Card>

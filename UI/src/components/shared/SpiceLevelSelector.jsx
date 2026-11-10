@@ -55,9 +55,10 @@ export default function SpiceLevelSelector({
   ];
 
   return (
-    <div style={{ marginBottom: 'var(--spacing-sm, 10px)', width: '100%', ...style }} className={className}>
+    <div style={{ marginBottom: 'var(--spacing-sm, 10px)', width: '100%', ...style }} className={`spice-level-container ${className}`}>
       {label && (
         <label
+          className="spice-level-label"
           style={{
             display: 'block',
             fontSize: 'var(--font-size-sm, 0.75rem)',
@@ -72,6 +73,7 @@ export default function SpiceLevelSelector({
       )}
 
       <div
+        className="spice-level-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
@@ -84,6 +86,7 @@ export default function SpiceLevelSelector({
             <button
               key={opt.id}
               type="button"
+              className="spice-level-btn"
               disabled={disabled}
               onClick={() => onChange && onChange(opt.id)}
               style={{
@@ -105,10 +108,11 @@ export default function SpiceLevelSelector({
                 opacity: disabled ? 0.6 : 1,
               }}
             >
-              <span style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '3px' }}>
+              <span className="spice-level-icon" style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '3px' }}>
                 {opt.icon}
               </span>
               <span
+                className="spice-level-title"
                 style={{
                   fontSize: '0.78rem',
                   fontWeight: isSelected ? 700 : 600,
@@ -118,6 +122,7 @@ export default function SpiceLevelSelector({
                 {opt.label}
               </span>
               <span
+                className="spice-level-hint"
                 style={{
                   fontSize: '0.64rem',
                   color: isSelected ? 'var(--color-primary, #2e3b12)' : 'var(--color-text-muted, #716c62)',

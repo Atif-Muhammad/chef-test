@@ -5,6 +5,9 @@ export default function DishFilterDrawer({
   isOpen,
   onClose,
   dishes = [],
+  categories = [],
+  activeCategory = 'all',
+  onSelectCategory,
   selectedDietary = [],
   onToggleDietary,
   selectedCuisines = [],
@@ -84,6 +87,7 @@ export default function DishFilterDrawer({
 
   // Active filter count
   let activeFilterCount = 0;
+  if (activeCategory && activeCategory !== 'all') activeFilterCount += 1;
   activeFilterCount += selectedDietary.length;
   activeFilterCount += selectedCuisines.length;
   if (selectedSpice !== 'all') activeFilterCount += 1;
@@ -217,7 +221,125 @@ export default function DishFilterDrawer({
             scrollbarColor: '#d6ccbe transparent',
           }}
         >
-          {/* 1. Dietary Requirements */}
+          {/* 1. Category Selection Tabs */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h3
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#1a1814',
+                  margin: 0,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Category
+              </h3>
+              {activeCategory !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => onSelectCategory?.('all')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '0.70rem',
+                    color: 'var(--color-primary, #2e3b12)',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0,
+                    fontWeight: 600,
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '6px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => onSelectCategory?.('all')}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '4px',
+                  border: `1px solid ${activeCategory === 'all' ? '#2e3b12' : '#ece7de'}`,
+                  backgroundColor: activeCategory === 'all' ? '#2e3b12' : '#fbf9f5',
+                  color: activeCategory === 'all' ? '#ffffff' : '#594f42',
+                  fontSize: '0.74rem',
+                  fontWeight: activeCategory === 'all' ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.12s ease',
+                }}
+              >
+                All Dishes ({dishes.length})
+              </button>
+
+              {categories.map((cat) => {
+                const isActive = activeCategory === cat.slug;
+                const count = dishes.filter((d) => {
+                  const dCatSlug = d.categoryId?.slug || (typeof d.category === 'string' ? d.category : '');
+                  return dCatSlug.toLowerCase() === cat.slug.toLowerCase();
+                }).length;
+
+                return (
+                  <button
+                    key={cat._id || cat.slug}
+                    type="button"
+                    onClick={() => onSelectCategory?.(cat.slug)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '4px',
+                      border: `1px solid ${isActive ? '#2e3b12' : '#ece7de'}`,
+                      backgroundColor: isActive ? '#2e3b12' : '#fbf9f5',
+                      color: isActive ? '#ffffff' : '#594f42',
+                      fontSize: '0.74rem',
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.12s ease',
+                    }}
+                  >
+                    {cat.name} {count > 0 && `(${count})`}
+                  </button>
+                );
+              })}
+
+              {['main', 'dessert', 'kids'].map((typeKey) => {
+                const isActive = activeCategory === typeKey;
+                const label = typeKey === 'main' ? 'Main Courses' : typeKey === 'dessert' ? 'Desserts' : "Kids' Meals";
+                const count = dishes.filter((d) => (d.type || '').toLowerCase() === typeKey.toLowerCase()).length;
+
+                return (
+                  <button
+                    key={typeKey}
+                    type="button"
+                    onClick={() => onSelectCategory?.(typeKey)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '4px',
+                      border: `1px solid ${isActive ? '#2e3b12' : '#ece7de'}`,
+                      backgroundColor: isActive ? '#2e3b12' : '#fbf9f5',
+                      color: isActive ? '#ffffff' : '#594f42',
+                      fontSize: '0.74rem',
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.12s ease',
+                    }}
+                  >
+                    {label} {count > 0 && `(${count})`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Dietary Requirements */}
           <div>
             <h3
               style={{

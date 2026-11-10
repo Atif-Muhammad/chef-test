@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, SlidersHorizontal, Edit3, Trash2 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Button from '../../components/shared/Button';
 import FormInput from '../../components/shared/FormInput';
@@ -7,6 +8,9 @@ import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { ManageIngredientsSkeleton } from '../../components/skeletons';
 import DataTable, { CategoryBadge } from '../../components/shared/DataTable';
+import FilterDrawer from '../../components/shared/FilterDrawer';
+import KebabMenu from '../../components/shared/KebabMenu';
+import { truncateWords } from '../../utils/formatters';
 import { EditIcon, TrashIcon, WarningIcon, UtensilsIcon, SearchIcon } from '../../components/shared/Icons';
 
 const CATEGORIES = [
@@ -29,6 +33,7 @@ export default function ManageIngredients() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Form Dialog state (Add / Edit)
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -138,20 +143,30 @@ export default function ManageIngredients() {
     return matchesSearch && matchesCategory;
   });
 
+  const activeFilterCount = selectedCategory !== 'All' ? 1 : 0;
+
+  const resetFilters = () => {
+    setSelectedCategory('All');
+    setSearch('');
+  };
+
   const columns = [
     {
-      header: 'Ingredient Name',
+      header: 'Ingredient & Unit',
       key: 'name',
       render: (row) => (
-        <div>
-          <strong style={{ fontSize: '0.78rem', color: 'var(--color-text, #1e1b16)', display: 'block' }}>
-            {row.name}
-          </strong>
-          <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #716c62)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <strong style={{ fontSize: '0.80rem', color: 'var(--color-text, #1e1b16)' }}>
+              {row.name}
+            </strong>
+            <CategoryBadge category={row.category} />
+          </div>
+          <span style={{ fontSize: '0.66rem', color: 'var(--color-text-muted, #716c62)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
             Default unit:
             <code
               style={{
-                fontSize: '0.66rem',
+                fontSize: '0.64rem',
                 backgroundColor: '#f6f3eb',
                 border: '1px solid #ede8df',
                 padding: '1px 5px',
@@ -167,95 +182,47 @@ export default function ManageIngredients() {
       ),
     },
     {
-      header: 'Category',
-      key: 'category',
-      width: '160px',
-      render: (row) => <CategoryBadge category={row.category} />,
-    },
-    {
-      header: 'Aliases & Synonyms (PRD § 19)',
+      header: 'Aliases & Synonyms',
       key: 'aliases',
-      render: (row) => (
-        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {row.aliases && row.aliases.length > 0 ? (
-            row.aliases.map((a, idx) => (
-              <span
-                key={idx}
-                style={{
-                  display: 'inline-block',
-                  padding: '1.5px 6px',
-                  borderRadius: '3px',
-                  backgroundColor: '#f6f3eb',
-                  border: '1px solid #ede8df',
-                  color: '#57534e',
-                  fontSize: '0.68rem',
-                  lineHeight: 1.3,
-                }}
-              >
-                {a}
-              </span>
-            ))
-          ) : (
-            <span style={{ color: 'var(--color-text-muted, #a8a29e)', fontSize: '0.70rem', fontStyle: 'italic' }}>
-              None
-            </span>
-          )}
-        </div>
-      ),
+      render: (row) => {
+        const aliasStr = row.aliases && row.aliases.length > 0 ? row.aliases.join(', ') : 'None';
+        return (
+          <span
+            style={{
+              display: 'block',
+              fontSize: '0.68rem',
+              color: row.aliases && row.aliases.length > 0 ? '#4a453e' : '#a8a29e',
+              lineHeight: 1.25,
+            }}
+            title={aliasStr}
+          >
+            {truncateWords(aliasStr, 4)}
+          </span>
+        );
+      },
     },
     {
-      header: 'Actions',
+      header: '',
       key: 'actions',
-      width: '80px',
+      width: '38px',
       align: 'right',
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-          {/* Edit Button */}
-          <button
-            type="button"
-            onClick={() => handleEdit(row)}
-            title="Edit ingredient"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EditIcon size={11} color="#4b5563" />
-          </button>
-
-          {/* Delete Button */}
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(row)}
-            title="Delete ingredient"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fee2e2',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fecaca')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-          >
-            <TrashIcon size={11} color="#dc2626" />
-          </button>
-        </div>
+        <KebabMenu
+          ariaLabel={`Actions for ingredient ${row.name}`}
+          items={[
+            {
+              label: 'Edit Ingredient',
+              icon: <Edit3 size={13} />,
+              onClick: () => handleEdit(row),
+            },
+            {
+              label: 'Delete Ingredient',
+              icon: <Trash2 size={13} />,
+              variant: 'danger',
+              onClick: () => setDeleteTarget(row),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -265,110 +232,100 @@ export default function ManageIngredients() {
   return (
     <div className="admin-page-container">
       {/* Page Header */}
-      <div className="admin-header-flex">
-        <div>
-          <h1
-            style={{
-              color: 'var(--color-primary, #2e3b12)',
-              fontSize: '1.25rem',
-              margin: '0 0 2px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <UtensilsIcon size={20} color="var(--color-primary, #2e3b12)" />
-            Master Ingredients Directory
-          </h1>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-            Central ingredient identities, unit scales, and alias synonyms for automated shopping-list combining ({ingredients.length} items).
-          </p>
-        </div>
-
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleOpenAdd}
+      {/* Title Row with Action Button at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1
+          className="admin-page-title"
           style={{
-            borderRadius: '4px',
-            boxShadow: 'none',
-            height: '34px',
-            fontSize: '0.76rem',
-            padding: '0 14px',
-            fontWeight: 600,
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
           }}
         >
-          + Add Ingredient
-        </Button>
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div className="admin-filter-bar">
-        <div className="admin-filter-search" style={{ position: 'relative', flex: '1 1 280px', maxWidth: '380px' }}>
-          <span
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-            }}
+          <UtensilsIcon size={18} color="var(--color-primary, #2e3b12)" />
+          <span>Master Ingredients</span>
+        </h1>
+        <div className="admin-title-actions">
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="admin-action-btn"
+            title="Add Ingredient"
+            aria-label="Add Ingredient"
           >
-            <SearchIcon size={14} color="#716c62" />
-          </span>
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+      <p className="admin-page-subtitle">
+        Central ingredient identities, unit scales, and alias synonyms ({ingredients.length} items).
+      </p>
+
+      {/* Search & Filter Bar */}
+      <div className="admin-search-filter-bar">
+        <div className="admin-search-box">
+          <SearchIcon size={13} color="#9ca3af" />
           <input
             type="text"
             placeholder="Search ingredients by name, category, or alias..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 10px 6px 30px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              fontSize: '0.76rem',
-              boxShadow: 'none',
-              outline: 'none',
-              height: '34px',
-              color: 'var(--color-text, #1e1b16)',
-            }}
           />
         </div>
 
-        {/* Category Filter Pills / Dropdown */}
-        <div style={{ width: '180px' }}>
-          <CustomSelect
-            value={selectedCategory}
-            onChange={(val) => setSelectedCategory(val)}
-            options={[
-              { value: 'All', label: 'All Categories' },
-              ...CATEGORIES.map((c) => ({ value: c, label: c })),
-            ]}
-          />
-        </div>
-
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.72rem',
-              color: 'var(--color-text-muted, #716c62)',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: '4px',
-            }}
-          >
-            Clear Search
-          </button>
-        )}
+        <button
+          type="button"
+          className={`admin-filter-toggle-btn ${activeFilterCount > 0 ? 'has-filters' : ''}`}
+          onClick={() => setFilterDrawerOpen(true)}
+          title="Open filters sidebar"
+        >
+          <SlidersHorizontal size={13} />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#15803d',
+                color: '#ffffff',
+                borderRadius: '10px',
+                padding: '1px 5px',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Filter Slide-out Sidebar Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        title="Filter Ingredients"
+        activeCount={activeFilterCount}
+        onReset={resetFilters}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Category
+            </label>
+            <CustomSelect
+              value={selectedCategory}
+              onChange={(val) => setSelectedCategory(val)}
+              options={[
+                { value: 'All', label: 'All Categories' },
+                ...CATEGORIES.map((c) => ({ value: c, label: c })),
+              ]}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '34px' }}
+            />
+          </div>
+        </div>
+      </FilterDrawer>
 
       {/* Modern DataTable */}
       <DataTable
@@ -398,7 +355,7 @@ export default function ManageIngredients() {
             overflow: 'visible',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -451,7 +408,7 @@ export default function ManageIngredients() {
               style={{ marginBottom: 0 }}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="dialog-grid-2col">
               <div>
                 <CustomSelect
                   label="Category"
@@ -501,7 +458,7 @@ export default function ManageIngredients() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <div className="dialog-footer-actions" style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button
                 variant="outline"
                 size="sm"

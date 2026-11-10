@@ -14,7 +14,7 @@ import {
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectUrl = searchParams.get('redirect') || '/catalogue';
+  const redirectUrl = searchParams.get('redirect') || '/home';
   const { user, loginClient } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -22,7 +22,11 @@ export default function Login() {
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    searchParams.get('terminated') === '1'
+      ? 'Your account has been terminated by administrator. Access revoked.'
+      : ''
+  );
   const [loading, setLoading] = useState(false);
 
   // If already authenticated as client, redirect to catalogue or target subpage
@@ -198,9 +202,37 @@ export default function Login() {
       {/* Right Side: Login Form (Seamless, No Floating Card Border) */}
       <div className="auth-right-panel">
         <div className="auth-form-container">
+          {/* Mobile Brand Crest (Visible only on mobile when left panel is hidden) */}
+          <div className="auth-mobile-brand" style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <img
+              src="/assets/logo-crest.png"
+              alt="Private Chef Missy Logo"
+              style={{
+                width: '64px',
+                height: 'auto',
+                margin: '0 auto 6px',
+                display: 'block',
+                mixBlendMode: 'multiply',
+              }}
+            />
+            <span
+              style={{
+                fontSize: '0.62rem',
+                letterSpacing: '2px',
+                color: '#7a7366',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                display: 'block',
+              }}
+            >
+              Fresh &bull; Thoughtful &bull; Curated
+            </span>
+          </div>
+
           {/* Heading & Subtitle */}
-          <div style={{ marginBottom: '22px' }}>
+          <div className="auth-form-header" style={{ marginBottom: '20px' }}>
             <h2
+              className="auth-form-title"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
                 fontSize: '1.85rem',
@@ -212,6 +244,7 @@ export default function Login() {
               Welcome Back
             </h2>
             <p
+              className="auth-form-subtitle"
               style={{
                 fontSize: '0.82rem',
                 color: '#78716c',
@@ -265,6 +298,7 @@ export default function Login() {
             <div style={{ marginBottom: '11px' }}>
               <label
                 htmlFor="client-email"
+                className="auth-form-label"
                 style={{
                   display: 'block',
                   fontSize: '0.74rem',
@@ -289,6 +323,7 @@ export default function Login() {
                 </span>
                 <input
                   id="client-email"
+                  className="auth-form-input"
                   type="email"
                   required
                   placeholder="your@email.com"
@@ -298,16 +333,22 @@ export default function Login() {
                     width: '100%',
                     padding: '8px 12px 8px 34px',
                     borderRadius: '8px',
-                    border: '1px solid #e7e5e4',
+                    border: '1.5px solid #8c8273',
                     fontSize: '0.8rem',
                     color: '#1c1917',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'transparent',
                     outline: 'none',
-                    transition: 'border-color 0.15s ease',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
-                  onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#36441c';
+                    e.target.style.boxShadow = '0 0 0 1px #36441c';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#8c8273';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
             </div>
@@ -316,6 +357,7 @@ export default function Login() {
             <div style={{ marginBottom: '6px' }}>
               <label
                 htmlFor="client-password"
+                className="auth-form-label"
                 style={{
                   display: 'block',
                   fontSize: '0.74rem',
@@ -340,6 +382,7 @@ export default function Login() {
                 </span>
                 <input
                   id="client-password"
+                  className="auth-form-input"
                   type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="Enter your password"
@@ -349,16 +392,22 @@ export default function Login() {
                     width: '100%',
                     padding: '8px 34px 8px 34px',
                     borderRadius: '8px',
-                    border: '1px solid #e7e5e4',
+                    border: '1.5px solid #8c8273',
                     fontSize: '0.8rem',
                     color: '#1c1917',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'transparent',
                     outline: 'none',
-                    transition: 'border-color 0.15s ease',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                     boxSizing: 'border-box',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#36441c')}
-                  onBlur={(e) => (e.target.style.borderColor = '#e7e5e4')}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#36441c';
+                    e.target.style.boxShadow = '0 0 0 1px #36441c';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#8c8273';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
                 <button
                   type="button"
@@ -381,7 +430,7 @@ export default function Login() {
             </div>
 
             {/* Forgot Password Link */}
-            <div style={{ textAlign: 'right', marginBottom: '16px' }}>
+            <div className="auth-forgot-row" style={{ textAlign: 'right', marginBottom: '16px' }}>
               <Link
                 to="/forgot-password"
                 style={{
@@ -399,6 +448,7 @@ export default function Login() {
             {/* Primary Log In Button */}
             <button
               type="submit"
+              className="auth-submit-btn"
               disabled={loading}
               style={{
                 width: '100%',
@@ -427,56 +477,8 @@ export default function Login() {
               {loading ? 'Logging in...' : 'Log In →'}
             </button>
 
-            {/* Divider "OR" */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                margin: '14px 0',
-                color: '#a8a29e',
-                fontSize: '0.72rem',
-              }}
-            >
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e5e4' }} />
-              <span style={{ padding: '0 10px', letterSpacing: '1px' }}>OR</span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e5e4' }} />
-            </div>
-
-            {/* Continue as Chef (Admin) Button */}
-            <Link
-              to="/admin/login"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                width: '100%',
-                padding: '9px',
-                backgroundColor: '#ffffff',
-                color: '#292524',
-                border: '1px solid #78716c',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 500,
-                textDecoration: 'none',
-                boxSizing: 'border-box',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#fbf9f5';
-                e.currentTarget.style.borderColor = '#36441c';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ffffff';
-                e.currentTarget.style.borderColor = '#78716c';
-              }}
-            >
-              <ChefHatIcon size={15} color="#36441c" />
-              <span>Continue as Chef (Admin)</span>
-            </Link>
-
             {/* Bottom Register Link */}
-            <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '0.74rem', color: '#78716c' }}>
+            <div className="auth-footer-text" style={{ textAlign: 'center', marginTop: '16px', fontSize: '0.74rem', color: '#78716c' }}>
               Don't have an account?{' '}
               <Link
                 to="/register"

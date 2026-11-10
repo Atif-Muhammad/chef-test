@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Clock, Plus, SlidersHorizontal, Eye, Edit3 } from 'lucide-react';
 import api from '../../config/shared/api';
 import Button from '../../components/shared/Button';
 import Dialog from '../../components/shared/Dialog';
 import Loader from '../../components/shared/Loader';
 import { PrivateRecipesSkeleton } from '../../components/skeletons';
 import DataTable, { CategoryBadge, DietaryBadge, AllergenBadge } from '../../components/shared/DataTable';
+import FilterDrawer from '../../components/shared/FilterDrawer';
+import KebabMenu from '../../components/shared/KebabMenu';
 import CustomSelect from '../../components/shared/CustomSelect';
+import { truncateWords } from '../../utils/formatters';
 import {
   LockIcon,
   SearchIcon,
@@ -25,6 +28,7 @@ export default function PrivateRecipes() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Detail Modal Dialog state
   const [viewDish, setViewDish] = useState(null);
@@ -63,267 +67,158 @@ export default function PrivateRecipes() {
     return matchesSearch && matchesCategory;
   });
 
+  const activeFilterCount = selectedCategory !== 'All' ? 1 : 0;
+
+  const resetFilters = () => {
+    setSelectedCategory('All');
+    setSearch('');
+  };
+
   const columns = [
     {
-      header: 'Image',
-      key: 'image',
-      width: '46px',
-      align: 'center',
+      header: 'Recipe & Technique',
+      key: 'name',
       render: (row) => {
         const primaryImg =
           (Array.isArray(row.photos) && row.photos[0]) || row.photoUrl || null;
         return (
-          <div
-            onClick={() => setViewDish(row)}
-            style={{
-              width: '38px',
-              height: '30px',
-              borderRadius: '3px',
-              overflow: 'hidden',
-              cursor: 'pointer',
-              flexShrink: 0,
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Click to view recipe details"
-          >
-            {primaryImg ? (
-              <img
-                src={primaryImg}
-                alt={row.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-            ) : (
-              <CameraIcon size={14} color="#a8a29e" />
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Recipe / Dish Name',
-      key: 'name',
-      render: (row) => (
-        <div>
-          <button
-            type="button"
-            onClick={() => setViewDish(row)}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              textAlign: 'left',
-              display: 'block',
-              fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              color: '#1a1814',
-              lineHeight: 1.25,
-            }}
-          >
-            {row.name}
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px', flexWrap: 'wrap' }}>
-            <CategoryBadge category={row.categoryId?.name || row.course} />
-            {row.type && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+            <div
+              onClick={() => setViewDish(row)}
+              style={{
+                width: '36px',
+                height: '30px',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                flexShrink: 0,
+                border: '1px solid var(--color-border, #ece7de)',
+                backgroundColor: 'var(--color-bg, #fbf9f5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Click to view recipe details"
+            >
+              {primaryImg ? (
+                <img
+                  src={primaryImg}
+                  alt={row.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <CameraIcon size={13} color="#a8a29e" />
+              )}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setViewDish(row)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    color: '#1a1814',
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {row.name}
+                </button>
+                <CategoryBadge category={row.categoryId?.name || row.course} />
+              </div>
               <span
-                style={{
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                  fontSize: '0.62rem',
-                  fontWeight: 500,
-                  backgroundColor: '#f6f3eb',
-                  border: '1px solid #ede8df',
-                  color: '#57534e',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {row.type}
-              </span>
-            )}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: 'Master Ingredients (Base: 2 Servings)',
-      key: 'ingredients',
-      render: (row) => {
-        const ings = row.ingredients || [];
-        if (ings.length === 0) {
-          return <span style={{ fontSize: '0.70rem', color: '#a8a29e', fontStyle: 'italic' }}>None specified</span>;
-        }
-
-        const previewList = ings.slice(0, 3);
-        const remainder = ings.length - previewList.length;
-
-        return (
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {previewList.map((ing, i) => (
-              <span
-                key={i}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '3px',
-                  padding: '1.5px 6px',
-                  borderRadius: '3px',
-                  backgroundColor: '#f6f3eb',
-                  border: '1px solid #ede8df',
-                  fontSize: '0.67rem',
-                  color: '#4a453e',
-                  lineHeight: 1.3,
-                }}
-              >
-                <strong>{ing.name}</strong>: {ing.qtyPer2} {ing.unit}
-              </span>
-            ))}
-            {remainder > 0 && (
-              <span
-                style={{
                   fontSize: '0.64rem',
-                  fontWeight: 600,
-                  color: 'var(--color-primary, #2e3b12)',
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
+                  color: '#9a3412',
+                  marginTop: '1px',
                 }}
+                title={row.cookingInstructions}
               >
-                +{remainder} more
+                <LockIcon size={9} color="#9a3412" />
+                {truncateWords(row.cookingInstructions || 'Confidential formula', 4)}
               </span>
-            )}
+            </div>
           </div>
         );
       },
     },
     {
-      header: 'Confidential Culinary Technique',
-      key: 'cookingInstructions',
+      header: 'Ingredients & Prep Scale',
+      key: 'ingredients',
       render: (row) => {
-        if (!row.cookingInstructions) {
-          return (
-            <span style={{ fontSize: '0.70rem', color: '#a8a29e', fontStyle: 'italic' }}>
-              No private instructions recorded
-            </span>
-          );
-        }
+        const ings = row.ingredients || [];
+        const ingStr = ings.length > 0
+          ? ings.map((i) => `${i.name} (${i.qtyPer2} ${i.unit})`).join(', ')
+          : 'None specified';
 
         return (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '3px 8px',
-              borderRadius: '3px',
-              backgroundColor: '#fff7ed',
-              border: '1px solid #fed7aa',
-              maxWidth: '320px',
-            }}
-          >
-            <LockIcon size={12} color="#9a3412" />
+          <div style={{ minWidth: 0 }}>
             <span
               style={{
+                display: 'block',
                 fontSize: '0.68rem',
-                color: '#9a3412',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                fontWeight: 500,
+                color: '#4a453e',
+                lineHeight: 1.25,
               }}
-              title={row.cookingInstructions}
+              title={ingStr}
             >
-              {row.cookingInstructions}
+              {truncateWords(ingStr, 4)}
+            </span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                padding: '1px 5px',
+                borderRadius: '3px',
+                fontSize: '0.62rem',
+                fontWeight: 600,
+                backgroundColor: row.isTimeIntensive ? '#fef3e2' : '#f6f3eb',
+                border: `1px solid ${row.isTimeIntensive ? '#fde68a' : '#ede8df'}`,
+                color: row.isTimeIntensive ? '#9a5b13' : '#716c62',
+                marginTop: '2px',
+              }}
+            >
+              {row.isTimeIntensive && <Clock size={9} color="#9a5b13" style={{ flexShrink: 0 }} />}
+              {row.isTimeIntensive ? 'Time-Intensive' : 'Standard Prep'}
             </span>
           </div>
         );
       },
     },
     {
-      header: 'Prep Scale',
-      key: 'isTimeIntensive',
-      width: '110px',
-      render: (row) => (
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '2px 7px',
-            borderRadius: '3px',
-            fontSize: '0.66rem',
-            fontWeight: 600,
-            backgroundColor: row.isTimeIntensive ? '#fef3e2' : '#f6f3eb',
-            border: `1px solid ${row.isTimeIntensive ? '#fde68a' : '#ede8df'}`,
-            color: row.isTimeIntensive ? '#9a5b13' : '#716c62',
-          }}
-        >
-          {row.isTimeIntensive && <Clock size={11} color="#9a5b13" style={{ flexShrink: 0 }} />}
-          {row.isTimeIntensive ? 'Time-Intensive' : 'Standard Prep'}
-        </span>
-      ),
-    },
-    {
-      header: 'Actions',
+      header: '',
       key: 'actions',
-      width: '75px',
+      width: '38px',
       align: 'right',
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-          {/* View Details Button */}
-          <button
-            type="button"
-            onClick={() => setViewDish(row)}
-            title="View confidential recipe details"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EyeIcon size={12} color="#4b5563" />
-          </button>
-
-          {/* Edit Dish Form Button */}
-          <button
-            type="button"
-            onClick={() => navigate(`/admin/dishes/edit/${row._id}`)}
-            title="Edit master recipe in dish form"
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '3px',
-              backgroundColor: '#f5f3ef',
-              border: '1px solid #e7e2d8',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f7f4ec')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f3ef')}
-          >
-            <EditIcon size={11} color="#4b5563" />
-          </button>
-        </div>
+        <KebabMenu
+          ariaLabel={`Actions for recipe ${row.name}`}
+          items={[
+            {
+              label: 'View Confidential Details',
+              icon: <Eye size={13} />,
+              onClick: () => setViewDish(row),
+            },
+            {
+              label: 'Edit Master Recipe',
+              icon: <Edit3 size={13} />,
+              onClick: () => navigate(`/admin/dishes/edit/${row._id}`),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -332,113 +227,99 @@ export default function PrivateRecipes() {
 
   return (
     <div className="admin-page-container">
-      {/* Page Header */}
-      <div className="admin-header-flex">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-            <h1
-              style={{
-                color: 'var(--color-primary, #2e3b12)',
-                fontSize: '1.25rem',
-                margin: 0,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <LockIcon size={20} color="var(--color-primary, #2e3b12)" />
-              Private Master Recipes
-            </h1>
-            <span
-              style={{
-                fontSize: '0.66rem',
-                fontWeight: 600,
-                padding: '2px 7px',
-                borderRadius: '3px',
-                backgroundColor: '#fff7ed',
-                border: '1px solid #fed7aa',
-                color: '#9a3412',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              Confidential Chef Archive
-            </span>
-          </div>
-          <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.76rem', margin: 0 }}>
-            Confidential culinary formulations, exact 2-serving ingredient ratios, and proprietary preparation techniques ({dishes.length} master recipes).
-          </p>
+      {/* Title Row with Action Button at the End (justify-between) */}
+      <div className="admin-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+        <h1
+          className="admin-page-title"
+          style={{
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <LockIcon size={18} color="var(--color-primary, #2e3b12)" />
+          <span>Private Recipes</span>
+        </h1>
+        <div className="admin-title-actions">
+          <Link
+            to="/admin/dishes/new"
+            className="admin-action-btn"
+            title="Add Master Recipe"
+            aria-label="Add Master Recipe"
+          >
+            <Plus size={16} />
+          </Link>
         </div>
       </div>
+      <p className="admin-page-subtitle">
+        Confidential culinary formulations, exact 2-serving ratios, and technique secrets ({dishes.length} total).
+      </p>
 
       {/* Search & Filter Bar */}
-      <div className="admin-filter-bar">
-        <div className="admin-filter-search" style={{ position: 'relative', flex: '1 1 280px', maxWidth: '380px' }}>
-          <span
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <SearchIcon size={14} color="#716c62" />
-          </span>
+      <div className="admin-search-filter-bar">
+        <div className="admin-search-box">
+          <SearchIcon size={13} color="#9ca3af" />
           <input
             type="text"
             placeholder="Search private instructions, ingredients, or dishes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 10px 6px 30px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border, #ece7de)',
-              backgroundColor: 'var(--color-bg, #fbf9f5)',
-              fontSize: '0.76rem',
-              boxShadow: 'none',
-              outline: 'none',
-              height: '34px',
-              color: 'var(--color-text, #1e1b16)',
-            }}
           />
         </div>
 
-        {/* Category Filter */}
-        <div style={{ width: '180px' }}>
-          <CustomSelect
-            value={selectedCategory}
-            onChange={(val) => setSelectedCategory(val)}
-            options={[
-              { value: 'All', label: 'All Categories' },
-              ...categories.map((c) => ({ value: c.name, label: c.name })),
-            ]}
-          />
-        </div>
-
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.72rem',
-              color: 'var(--color-text-muted, #716c62)',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: '4px',
-            }}
-          >
-            Clear Search
-          </button>
-        )}
+        <button
+          type="button"
+          className={`admin-filter-toggle-btn ${activeFilterCount > 0 ? 'has-filters' : ''}`}
+          onClick={() => setFilterDrawerOpen(true)}
+          title="Open filters sidebar"
+        >
+          <SlidersHorizontal size={13} />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#15803d',
+                color: '#ffffff',
+                borderRadius: '10px',
+                padding: '1px 5px',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Filter Slide-out Sidebar Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        title="Filter Private Recipes"
+        activeCount={activeFilterCount}
+        onReset={resetFilters}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#4a453e', marginBottom: '4px' }}>
+              Category
+            </label>
+            <CustomSelect
+              value={selectedCategory}
+              onChange={(val) => setSelectedCategory(val)}
+              options={[
+                { value: 'All', label: 'All Categories' },
+                ...categories.map((c) => ({ value: c.name, label: c.name })),
+              ]}
+              style={{ width: '100%' }}
+              triggerStyle={{ height: '34px' }}
+            />
+          </div>
+        </div>
+      </FilterDrawer>
 
       {/* Main Recipes DataTable */}
       <DataTable
@@ -466,11 +347,11 @@ export default function PrivateRecipes() {
             padding: '18px 20px',
           }}
           footer={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="dialog-responsive-footer">
               <span style={{ fontSize: '0.70rem', color: '#9a3412', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <LockIcon size={12} color="#9a3412" /> Admin culinary secret &bull; Never transmitted to client portal
               </span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="dialog-footer-actions">
                 <Button
                   variant="outline"
                   size="sm"
@@ -512,8 +393,8 @@ export default function PrivateRecipes() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Header Identity Row */}
             <div
+              className="dialog-dish-overview"
               style={{
-                display: 'flex',
                 gap: '14px',
                 alignItems: 'flex-start',
                 padding: '12px 14px',
@@ -535,6 +416,7 @@ export default function PrivateRecipes() {
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div
+                      className="dialog-dish-thumb"
                       onClick={() => primaryPhoto && setPreviewImage(primaryPhoto)}
                       style={{
                         width: '84px',
@@ -768,7 +650,7 @@ export default function PrivateRecipes() {
                   >
                     Storage, Shelf Life & Reheating
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.70rem' }}>
+                  <div className="dialog-grid-2col" style={{ fontSize: '0.70rem' }}>
                     <div>
                       <span style={{ fontWeight: 600, color: '#4a453e', display: 'block' }}>Storage Duration:</span>
                       <span style={{ color: '#716c62' }}>

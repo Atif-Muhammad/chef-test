@@ -6,6 +6,9 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import UserLayout from '../components/user-components/UserLayout';
 import AdminLayout from '../components/admin-components/AdminLayout';
 
+// Public Website
+import PublicWebsite from '../pages/public/index';
+
 // Client Pages
 import Home from '../pages/user-pages/Home';
 import DishCatalogue from '../pages/user-pages/DishCatalogue';
@@ -53,10 +56,10 @@ function AdminRoute({ children }) {
 
 function ClientRoute({ children }) {
   const { user, loading } = useAuth();
-  const location = useLocation();
   if (loading) return <Loader message="Verifying client access..." />;
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+    // If no token found for user/, redirect to public website with login/signup on top
+    return <Navigate to="/" replace />;
   }
   return children;
 }
@@ -65,6 +68,9 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
+        {/* Public Website */}
+        <Route path="/" element={<PublicWebsite />} />
+
         {/* Auth Entry Pages */}
         <Route path="/login" element={<Login />} />
         <Route path="/user/login" element={<Login />} />
@@ -75,14 +81,14 @@ export default function App() {
         <Route path="/user/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/user" element={<Navigate to="/catalogue" replace />} />
+        <Route path="/user" element={<Navigate to="/home" replace />} />
 
-        {/* User / Client Screens (Classic Sidebar + Header Layout) */}
+        {/* User / Client Screens (Classic Sidebar + Header Layout) with /home as index */}
         <Route element={<UserLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/catalogue" element={<DishCatalogue />} />
-          <Route path="/dishes/:id" element={<DishDetail />} />
-          <Route path="/cart" element={<SelectionCart />} />
+          <Route path="/home" element={<ClientRoute><Home /></ClientRoute>} />
+          <Route path="/catalogue" element={<ClientRoute><DishCatalogue /></ClientRoute>} />
+          <Route path="/dishes/:id" element={<ClientRoute><DishDetail /></ClientRoute>} />
+          <Route path="/cart" element={<ClientRoute><SelectionCart /></ClientRoute>} />
           <Route path="/favourites" element={<ClientRoute><Favourites /></ClientRoute>} />
           <Route path="/history" element={<ClientRoute><History /></ClientRoute>} />
           <Route path="/visits/:id" element={<ClientRoute><VisitDetails /></ClientRoute>} />
@@ -123,7 +129,7 @@ export default function App() {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Home />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   );

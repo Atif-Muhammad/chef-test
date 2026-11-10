@@ -28,9 +28,10 @@ export default function AllergenSelector({
   ).filter(Boolean);
 
   return (
-    <div style={{ marginBottom: 'var(--spacing-sm, 10px)', width: '100%', ...style }} className={className}>
+    <div style={{ marginBottom: 'var(--spacing-sm, 10px)', width: '100%', ...style }} className={`allergen-selector-container ${className}`}>
       {label && (
         <label
+          className="allergen-selector-label"
           style={{
             display: 'block',
             fontSize: 'var(--font-size-sm, 0.75rem)',
@@ -45,18 +46,19 @@ export default function AllergenSelector({
       )}
 
       {helperText && (
-        <p style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #716c62)', margin: '0 0 6px' }}>
+        <p className="allergen-selector-helper" style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #716c62)', margin: '0 0 6px' }}>
           {helperText}
         </p>
       )}
 
-      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+      <div className="allergen-chips-wrap" style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
         {allAllergenNames.map((name) => {
           const isSelected = selectedAllergens.includes(name);
           return (
             <button
               type="button"
               key={name}
+              className="allergen-chip-btn"
               disabled={disabled}
               onClick={() => onToggleAllergen && onToggleAllergen(name)}
               style={{

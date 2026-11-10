@@ -193,11 +193,22 @@ export default function DishCatalogue() {
 
   // Active filters count
   const activeDrawerFilterCount =
+    (activeCategory !== 'all' ? 1 : 0) +
     selectedDietary.length +
     selectedCuisines.length +
     (selectedSpice !== 'all' ? 1 : 0) +
     (selectedPrepTime !== 'all' ? 1 : 0) +
     excludedAllergens.length;
+
+  const getActiveCategoryLabel = () => {
+    if (activeCategory === 'all') return '';
+    const found = categories.find((c) => c.slug === activeCategory);
+    if (found) return found.name;
+    if (activeCategory === 'main') return 'Main Courses';
+    if (activeCategory === 'dessert') return 'Desserts';
+    if (activeCategory === 'kids') return "Kids' Meals";
+    return activeCategory;
+  };
 
   // Filter application
   const filteredDishes = dishes
@@ -287,24 +298,17 @@ export default function DishCatalogue() {
     });
 
   return (
-    <div style={{ maxWidth: '1240px', margin: '0 auto', paddingBottom: '30px' }}>
+    <div className="user-page-container">
       {/* Header Title */}
-      <div style={{ marginBottom: '16px' }}>
-        <h1
-          style={{
-            fontSize: '1.45rem',
-            color: '#1a1814',
-            marginBottom: '2px',
-            letterSpacing: '-0.3px',
-            fontWeight: 600,
-            fontFamily: 'var(--font-family-serif)',
-          }}
-        >
-          Explore Our Menu
-        </h1>
-        <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: 0 }}>
-          Seasonal culinary selections crafted by Chef Missy. Standardized 2-serving base recipes for in-home meal prep.
-        </p>
+      <div className="user-title-row">
+        <div>
+          <h1 className="user-page-title">
+            Explore Our Menu
+          </h1>
+          <p className="user-page-subtitle">
+            Seasonal culinary selections crafted by Chef Missy. Standardized 2-serving base recipes for in-home meal prep.
+          </p>
+        </div>
       </div>
 
       {/* Main Unified Filter Bar (Sleek, No Shadows, Drawer-Powered) */}
@@ -313,109 +317,15 @@ export default function DishCatalogue() {
           backgroundColor: '#ffffff',
           borderRadius: '8px',
           border: '1px solid var(--color-border, #ece7de)',
-          padding: '12px 14px',
+          padding: '10px 14px',
           marginBottom: '14px',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
+          gap: '8px',
+          alignItems: 'center',
+          flexWrap: 'wrap',
           boxShadow: 'none',
         }}
       >
-        {/* Tier 1: Category Selector Bar */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '6px',
-            overflowX: 'auto',
-            paddingBottom: '2px',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setActiveCategory('all')}
-            style={{
-              padding: '5px 12px',
-              borderRadius: '4px',
-              border: `1px solid ${activeCategory === 'all' ? '#2e3b12' : '#ece7de'}`,
-              backgroundColor: activeCategory === 'all' ? '#2e3b12' : '#fbf9f5',
-              color: activeCategory === 'all' ? '#ffffff' : '#594f42',
-              fontSize: '0.74rem',
-              fontWeight: activeCategory === 'all' ? 700 : 500,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: 'none',
-              transition: 'all 0.12s ease',
-            }}
-          >
-            All Dishes ({dishes.length})
-          </button>
-
-          {categories.map((cat) => {
-            const isActive = activeCategory === cat.slug;
-            return (
-              <button
-                key={cat._id || cat.slug}
-                type="button"
-                onClick={() => setActiveCategory(cat.slug)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '4px',
-                  border: `1px solid ${isActive ? '#2e3b12' : '#ece7de'}`,
-                  backgroundColor: isActive ? '#2e3b12' : '#fbf9f5',
-                  color: isActive ? '#ffffff' : '#594f42',
-                  fontSize: '0.74rem',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  boxShadow: 'none',
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                {cat.name}
-              </button>
-            );
-          })}
-
-          {['main', 'dessert', 'kids'].map((typeKey) => {
-            const isActive = activeCategory === typeKey;
-            const label = typeKey === 'main' ? 'Main Courses' : typeKey === 'dessert' ? 'Desserts' : "Kids' Meals";
-            return (
-              <button
-                key={typeKey}
-                type="button"
-                onClick={() => setActiveCategory(typeKey)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '4px',
-                  border: `1px solid ${isActive ? '#2e3b12' : '#ece7de'}`,
-                  backgroundColor: isActive ? '#2e3b12' : '#fbf9f5',
-                  color: isActive ? '#ffffff' : '#594f42',
-                  fontSize: '0.74rem',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  boxShadow: 'none',
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tier 2: Search Input, Filters Drawer Trigger, Sort By, and View Mode */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
           {/* Search Input Box */}
           <div
             style={{
@@ -533,6 +443,7 @@ export default function DishCatalogue() {
 
           {/* View Mode (Grid / List) */}
           <div
+            className="catalogue-view-mode-toggle"
             style={{
               display: 'flex',
               backgroundColor: '#fbf9f5',
@@ -593,7 +504,6 @@ export default function DishCatalogue() {
             </button>
           </div>
         </div>
-      </div>
 
       {/* Active Filter Chips Ribbon (Quick dismiss) */}
       {activeDrawerFilterCount > 0 && (
@@ -608,6 +518,31 @@ export default function DishCatalogue() {
           }}
         >
           <span style={{ fontSize: '0.70rem', color: '#716c62', fontWeight: 600 }}>Active Filters:</span>
+
+          {/* Category chip */}
+          {activeCategory !== 'all' && (
+            <button
+              type="button"
+              onClick={() => setActiveCategory('all')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 7px',
+                borderRadius: '4px',
+                backgroundColor: '#f5eee3',
+                color: '#2e3b12',
+                border: '1px solid #dcd3c3',
+                fontSize: '0.68rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: 'none',
+              }}
+            >
+              <span>Category: {getActiveCategoryLabel()}</span>
+              <X size={10} />
+            </button>
+          )}
 
           {/* Dietary chips */}
           {selectedDietary.map((dt) => (
@@ -815,10 +750,11 @@ export default function DishCatalogue() {
         </div>
       ) : (
         <div
+          className={viewMode === 'grid' ? 'user-dish-grid' : ''}
           style={{
             display: 'grid',
-            gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr',
-            gap: '18px',
+            gridTemplateColumns: viewMode === 'grid' ? undefined : '1fr',
+            gap: '16px',
           }}
         >
           {filteredDishes.map((dish) => {
@@ -830,13 +766,14 @@ export default function DishCatalogue() {
             return (
               <div
                 key={dish._id}
+                className={viewMode === 'list' ? 'user-dish-card-list-mode' : ''}
                 style={{
                   backgroundColor: '#ffffff',
                   borderRadius: '8px',
                   border: '1px solid var(--color-border, #ece7de)',
                   overflow: 'hidden',
                   display: 'flex',
-                  flexDirection: viewMode === 'grid' ? 'column' : 'row',
+                  flexDirection: viewMode === 'grid' ? 'column' : undefined,
                   boxShadow: 'none',
                   transition: 'border-color 0.15s ease',
                   height: viewMode === 'grid' ? '100%' : 'auto',
@@ -844,6 +781,7 @@ export default function DishCatalogue() {
               >
                 {/* Thumbnail Container */}
                 <div
+                  className="dish-thumb"
                   style={{
                     height: viewMode === 'grid' ? '160px' : '140px',
                     width: viewMode === 'grid' ? '100%' : '180px',
@@ -1090,6 +1028,9 @@ export default function DishCatalogue() {
         isOpen={isDrawerOpen}
         onClose={handleCloseDrawer}
         dishes={dishes}
+        categories={categories}
+        activeCategory={activeCategory}
+        onSelectCategory={setActiveCategory}
         selectedDietary={selectedDietary}
         onToggleDietary={toggleDietaryFilter}
         selectedCuisines={selectedCuisines}

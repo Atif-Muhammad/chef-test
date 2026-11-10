@@ -243,6 +243,7 @@ export default function CustomDatePicker({
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
+        className="custom-date-picker-trigger"
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
@@ -310,6 +311,7 @@ export default function CustomDatePicker({
       {/* Popover Calendar Dropdown */}
       {isOpen && (
         <div
+          className="custom-date-picker-popover"
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
