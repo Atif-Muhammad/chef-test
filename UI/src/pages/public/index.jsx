@@ -414,8 +414,8 @@ export default function PublicWebsite() {
 
   const faqs = [
     {
-      q: 'How does Chef Missy’s in-home cooking service work?',
-      a: 'Chef Missy comes directly to your home to prepare wholesome, fresh meals tailored to your family. She brings fresh ingredients, cooks your selected dishes in your kitchen, packages them neatly in your refrigerator, and leaves the kitchen spotless.',
+      q: 'How does Chef Missy’s private chef service work?',
+      a: 'Chef Missy sources wholesome, fresh ingredients and prepares nutritious, home-cooked meals tailored to your family’s menu selections and dietary needs.',
     },
     {
       q: 'How are food allergies and dietary needs handled?',
@@ -423,19 +423,19 @@ export default function PublicWebsite() {
     },
     {
       q: 'Can family members choose different dishes?',
-      a: 'Yes. You can select a variety of mains, sides, soups, desserts, and kid-friendly dishes for your visit, making it easy to satisfy everyone at the table.',
+      a: 'Yes. You can select a variety of mains, sides, soups, desserts, and kid-friendly dishes for your menu, making it easy to satisfy everyone at the table.',
     },
     {
       q: 'How long do the prepared meals stay fresh?',
-      a: 'Dishes are prepared fresh in your kitchen during Chef Missy’s visit and remain delicious and ready to enjoy in your refrigerator for three to five days.',
+      a: 'Dishes are prepared fresh by Chef Missy and stay flavorful and ready to enjoy for three to five days.',
     },
     {
       q: 'Is there a recurring contract or minimum weekly commitment?',
-      a: 'No forced contracts or commitments. You can schedule a cooking visit whenever you need help, whether on a regular weekly basis or for busy periods.',
+      a: 'No forced contracts or commitments. You can schedule meals whenever you need help, whether on a regular weekly basis or for busy periods.',
     },
     {
-      q: 'How do I choose dishes and book my first visit?',
-      a: 'Create an account to browse the seasonal dishes, choose up to 7 dishes, pick your preferred cooking date (Morning or Afternoon), and submit your request. Exact arrival times are confirmed directly with Chef Missy.',
+      q: 'How do I choose dishes and place my first order?',
+      a: 'Create an account to browse the seasonal dishes, choose up to 7 dishes, pick your preferred preparation date (Morning or Afternoon), and submit your request. All meal details are confirmed directly with Chef Missy.',
     },
   ];
 
@@ -1288,7 +1288,7 @@ export default function PublicWebsite() {
                 >
                   <img
                     src="/assets/2nd-section-plate.png"
-                    alt="Chef Missy in-home grilled salmon plate"
+                    alt="Chef Missy grilled salmon plate"
                     loading="eager"
                     decoding="sync"
                     style={{
@@ -1823,7 +1823,7 @@ export default function PublicWebsite() {
               </span>
               <span className="service-reveal-line-mask">
                 <span className="service-reveal-step service-step-4">
-                  dinners right in your kitchen, customized directly to your family’s tastes
+                  dinners from scratch with care, customized directly to your family’s tastes
                 </span>
               </span>
               <span className="service-reveal-line-mask">
@@ -2305,7 +2305,7 @@ export default function PublicWebsite() {
                 textWrap: 'balance',
               }}
             >
-              How our in-home{' '}
+              How our private chef{' '}
               <span style={{ fontStyle: 'italic', color: '#455c24', fontWeight: 500 }}>
                 cooking service
               </span>{' '}
@@ -2323,7 +2323,7 @@ export default function PublicWebsite() {
                 textWrap: 'pretty',
               }}
             >
-              Three simple steps to fresh meals cooked in your kitchen.
+              Three simple steps to fresh, chef-prepared meals for your family.
             </p>
 
             <span
@@ -2396,14 +2396,14 @@ export default function PublicWebsite() {
                 {
                   num: '2',
                   title: 'Plan your menu',
-                  desc: 'Browse our seasonal dishes and select up to 7 delicious meals for your upcoming cooking visit.',
+                  desc: 'Browse our seasonal dishes and select up to 7 delicious meals for your upcoming meal preparation.',
                   stepIdx: 5,
                   icon: <Calendar size={28} strokeWidth={1.6} color="#2d401e" />,
                 },
                 {
                   num: '3',
-                  title: 'Cooked fresh in your home',
-                  desc: 'Chef Missy brings fresh ingredients to your home, prepares your meals, and leaves your refrigerator stocked and kitchen clean.',
+                  title: 'Prepared fresh by Chef Missy',
+                  desc: 'Chef Missy sources fresh ingredients and prepares your selected meals from scratch, thoughtfully portioned and packaged for your family.',
                   stepIdx: 6,
                   icon: (
                     <svg
@@ -2417,13 +2417,11 @@ export default function PublicWebsite() {
                       strokeLinejoin="round"
                       aria-hidden="true"
                     >
-                      <path d="M3 10.5L12 3l9 7.5" />
-                      <path d="M5.5 9V20h13V9" />
-                      <path d="M9.5 11.5v3.2a1.5 1.5 0 0 0 1.5 1.5h0V18" />
-                      <path d="M8.5 11.5v2" />
-                      <path d="M10.5 11.5v2" />
-                      <path d="M14.5 11.5v6.5" />
-                      <path d="M14.5 11.5c1.1 0 1.5 1 1.5 2.4h-1.5" />
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M7.8 8v2.2a1.45 1.45 0 0 0 2.9 0V8" />
+                      <path d="M9.25 8v8.5" />
+                      <path d="M14.75 8v8.5" />
+                      <path d="M14.75 8c1.25 0 1.75 1.2 1.75 2.7 0 1.1-.6 1.8-1.75 1.8" />
                     </svg>
                   ),
                 },
@@ -2639,10 +2637,10 @@ export default function PublicWebsite() {
               textWrap: 'balance',
             }}
           >
-            Experience fresh in-home cooking for your family
+            Experience fresh, chef-prepared meals for your family
           </h2>
           <p className="cta-subtitle" style={{ fontSize: '1rem', color: '#5c564c', lineHeight: 1.6, margin: '0 0 32px', textWrap: 'pretty' }}>
-            Create an account to browse the seasonal menu, select your favorite dishes, and choose your preferred cooking date.
+            Create an account to browse the seasonal menu, select your favorite dishes, and choose your preferred date.
           </p>
 
           <div className="cta-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
