@@ -789,10 +789,10 @@ export default function Profile() {
                 marginBottom: '2px',
               }}
             >
-              <Utensils size={11} /> Total Orders / Boxes
+              <Utensils size={11} /> Total Cooking Visits
             </span>
             <span style={{ fontSize: '0.80rem', fontWeight: 600, color: '#1a1814' }}>
-              {loadingStats ? '—' : `${totalVisits} ${totalVisits === 1 ? 'Box' : 'Boxes'}`}
+              {loadingStats ? '—' : `${totalVisits} ${totalVisits === 1 ? 'Visit' : 'Visits'}`}
             </span>
           </div>
 
@@ -982,7 +982,7 @@ export default function Profile() {
 
               <div>
                 <span style={{ fontSize: '0.68rem', color: '#716c62', display: 'block' }}>
-                  Delivery Location
+                  Cooking Address
                 </span>
                 <span style={{ fontSize: '0.80rem', fontWeight: 500, color: '#1a1814', wordBreak: 'break-word' }}>
                   {user?.location || 'Not provided'}
@@ -1116,7 +1116,7 @@ export default function Profile() {
               color: '#8c857b',
             }}
           >
-            Menus and seasonal box recommendations automatically prioritize recipes adhering to your dietary regimen.
+            Menus and menu recommendations automatically prioritize recipes adhering to your dietary regimen.
           </div>
         </div>
 
@@ -2015,7 +2015,7 @@ export default function Profile() {
 
                       <div>
                         <label style={{ fontSize: '0.74rem', fontWeight: 600, color: '#1a1814', display: 'block', marginBottom: '5px' }}>
-                          Delivery Address / Location
+                          Cooking Address
                         </label>
                         <input
                           type="text"
@@ -2085,7 +2085,7 @@ export default function Profile() {
                 {modalTab === 'dietary' && (
                   <div>
                     <p style={{ fontSize: '0.74rem', color: '#716c62', margin: '0 0 12px' }}>
-                      Select the dietary regimens you follow. Menus and weekly box recommendations are tailored to your choices.
+                      Select the dietary regimens you follow. Menus and menu recommendations are tailored to your choices.
                     </p>
 
                     <div
@@ -2340,7 +2340,7 @@ export default function Profile() {
                         }}
                       />
                       <span style={{ fontSize: '0.68rem', color: '#8c857b', marginTop: '4px', display: 'block' }}>
-                        Chef Missy directly inspects these preparation notes for all your orders.
+                        Chef Missy directly inspects these preparation notes for all your cooking visits.
                       </span>
                     </div>
                   </div>

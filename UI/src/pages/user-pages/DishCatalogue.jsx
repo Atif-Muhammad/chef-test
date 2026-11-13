@@ -206,7 +206,7 @@ export default function DishCatalogue() {
     if (activeCategory === 'side') return 'Side';
     if (activeCategory === 'soup') return 'Soup';
     if (activeCategory === 'dessert') return 'Dessert';
-    if (activeCategory === 'kids') return "Kids' Meals";
+    if (activeCategory === 'kids') return 'Kids';
     const found = categories.find((c) => c.slug === activeCategory);
     return found ? found.name : activeCategory;
   };
@@ -347,7 +347,7 @@ export default function DishCatalogue() {
           { key: 'side', label: 'Side' },
           { key: 'soup', label: 'Soup' },
           { key: 'dessert', label: 'Dessert' },
-          { key: 'kids', label: "Kids' Meals" },
+          { key: 'kids', label: 'Kids' },
         ].map((tab) => {
           const isActive = activeCategory === tab.key;
           return (
@@ -961,7 +961,7 @@ export default function DishCatalogue() {
                       }}
                     >
                       {dish.type === 'kids' || dish.category === 'kids'
-                        ? "Kids' Meal"
+                        ? 'Kids'
                         : dish.type === 'dessert' || dish.category === 'dessert'
                         ? 'Dessert'
                         : dish.type === 'soup' || dish.category === 'soup'

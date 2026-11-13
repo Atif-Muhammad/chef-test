@@ -422,7 +422,7 @@ export default function DishDetail() {
                   fontWeight: 600,
                 }}
               >
-                {currentDish.type === 'kids' ? "Kids' Meal" : currentDish.type === 'dessert' ? 'Dessert' : currentDish.type === 'soup' ? 'Soup' : currentDish.type === 'side' ? 'Side' : 'Main'}
+                {currentDish.type === 'kids' ? 'Kids' : currentDish.type === 'dessert' ? 'Dessert' : currentDish.type === 'soup' ? 'Soup' : currentDish.type === 'side' ? 'Side' : 'Main'}
               </span>
 
               <span

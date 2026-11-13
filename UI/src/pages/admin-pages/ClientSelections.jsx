@@ -270,9 +270,24 @@ export default function ClientSelections() {
   };
 
   const filteredAvailableDishes = allDishes.filter((dish) => {
+    const dishType = (dish.type || '').toLowerCase();
+    const dishCatName = (dish.categoryId?.name || dish.categoryId?.slug || dish.category || '').toLowerCase();
+    const isKids =
+      dishType === 'kids' ||
+      dishCatName.includes('kid') ||
+      Boolean(dish.isKidsMeal) ||
+      Boolean(dish.suitableForAges1to5);
+
     const matchesCat =
       createForm.dishCategory === 'all' ||
-      (dish.type || '').toLowerCase() === createForm.dishCategory.toLowerCase();
+      (createForm.dishCategory === 'kids' && isKids) ||
+      (createForm.dishCategory === 'soup' && (dishType === 'soup' || dishCatName.includes('soup'))) ||
+      (createForm.dishCategory === 'side' &&
+        (dishType === 'side' || dishType === 'starter' || dishCatName.includes('side') || dishCatName.includes('starter'))) ||
+      (createForm.dishCategory === 'dessert' && (dishType === 'dessert' || dishCatName.includes('dessert'))) ||
+      (createForm.dishCategory === 'main' && (dishType === 'main' || dishCatName.includes('main'))) ||
+      dishType === createForm.dishCategory.toLowerCase();
+
     const q = createForm.dishSearch.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -2317,10 +2332,11 @@ export default function ClientSelections() {
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                   {[
                     { id: 'all', label: 'All Courses' },
-                    { id: 'main', label: 'Mains' },
-                    { id: 'starter', label: 'Starters' },
-                    { id: 'dessert', label: 'Desserts' },
-                    { id: 'side', label: 'Sides' },
+                    { id: 'main', label: 'Main' },
+                    { id: 'side', label: 'Side' },
+                    { id: 'soup', label: 'Soup' },
+                    { id: 'dessert', label: 'Dessert' },
+                    { id: 'kids', label: 'Kids' },
                   ].map((cat) => (
                     <button
                       key={cat.id}

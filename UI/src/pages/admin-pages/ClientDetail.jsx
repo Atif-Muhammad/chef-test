@@ -742,7 +742,7 @@ export default function ClientDetail() {
           </div>
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
-              Total Orders
+              Total Visits
             </span>
             <strong style={{ fontSize: '0.76rem', color: 'var(--color-primary, #2e3b12)', fontWeight: 700, display: 'block' }}>
               {totalVisits}
@@ -750,7 +750,7 @@ export default function ClientDetail() {
           </div>
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
-              Last Order
+              Last Visit
             </span>
             <strong style={{ fontSize: '0.72rem', color: '#1a1814', fontWeight: 700, display: 'block' }}>
               {lastOrderDate}
@@ -758,7 +758,7 @@ export default function ClientDetail() {
           </div>
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #ede8df', borderRadius: '4px', padding: '6px 4px' }}>
             <span style={{ fontSize: '0.62rem', color: '#8c857b', display: 'block', marginBottom: '2px' }}>
-              Preferred Delivery
+              Arrival Window
             </span>
             <strong
               style={{

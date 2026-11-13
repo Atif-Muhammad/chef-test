@@ -4,27 +4,36 @@ import React from 'react';
  * CategoryBadge - Renders soft pastel pill badge for categories
  */
 export function CategoryBadge({ category }) {
-  const catName = typeof category === 'string' ? category : category?.name || 'Main Course';
-  const nameLower = catName.toLowerCase();
+  const rawName = typeof category === 'string' ? category : category?.name || 'Main Course';
+  let catName = rawName;
+  const nameLower = rawName.toLowerCase();
+
+  // Normalize legacy starter/appetizer to Side, and kids labels to Kids
+  if (nameLower === 'starter' || nameLower === 'starters' || nameLower === 'appetizer') {
+    catName = 'Side';
+  } else if (nameLower.includes('kid')) {
+    catName = 'Kids';
+  }
 
   let bg = '#fef3e2';
   let color = '#9a5b13';
 
-  if (nameLower.includes('salad')) {
+  const checkLower = catName.toLowerCase();
+  if (checkLower.includes('salad')) {
     bg = '#ecfdf5';
     color = '#065f46';
-  } else if (nameLower.includes('dessert') || nameLower.includes('sweet')) {
+  } else if (checkLower.includes('dessert') || checkLower.includes('sweet')) {
     bg = '#f3e8ff';
     color = '#7c3aed';
-  } else if (nameLower.includes('soup')) {
+  } else if (checkLower.includes('soup')) {
     bg = '#eff6ff';
     color = '#1e40af';
-  } else if (nameLower.includes('starter') || nameLower.includes('appetizer')) {
-    bg = '#fef9c3';
-    color = '#854d0e';
-  } else if (nameLower.includes('side')) {
+  } else if (checkLower.includes('side') || checkLower.includes('starter') || checkLower.includes('appetizer')) {
     bg = '#f1f5f9';
     color = '#475569';
+  } else if (checkLower.includes('kid') || checkLower.includes('children')) {
+    bg = '#ecfdf5';
+    color = '#15803d';
   }
 
   return (

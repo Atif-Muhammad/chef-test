@@ -298,17 +298,17 @@ export default function SelectionCart() {
       return;
     }
     if (!cart.visitDate) {
-      setError('Please choose your preferred cooking date.');
+      setError('Please choose your preferred preparation date.');
       setActiveStep(1);
       return;
     }
     if (cart.visitDate < todayStr) {
-      setError('Past dates cannot be selected for cooking visits.');
+      setError('Past dates cannot be selected for meal preparations.');
       setActiveStep(1);
       return;
     }
     if (isTimeslotMissing) {
-      setError('Please choose your visit preference (Morning or Afternoon).');
+      setError('Please choose your time preference (Morning or Afternoon).');
       setActiveStep(1);
       return;
     }
@@ -573,7 +573,7 @@ export default function SelectionCart() {
                 </span>
               </div>
               <p style={{ margin: '0 0 8px', fontSize: '0.74rem', color: '#78350f', lineHeight: 1.45 }}>
-                Chef Missy initiated this menu plan for you. The fields highlighted in <strong>amber</strong> below need to be completed before your cooking visit can be confirmed.
+                Chef Missy initiated this menu plan for you. The fields highlighted in <strong>amber</strong> below need to be completed before your menu plan can be confirmed.
               </p>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {isDateMissing && (
@@ -694,7 +694,7 @@ export default function SelectionCart() {
         </h1>
         <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: 0 }}>
           {activeStep === 1
-            ? 'Set your preferred cooking date, visit preference, and portions for Chef Missy.'
+            ? 'Set your preferred preparation date, time preference, and portions for Chef Missy.'
             : activeStep === 2
             ? 'Select fresh chef-crafted dishes for your in-home meal preparation.'
             : activeStep === 3
@@ -800,11 +800,11 @@ export default function SelectionCart() {
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => {
               if (!cart.visitDate) {
-                setError('Please select your preferred cooking date first.');
+                setError('Please select your preferred preparation date first.');
                 return;
               }
               if (isTimeslotMissing) {
-                setError('Please choose your visit preference (Morning or Afternoon) first.');
+                setError('Please choose your time preference (Morning or Afternoon) first.');
                 return;
               }
               setError('');
@@ -868,11 +868,11 @@ export default function SelectionCart() {
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', width: '25%' }}
             onClick={() => {
               if (!cart.visitDate) {
-                setError('Please select your preferred cooking date first.');
+                setError('Please select your preferred preparation date first.');
                 return;
               }
               if (isTimeslotMissing) {
-                setError('Please choose your visit preference (Morning or Afternoon) first.');
+                setError('Please choose your time preference (Morning or Afternoon) first.');
                 return;
               }
               if (cart.dishes.length === 0) {
@@ -1176,7 +1176,7 @@ export default function SelectionCart() {
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Visit Preference</span>
+              <span style={{ color: '#716c62', fontSize: '0.69rem' }}>Time Preference</span>
               <span style={{ fontWeight: 600, color: '#1a1814', textAlign: 'right' }}>
                 {(confirmedVisit?.arrivalWindow || formattedTimeslotPreview)?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
                 {/\d/.test(confirmedVisit?.arrivalWindow || '') && (
@@ -1442,7 +1442,7 @@ export default function SelectionCart() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ color: '#716c62' }}>Visit Preference:</span>
+                  <span style={{ color: '#716c62' }}>Time Preference:</span>
                   <span style={{ fontWeight: 600, textAlign: 'right' }}>
                     {visitPreference}
                     {linkedVisit?.arrivalWindow && /\d/.test(linkedVisit.arrivalWindow) && (
@@ -1817,7 +1817,7 @@ export default function SelectionCart() {
                       return;
                     }
                     if (isTimeslotMissing) {
-                      setError('Please choose your visit preference (Morning or Afternoon) to proceed.');
+                      setError('Please choose your time preference (Morning or Afternoon) to proceed.');
                       return;
                     }
                     setError('');
@@ -1912,7 +1912,7 @@ export default function SelectionCart() {
                     { key: 'side', label: 'Side' },
                     { key: 'soup', label: 'Soup' },
                     { key: 'dessert', label: 'Dessert' },
-                    { key: 'kids', label: "Kids' Meals" },
+                    { key: 'kids', label: 'Kids' },
                   ].map((tab) => {
                     const isActive = activeCat === tab.key;
                     return (
@@ -2141,7 +2141,7 @@ export default function SelectionCart() {
                                   flexShrink: 0,
                                 }}
                               >
-                                {dish.type === 'kids' ? "Kids' Meal" : dish.type === 'dessert' ? 'Dessert' : dish.type === 'soup' ? 'Soup' : dish.type === 'side' ? 'Side' : 'Main'}
+                                {dish.type === 'kids' ? 'Kids' : dish.type === 'dessert' ? 'Dessert' : dish.type === 'soup' ? 'Soup' : dish.type === 'side' ? 'Side' : 'Main'}
                               </span>
                             </div>
 

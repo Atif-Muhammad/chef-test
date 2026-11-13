@@ -114,7 +114,7 @@ export default function DishBasicStep({
               { value: 'side', label: 'Side' },
               { value: 'soup', label: 'Soup' },
               { value: 'dessert', label: 'Dessert' },
-              { value: 'kids', label: "Kids' Meals" },
+              { value: 'kids', label: 'Kids' },
             ]}
           />
         </div>

@@ -111,10 +111,10 @@ export default function VisitDetails() {
         <div style={{ maxWidth: '440px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #ece7de', padding: '30px 20px' }}>
           <Package size={38} color="#9ca3af" style={{ margin: '0 auto 12px' }} />
           <h2 style={{ fontSize: '1.15rem', color: '#1a1814', marginBottom: '6px', fontWeight: 700 }}>
-            Cooking Visit Not Found
+            Menu Details Not Found
           </h2>
           <p style={{ color: 'var(--color-text-muted, #716c62)', fontSize: '0.78rem', margin: '0 0 16px', lineHeight: 1.45 }}>
-            We couldn't locate the requested cooking visit. It may have been removed.
+            We couldn't locate the requested menu details. It may have been removed.
           </p>
           <Link to="/history">
             <button
@@ -193,7 +193,7 @@ export default function VisitDetails() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
             <h1 className="user-page-title">
-              Cooking Visit Details
+              Menu Details
             </h1>
             <span
               style={{
@@ -209,7 +209,7 @@ export default function VisitDetails() {
             </span>
           </div>
           <p className="user-page-subtitle">
-            Full menu selections, special requests, visit preference, and status.
+            Full menu selections, special requests, time preference, and status.
           </p>
         </div>
 
@@ -292,14 +292,14 @@ export default function VisitDetails() {
               }}
             >
               {visit.status === 'confirmed'
-                ? 'Confirmed Cooking Visit'
+                ? 'Confirmed Menu'
                 : visit.status === 'ready'
                 ? 'Menu Confirmed'
                 : visit.status === 'pending'
                 ? 'Pending Chef Review'
                 : visit.status === 'completed'
-                ? 'Completed Cooking Visit'
-                : 'Cancelled Cooking Visit'}
+                ? 'Completed Menu'
+                : 'Cancelled Menu'}
             </span>
             {getStatusBadge(visit.status)}
           </div>
@@ -323,19 +323,19 @@ export default function VisitDetails() {
           >
             {visit.status === 'confirmed' && (
               <>
-                Chef Missy will arrive for your in-home cooking session during your preferred window:{' '}
+                Chef Missy will prepare your meals during your preferred window:{' '}
                 <strong>{visit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}</strong>.
               </>
             )}
             {visit.status === 'ready' &&
-              'Your menu plan is confirmed. Chef Missy will arrive on your scheduled date!'}
+              'Your menu plan is confirmed. Chef Missy will prepare your meals on your scheduled date!'}
             {visit.status === 'pending' &&
-              'Your menu selection has been submitted to Chef Missy. She will confirm the exact arrival time directly with you.'}
+              'Your menu selection has been submitted to Chef Missy. She will confirm the exact preparation time directly with you.'}
             {visit.status === 'completed' &&
-              'This cooking visit has been completed. We hope your family enjoyed every dish!'}
+              'This menu has been completed. We hope your family enjoyed every dish!'}
             {visit.status === 'cancelled' && (
               <>
-                This cooking visit was cancelled{visit.cancelledBy ? ` by ${visit.cancelledBy}` : ''}.
+                This menu was cancelled{visit.cancelledBy ? ` by ${visit.cancelledBy}` : ''}.
                 {visit.cancellationReason && ` Reason: "${visit.cancellationReason}"`}
               </>
             )}
@@ -374,7 +374,7 @@ export default function VisitDetails() {
           </div>
           <div>
             <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-              Cooking Visit Date
+              Preparation Date
             </span>
             <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
               {formattedDate}
@@ -419,7 +419,7 @@ export default function VisitDetails() {
           </div>
         </div>
 
-        {/* 3. Visit Preference */}
+        {/* 3. Time Preference */}
         <div
           style={{
             backgroundColor: '#ffffff',
@@ -448,7 +448,7 @@ export default function VisitDetails() {
           </div>
           <div>
             <span style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-              Visit Preference
+              Time Preference
             </span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' }}>
               <strong style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
@@ -668,7 +668,7 @@ export default function VisitDetails() {
             >
               <FileText size={15} color="#ffffff" />
               <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 700, color: '#ffffff' }}>
-                Cooking Visit Summary
+                Menu Summary
               </h4>
             </div>
 
@@ -719,12 +719,12 @@ export default function VisitDetails() {
                 {getStatusBadge(visit.status)}
               </div>
 
-              {/* Visit Preference */}
+              {/* Time Preference */}
               {visit.arrivalWindow && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#57534e', fontSize: '0.76rem' }}>
                     <Clock size={13} color="#716c62" />
-                    <span>Visit Preference</span>
+                    <span>Time Preference</span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <strong style={{ fontSize: '0.74rem', color: '#1a1814' }}>

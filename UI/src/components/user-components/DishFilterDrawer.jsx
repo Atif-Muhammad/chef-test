@@ -56,6 +56,7 @@ export default function DishFilterDrawer({
     'Asian',
     'Mediterranean',
     'French',
+    'Mexican',
     'Thai',
     'Japanese',
     'Korean',
@@ -328,12 +329,16 @@ export default function DishFilterDrawer({
                 { key: 'side', label: 'Side' },
                 { key: 'soup', label: 'Soup' },
                 { key: 'dessert', label: 'Dessert' },
-                { key: 'kids', label: "Kids' Meals" },
+                { key: 'kids', label: 'Kids' },
               ].map(({ key: typeKey, label }) => {
                 const isActive = activeCategory === typeKey;
+                const isSide = typeKey === 'side';
+                const isKids = typeKey === 'kids';
                 const count = dishes.filter(
                   (d) =>
                     (d.type || '').toLowerCase() === typeKey.toLowerCase() ||
+                    (isSide && (d.type || '').toLowerCase() === 'starter') ||
+                    (isKids && (Boolean(d.isKidsMeal) || Boolean(d.suitableForAges1to5))) ||
                     (d.categoryId?.slug || '').toLowerCase() === typeKey.toLowerCase()
                 ).length;
 

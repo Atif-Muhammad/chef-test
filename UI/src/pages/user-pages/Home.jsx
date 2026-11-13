@@ -286,7 +286,7 @@ export default function Home() {
               </div>
               <h4 style={{ fontSize: '0.86rem', color: '#1a1814', marginBottom: '4px', fontWeight: 600 }}>Reserve Your Date</h4>
               <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: 1.4, margin: 0 }}>
-                Pick your preferred cooking day, guest numbers, and note family allergies. Deadlines lock 48h prior.
+                Pick your preferred preparation date, portions, and note family allergies. Deadlines lock 48h prior.
               </p>
             </div>
 
@@ -308,9 +308,9 @@ export default function Home() {
               >
                 3
               </div>
-              <h4 style={{ fontSize: '0.86rem', color: '#1a1814', marginBottom: '4px', fontWeight: 600 }}>Chef Missy Cooks</h4>
+              <h4 style={{ fontSize: '0.86rem', color: '#1a1814', marginBottom: '4px', fontWeight: 600 }}>Prepared Fresh by Chef Missy</h4>
               <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: 1.4, margin: 0 }}>
-                Missy sources fresh ingredients, arrives at your home, cooks, labels dishes, and leaves your kitchen spotless.
+                Chef Missy sources fresh ingredients and prepares your selected meals from scratch, thoughtfully portioned and packaged for your family.
               </p>
             </div>
           </div>
@@ -335,7 +335,7 @@ export default function Home() {
             marginBottom: '6px',
           }}
         >
-          Fresh Meal Prep &bull; In-Home Service
+          Fresh Meal Prep &bull; Private Chef Service
         </span>
 
         <h1
@@ -361,7 +361,7 @@ export default function Home() {
             lineHeight: 1.5,
           }}
         >
-          Plan your weekly menu. Chef Missy handles the fresh ingredient sourcing and cooks wholesome meals right in your home.
+          Plan your menu. Chef Missy sources fresh ingredients and prepares wholesome meals tailored to your family.
         </p>
 
         <div className="user-home-hero-actions">
@@ -399,7 +399,7 @@ export default function Home() {
                 <UtensilsCrossed size={18} color="var(--color-primary, #2e3b12)" className="user-upcoming-icon" />
                 <div>
                   <h3 className="user-upcoming-heading">
-                    Your Upcoming Cooking Visit
+                    Your Upcoming Menu
                   </h3>
                   <span className="user-upcoming-subtext">
                     Chef Missy will prepare this menu for your family.
@@ -463,7 +463,7 @@ export default function Home() {
                       </span>
                       <span>&bull;</span>
                       <span style={{ color: 'var(--color-primary)', fontWeight: 500 }}>
-                        Visit: {upcomingVisit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
+                        Window: {upcomingVisit.arrivalWindow?.toLowerCase().includes('afternoon') ? 'Afternoon' : 'Morning'}
                         {/\d/.test(upcomingVisit.arrivalWindow || '') && (
                           <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #524d43)', marginLeft: '4px' }}>
                             ({formatArrivalWindow(upcomingVisit.arrivalWindow)})
@@ -646,14 +646,14 @@ export default function Home() {
                 {/* 4-Step Preparation Journey Progress Bar */}
                 <div className="user-upcoming-journey-card">
                   <span className="user-upcoming-journey-title">
-                    Visit Prep Journey
+                    Menu Prep Journey
                   </span>
                   <div className="user-upcoming-journey-track">
                     {[
                       { short: 'Planned', full: '1. Menu Planned', active: Boolean(upcomingVisit.dishes?.length) },
                       { short: 'Confirmed', full: '2. Confirmed Date', active: ['confirmed', 'ready', 'completed'].includes(upcomingVisit.status) },
                       { short: 'Sourcing', full: '3. Grocery Sourcing', active: ['ready', 'completed'].includes(upcomingVisit.status) || Boolean(upcomingVisit.shoppingListShared) },
-                      { short: 'Ready', full: '4. Ready / Cooking', active: upcomingVisit.status === 'completed' || Boolean(visitDateInfo?.isToday) },
+                      { short: 'Ready', full: '4. Ready / Prepared', active: upcomingVisit.status === 'completed' || Boolean(visitDateInfo?.isToday) },
                     ].map((st, i) => (
                       <div key={i} className="user-upcoming-journey-node">
                         <div
@@ -681,7 +681,7 @@ export default function Home() {
                 <div className="user-upcoming-actions">
                   <Link to={`/visits/${upcomingVisit._id}`}>
                     <button type="button" className="user-upcoming-btn-primary">
-                      <span>View Visit Details</span>
+                      <span>View Menu Details</span>
                       <span>&rarr;</span>
                     </button>
                   </Link>
@@ -707,10 +707,10 @@ export default function Home() {
                   <ChefHatIcon size={32} color="#8c857b" />
                 </div>
                 <h4 style={{ fontSize: '0.96rem', color: '#1a1814', margin: '0 0 6px', fontWeight: 600 }}>
-                  No Upcoming Cooking Visit
+                  No Upcoming Menu Planned
                 </h4>
                 <p style={{ fontSize: '0.80rem', color: 'var(--color-text-muted)', margin: '0 0 16px', maxWidth: '380px', marginInline: 'auto', lineHeight: 1.45 }}>
-                  Chef Missy is ready to cook your next meals. Select your preferred dishes and choose your cooking date.
+                  Chef Missy is ready to prepare your next meals. Select your preferred dishes and choose your preparation date.
                 </p>
                 <Link to="/catalogue">
                   <button

@@ -324,10 +324,10 @@ export default function History() {
       <div className="user-title-row">
         <div>
           <h1 className="user-page-title">
-            Past Menus & Visits
+            Past Menus
           </h1>
           <p className="user-page-subtitle">
-            Browse your past cooking visits, review dish choices, and quickly re-plan favourite menus.
+            Browse your past menus, review dish choices, and quickly re-plan favourite dishes.
           </p>
         </div>
 
@@ -367,7 +367,7 @@ export default function History() {
             No Past Menus Yet
           </h3>
           <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #716c62)', maxWidth: '420px', margin: '0 auto 16px', lineHeight: 1.45 }}>
-            Once you confirm your first menu plan, your full dish choices and cooking visit details will appear here.
+            Once you confirm your first menu plan, your full dish choices and menu details will appear here.
           </p>
           <Link to="/cart">
             <button
@@ -741,7 +741,7 @@ export default function History() {
                   </div>
                   <div>
                     <span className="history-metric-label" style={{ fontSize: '0.70rem', color: 'var(--color-text-muted, #716c62)', display: 'block', fontWeight: 500 }}>
-                      Visit Preference
+                      Time Preference
                     </span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' }}>
                       <strong className="history-metric-value" style={{ fontSize: '0.84rem', color: '#1a1814', fontWeight: 700 }}>
@@ -981,7 +981,7 @@ export default function History() {
                     >
                       <FileText size={15} color="#ffffff" />
                       <h4 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 700, color: '#ffffff' }}>
-                        Cooking Visit Summary
+                        Menu Summary
                       </h4>
                     </div>
 
@@ -1025,12 +1025,12 @@ export default function History() {
                         {getStatusBadge(selectedVisit.status)}
                       </div>
 
-                      {/* Visit Preference */}
+                      {/* Time Preference */}
                       {selectedVisit.arrivalWindow && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#57534e', fontSize: '0.76rem' }}>
                             <Clock size={13} color="#716c62" />
-                            <span>Visit Preference</span>
+                            <span>Time Preference</span>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <strong style={{ fontSize: '0.74rem', color: '#1a1814' }}>
@@ -1102,7 +1102,7 @@ export default function History() {
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
                       >
                         <Eye size={14} color="var(--color-primary, #2e3b12)" />
-                        <span>View Full Visit Details</span>
+                        <span>View Full Menu Details</span>
                       </button>
                     </Link>
 

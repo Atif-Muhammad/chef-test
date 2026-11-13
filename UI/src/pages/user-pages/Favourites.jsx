@@ -39,30 +39,38 @@ export default function Favourites() {
     }
   };
 
+  const getDishCategory = (f) => {
+    const raw = (f.type || f.category || (f.categoryId && typeof f.categoryId === 'object' ? f.categoryId.slug || f.categoryId.name : f.categoryId) || 'main').toString().toLowerCase();
+    if (raw.includes('kid')) return 'kids';
+    if (raw.includes('soup')) return 'soup';
+    if (raw.includes('dessert') || raw.includes('sweet')) return 'dessert';
+    if (raw.includes('side') || raw.includes('starter') || raw.includes('appetizer') || raw.includes('salad')) return 'side';
+    return 'main';
+  };
+
   // Dynamically compute tabs from real favourites list
   const tabCounts = favourites.reduce(
     (acc, f) => {
       acc.all++;
-      const cat = f.category || (f.categoryId && typeof f.categoryId === 'object' ? f.categoryId.slug : null) || 'mains';
+      const cat = getDishCategory(f);
       acc[cat] = (acc[cat] || 0) + 1;
       return acc;
     },
-    { all: 0 }
+    { all: 0, main: 0, side: 0, soup: 0, dessert: 0, kids: 0 }
   );
 
   const filterTabs = [
     { id: 'all', label: `All (${tabCounts.all})` },
-    ...(tabCounts.mains ? [{ id: 'mains', label: `Mains (${tabCounts.mains})` }] : []),
-    ...(tabCounts.salads ? [{ id: 'salads', label: `Salads (${tabCounts.salads})` }] : []),
-    ...(tabCounts.pasta ? [{ id: 'pasta', label: `Pasta & Grains (${tabCounts.pasta})` }] : []),
-    ...(tabCounts.desserts ? [{ id: 'desserts', label: `Desserts (${tabCounts.desserts})` }] : []),
-    ...(tabCounts.kids ? [{ id: 'kids', label: `Kids' Meals (${tabCounts.kids})` }] : []),
+    ...(tabCounts.main ? [{ id: 'main', label: `Main (${tabCounts.main})` }] : []),
+    ...(tabCounts.side ? [{ id: 'side', label: `Side (${tabCounts.side})` }] : []),
+    ...(tabCounts.soup ? [{ id: 'soup', label: `Soup (${tabCounts.soup})` }] : []),
+    ...(tabCounts.dessert ? [{ id: 'dessert', label: `Dessert (${tabCounts.dessert})` }] : []),
+    ...(tabCounts.kids ? [{ id: 'kids', label: `Kids (${tabCounts.kids})` }] : []),
   ];
 
   const filtered = favourites.filter((f) => {
     if (activeTab === 'all') return true;
-    const cat = f.category || (f.categoryId && typeof f.categoryId === 'object' ? f.categoryId.slug : null);
-    return cat === activeTab;
+    return getDishCategory(f) === activeTab;
   });
 
   if (loading) return <Loader message="Loading favourite dishes..." />;
